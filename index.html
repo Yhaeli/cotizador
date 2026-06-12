@@ -12,7 +12,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
-        /* INTERFAZ DE TRABAJO (Lo que tú ves en pantalla) */
+        /* INTERFAZ DE LA APP */
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; 
             background-color: #f4f9f4; 
@@ -21,7 +21,7 @@
             color: #2c3e50; 
         }
         .app-container { 
-            max-width: 500px; 
+            max-width: 480px; 
             margin: 0 auto; 
             background: white; 
             padding: 16px; 
@@ -44,7 +44,6 @@
             font-family: inherit; 
             background-color: #f8fafc;
         }
-        input:focus, textarea:focus { border-color: #2e6f40; outline: none; background-color: white; }
         
         .hint { font-size: 0.75rem; color: #718096; display: block; margin-top: 2px; }
         .input-readonly { background-color: #edf2f7; font-weight: bold; color: #2d3748; }
@@ -67,32 +66,29 @@
         .btn-copy { background-color: #10b981; }
         .btn-img { background-color: #2563eb; }
 
-        /* VISTA PREVIA CONTENEDORA */
         #zona-captura-recorte {
             margin-top: 20px;
             width: 100%;
-            overflow-x: auto; /* Permite deslizar si la pantalla es muy chica */
+            overflow-x: auto;
         }
         
         /* ======================================================= */
-        /* CONFIGURACIÓN ESTRUCTURAL HOJA A4 STRICTA               */
+        /* REGLAS ESTRICTAS PARA MEDIDAS DE HOJA A4                */
         /* ======================================================= */
         .recibo-estilizado {
-            width: 595px;          /* Ancho estándar proporcional A4 */
-            height: 842px;         /* Alto estándar proporcional A4 */
+            width: 595px;          /* Ancho A4 exacto */
+            height: 842px;         /* Alto A4 exacto (¡Bloqueado!) */
             min-height: 842px;
             max-height: 842px;
             background-color: white;
             box-sizing: border-box;
-            padding: 40px;         /* Márgenes limpios de documento oficial */
-            text-align: left;
-            font-size: 14px;
-            line-height: 1.5;
+            padding: 45px;         
             border: 1px solid #cbd5e1; 
             display: flex;
             flex-direction: column;
-            justify-content: space-between; /* Distribuye el contenido a lo largo del A4 */
+            justify-content: space-between; 
             position: relative;
+            overflow: hidden;      /* Evita que cualquier contenido deforme la hoja */
         }
         
         .recibo-contenido-superior {
@@ -103,42 +99,40 @@
             text-align: center; 
             font-weight: bold; 
             color: #2e6f40; 
-            font-size: 22px; 
-            margin-bottom: 20px; 
+            font-size: 21px; 
+            margin-bottom: 15px; 
             border-bottom: 3px solid #2e6f40; 
-            padding-bottom: 10px; 
-            letter-spacing: 0.5px;
+            padding-bottom: 8px; 
         }
         
         .recibo-meta { 
-            margin-bottom: 20px; 
-            font-size: 14px; 
+            margin-bottom: 15px; 
+            font-size: 13px; 
             background: #f8fafc; 
-            padding: 12px; 
+            padding: 10px; 
             border: 1px solid #e2e8f0; 
-            border-radius: 8px; 
-            line-height: 1.6;
+            border-radius: 6px; 
         }
         
-        .tabla-productos { width: 100%; border-collapse: collapse; margin: 15px 0; }
-        .tabla-productos th { border-bottom: 2px solid #2e6f40; color: #2e6f40; padding: 8px 4px; font-weight: bold; text-align: left; font-size: 12px; text-transform: uppercase; }
-        .tabla-productos td { border-bottom: 1px dashed #e2e8f0; padding: 9px 4px; color: #334155; font-size: 13.5px; }
+        /* Ajuste de tabla dinámico para que no estire el documento */
+        .tabla-productos { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        .tabla-productos th { border-bottom: 2px solid #2e6f40; color: #2e6f40; padding: 6px 2px; font-weight: bold; text-align: left; font-size: 11px; }
+        .tabla-productos td { border-bottom: 1px dashed #e2e8f0; padding: 6px 2px; color: #334155; font-size: 12.5px; }
         
         .text-right { text-align: right; }
         .text-center { text-align: center; }
         
-        .recibo-resumen { background: #f8fafc; padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 15px; }
-        .recibo-total-destacado { font-size: 17px; font-weight: bold; color: #b91c1c; margin-top: 6px; border-top: 1px solid #e2e8f0; padding-top: 6px; }
+        .recibo-resumen { background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; margin-top: 12px; font-size: 13px; }
+        .recibo-total-destacado { font-size: 16px; font-weight: bold; color: #b91c1c; margin-top: 4px; border-top: 1px solid #e2e8f0; padding-top: 4px; }
         
-        /* SECCIÓN INFERIOR FIJADA EN EL FONDO DEL A4 */
         .recibo-contenido-inferior {
             width: 100%;
             margin-top: auto; 
         }
 
-        .recibo-pagos { background-color: #fdfdfd; padding: 14px; border-radius: 8px; border-left: 4px solid #10b981; font-size: 13px; margin-top: 15px; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;}
-        .recibo-importante { font-size: 11.5px; color: #64748b; margin-top: 15px; padding-top: 10px; border-top: 1px solid #e2e8f0; }
-        .recibo-importante ul { margin: 4px 0; padding-left: 16px; }
+        .recibo-pagos { background-color: #fdfdfd; padding: 12px; border-radius: 6px; border-left: 4px solid #10b981; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; font-size: 12px; margin-top: 10px; }
+        .recibo-importante { font-size: 11px; color: #64748b; margin-top: 10px; padding-top: 8px; border-top: 1px solid #e2e8f0; }
+        .recibo-importante ul { margin: 2px 0; padding-left: 14px; }
     </style>
 </head>
 <body>
@@ -150,9 +144,8 @@
     <label>Nombre del Cliente:</label> 
     <input type="text" id="cliente" placeholder="Ej: LISA LOWERS" oninput="procesarCotizacion()">
     
-    <label>Detalle del pedido (Escribe o pega aquí):</label>
-    <span class="hint">Formato: 2 Solanum - 10.00 (Una planta por línea)</span>
-    <textarea id="pedido-texto" rows="5" placeholder="2 Solanum - 10.00&#10;1 Lengua de perro - 15.00" oninput="procesarCotizacion()"></textarea>
+    <label>Detalle del pedido:</label>
+    <textarea id="pedido-texto" rows="5" placeholder="2 Pepeomia - 10.00" oninput="procesarCotizacion()"></textarea>
     
     <label>Valor de las Plantas (S/.):</label> 
     <input type="number" id="valPlantas" class="input-readonly" value="0.00" readonly>
@@ -177,9 +170,9 @@
                 <div class="recibo-header">🌿 COTIZACIÓN VIVERO ELIEL</div>
                 
                 <div class="recibo-meta">
-                    <strong>Cliente:</strong> <span id="img-cliente">---</span><br>
-                    <strong>Fecha:</strong> <span id="img-fecha">--/--/----</span><br>
-                    <strong>Vigencia:</strong> 24 horas
+                    👤 <strong>Cliente:</strong> <span id="img-cliente">---</span><br>
+                    📅 <strong>Fecha:</strong> <span id="img-fecha">--/--/----</span><br>
+                    ⏳ <strong>Vigencia:</strong> 24 horas
                 </div>
                 
                 <strong>Detalle del pedido:</strong>
@@ -197,7 +190,7 @@
                 
                 <div class="recibo-resumen">
                     🪴 <strong>Total de plantas:</strong> S/. <span id="img-subtotal">0.00</span><br>
-                    <strong>Embalaje y traslado:</strong> S/. <span id="img-embalaje">0.00</span>
+                    📦 <strong>Embalaje y traslado:</strong> S/. <span id="img-embalaje">0.00</span>
                     <div class="recibo-total-destacado">💰 TOTAL A CANCELAR: S/. <span id="img-total">0.00</span></div>
                 </div>
             </div>
@@ -216,7 +209,7 @@
                     <ul>
                         <li>Vigencia de la cotización: 24 horas.</li>
                         <li>Sin confirmación o pago dentro de ese plazo, las plantas serán liberadas para su venta.</li>
-                        <li>El flete es cobrado directamente por la de transporte elegida por el cliente.</li>
+                        <li>El flete es cobrado directamente por la agencia de transporte elegida por el cliente.</li>
                     </ul>
                 </div>
             </div>
@@ -285,28 +278,22 @@ function procesarCotizacion() {
             </tr>
         `;
 
-        textoWhatsAppDetalle += `${itemNum}. ${cantidad} x ${descripcion} - S/. ${precioUnitario.toFixed(2)} c/u\n`;
+        textoWhatsAppDetalle += `${itemNum}. ${cantidad} x ${descripcion} - S/. ${precioUnitario.toFixed(2)}\n`;
         itemNum++;
     });
 
     document.getElementById('valPlantas').value = sumaPlantas.toFixed(2);
     const embalaje = parseFloat(document.getElementById('valEmbalaje').value) || 0;
-    const totalGeneral = sumaPlants = sumaPlantas + embalaje;
+    const totalGeneral = sumaPlantas + embalaje;
     document.getElementById('valTotal').value = totalGeneral.toFixed(2);
 
-    const clienteAct = document.getElementById('cliente').value || '---';
-    document.getElementById('img-cliente').innerText = clienteAct;
+    document.getElementById('img-cliente').innerText = document.getElementById('cliente').value || '---';
     document.getElementById('img-subtotal').innerText = sumaPlantas.toFixed(2);
     document.getElementById('img-embalaje').innerText = embalaje.toFixed(2);
     document.getElementById('img-total').innerText = totalGeneral.toFixed(2);
 
     const fechaActual = document.getElementById('img-fecha').innerText;
-    document.getElementById('output-texto').value = 
-        `*COTIZACIÓN VIVERO ELIEL*\n\n` +
-        `*Cliente:* ${clienteAct}\n` +
-        `*Fecha:* ${fechaActual}\n\n` +
-        `*Pedido:*\n${textoWhatsAppDetalle}\n` +
-        `*TOTAL: S/. ${totalGeneral.toFixed(2)}*`;
+    document.getElementById('output-texto').value = `🪴 *COTIZACIÓN VIVERO ELIEL*\n\n💰 *TOTAL: S/. ${totalGeneral.toFixed(2)}*`;
 }
 
 function guardarImagen() {
@@ -314,11 +301,11 @@ function guardarImagen() {
     const contenedor = document.getElementById('bloque-imagen');
     const cliente = document.getElementById('cliente').value || 'Cliente';
     
-    // Forzar renderizado exacto a dimensiones A4 nativas en la descarga
+    // Forzado estricto de captura a proporciones A4
     html2canvas(contenedor, { 
         width: 595,
         height: 842,
-        scale: 2, // Mantiene la nitidez nítida al descargar
+        scale: 2, 
         useCORS: true
     }).then(canvas => {
         const enlace = document.createElement('a');
@@ -332,7 +319,6 @@ function copiarWhatsApp() {
     procesarCotizacion();
     const tArea = document.getElementById('output-texto');
     tArea.select();
-    tArea.setSelectionRange(0, 99999);
     document.execCommand('copy');
     alert('📋 ¡Texto copiado!');
 }
