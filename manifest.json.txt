@@ -1,0 +1,17 @@
+{
+  "short_name": "CotiEliel",
+  "name": "Cotizador Vivero Eliel",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/628/628283.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#f4f9f4",
+  "theme_color": "#2e6f40",
+  "display": "standalone",
+  "orientation": "portrait"
+}
