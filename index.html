@@ -272,17 +272,37 @@ function procesarCotizacion() {
     document.getElementById('img-subtotal').innerText = sumaPlantas.toFixed(2);
     document.getElementById('img-embalaje').innerText = embalaje.toFixed(2);
     document.getElementById('img-total').innerText = totalGeneral.toFixed(2);
-}
 
+    document.getElementById('img-total').innerText = totalGeneral.toFixed(2);
+
+ajustarA4();
+}
+function ajustarA4(){
+
+    const hoja = document.getElementById("bloque-imagen");
+
+    hoja.style.transform = "scale(1)";
+
+    const altura = hoja.scrollHeight;
+
+    if(altura > 1123){
+
+        const escala = 1123 / altura;
+
+        hoja.style.transform = `scale(${escala})`;
+    }
+}
 function guardarImagen() {
     procesarCotizacion();
     const contenedor = document.getElementById('bloque-imagen');
     const cliente = document.getElementById('cliente').value || 'Cliente';
     
     // Dejar que capture TODO el contenido completo sin cortes
-    html2canvas(contenedor, { 
-        scale: 2, 
-        useCORS: true
+    html2canvas(contenedor,{
+    scale:3,
+    useCORS:true,
+    backgroundColor:"#ffffff"
+})
     }).then(canvas => {
         const enlace = document.createElement('a');
         enlace.download = `Cotizacion_A4_${cliente.replace(/\s+/g, '_')}.png`;
