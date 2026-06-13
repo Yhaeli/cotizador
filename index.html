@@ -12,7 +12,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
-        /* INTERFAZ DE LA APP (Lo que usas en pantalla) */
+        /* INTERFAZ DE LA APP */
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; 
             background-color: #f4f9f4; 
@@ -45,7 +45,6 @@
             background-color: #f8fafc;
         }
         
-        .hint { font-size: 0.75rem; color: #718096; display: block; margin-top: 2px; }
         .input-readonly { background-color: #edf2f7; font-weight: bold; color: #2d3748; }
         .input-total { background-color: #fef2f2; font-weight: bold; color: #b91c1c; }
         
@@ -76,13 +75,15 @@
         /* DISEÑO DE HOJA CON PROPORCIÓN DE ASPECTO A4 REAL        */
         /* ======================================================= */
         .recibo-estilizado {
-            width: 650px;           /* Ancho fijo optimizado */
+            width: 595px;           /* Ancho base A4 estándar */
+            min-height: 842px;      /* Alto mínimo A4 estándar */
             background-color: white;
             box-sizing: border-box;
-            padding: 45px;         
+            padding: 40px;         
             border: 1px solid #cbd5e1; 
             display: flex;
             flex-direction: column;
+            justify-content: space-between;
             position: relative;
         }
         
@@ -90,33 +91,33 @@
             text-align: center; 
             font-weight: bold; 
             color: #2e6f40; 
-            font-size: 24px; 
-            margin-bottom: 20px; 
+            font-size: 22px; 
+            margin-bottom: 15px; 
             border-bottom: 3px solid #2e6f40; 
             padding-bottom: 8px; 
         }
         
         .recibo-meta { 
-            margin-bottom: 20px; 
-            font-size: 14px; 
+            margin-bottom: 15px; 
+            font-size: 13px; 
             background: #f8fafc; 
-            padding: 12px; 
+            padding: 10px; 
             border: 1px solid #e2e8f0; 
             border-radius: 6px; 
         }
         
-        .tabla-productos { width: 100%; border-collapse: collapse; margin: 15px 0; }
-        .tabla-productos th { border-bottom: 2px solid #2e6f40; color: #2e6f40; padding: 8px 4px; font-weight: bold; text-align: left; font-size: 12px; }
-        .tabla-productos td { border-bottom: 1px dashed #e2e8f0; padding: 8px 4px; color: #334155; font-size: 13.5px; }
+        .tabla-productos { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        .tabla-productos th { border-bottom: 2px solid #2e6f40; color: #2e6f40; padding: 6px 4px; font-weight: bold; text-align: left; font-size: 12px; }
+        .tabla-productos td { border-bottom: 1px dashed #e2e8f0; padding: 6px 4px; color: #334155; font-size: 13px; }
         
         .text-right { text-align: right; }
         .text-center { text-align: center; }
         
-        .recibo-resumen { background: #f8fafc; padding: 14px; border-radius: 6px; border: 1px solid #e2e8f0; margin-top: 15px; font-size: 14px; }
-        .recibo-total-destacado { font-size: 18px; font-weight: bold; color: #b91c1c; margin-top: 6px; border-top: 1px solid #e2e8f0; padding-top: 6px; }
+        .recibo-resumen { background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; margin-top: 15px; font-size: 13px; }
+        .recibo-total-destacado { font-size: 16px; font-weight: bold; color: #b91c1c; margin-top: 6px; border-top: 1px solid #e2e8f0; padding-top: 6px; }
         
-        .recibo-pagos { background-color: #fdfdfd; padding: 14px; border-radius: 6px; border-left: 4px solid #10b981; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; font-size: 13px; margin-top: 20px; }
-        .recibo-importante { font-size: 12px; color: #64748b; margin-top: 15px; padding-top: 8px; border-top: 1px solid #e2e8f0; }
+        .recibo-pagos { background-color: #fdfdfd; padding: 12px; border-radius: 6px; border-left: 4px solid #10b981; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; font-size: 12.5px; margin-top: 15px; }
+        .recibo-importante { font-size: 11.5px; color: #64748b; margin-top: 15px; padding-top: 8px; border-top: 1px solid #e2e8f0; }
         .recibo-importante ul { margin: 4px 0; padding-left: 14px; }
     </style>
 </head>
@@ -151,48 +152,52 @@
     <div id="zona-captura-recorte">
         <div class="recibo-estilizado" id="bloque-imagen">
             
-            <div class="recibo-header">🌿 COTIZACIÓN VIVERO ELIEL</div>
-            
-            <div class="recibo-meta">
-                👤 <strong>Cliente:</strong> <span id="img-cliente">---</span><br>
-                📅 <strong>Fecha:</strong> <span id="img-fecha">--/--/----</span><br>
-                ⏳ <strong>Vigencia:</strong> 24 horas
+            <div>
+                <div class="recibo-header">🌿 COTIZACIÓN VIVERO ELIEL</div>
+                
+                <div class="recibo-meta">
+                    👤 <strong>Cliente:</strong> <span id="img-cliente">---</span><br>
+                    📅 <strong>Fecha:</strong> <span id="img-fecha">--/--/----</span><br>
+                    ⏳ <strong>Vigencia:</strong> 24 horas
+                </div>
+                
+                <strong>Detalle del pedido:</strong>
+                <table class="tabla-productos">
+                    <thead>
+                        <tr>
+                            <th class="text-center" style="width: 12%;">CANT.</th>
+                            <th>DESCRIPCIÓN ESPECIE</th>
+                            <th class="text-right" style="width: 22%;">P. UNIT</th>
+                            <th class="text-right" style="width: 22%;">TOTAL</th>
+                        </tr>
+                    </thead>
+                    <tbody id="img-tabla-filas"></tbody>
+                </table>
+                
+                <div class="recibo-resumen">
+                    🪴 <strong>Total de plantas:</strong> S/. <span id="img-subtotal">0.00</span><br>
+                    📦 <strong>Embalaje y traslado:</strong> S/. <span id="img-embalaje">0.00</span>
+                    <div class="recibo-total-destacado">💰 TOTAL A CANCELAR: S/. <span id="img-total">0.00</span></div>
+                </div>
             </div>
             
-            <strong>Detalle del pedido:</strong>
-            <table class="tabla-productos">
-                <thead>
-                    <tr>
-                        <th class="text-center" style="width: 12%;">CANT.</th>
-                        <th>DESCRIPCIÓN ESPECIE</th>
-                        <th class="text-right" style="width: 22%;">P. UNIT</th>
-                        <th class="text-right" style="width: 22%;">TOTAL</th>
-                    </tr>
-                </thead>
-                <tbody id="img-tabla-filas"></tbody>
-            </table>
-            
-            <div class="recibo-resumen">
-                🪴 <strong>Total de plantas:</strong> S/. <span id="img-subtotal">0.00</span><br>
-                📦 <strong>Embalaje y traslado:</strong> S/. <span id="img-embalaje">0.00</span>
-                <div class="recibo-total-destacado">💰 TOTAL A CANCELAR: S/. <span id="img-total">0.00</span></div>
-            </div>
-            
-            <div class="recibo-pagos">
-                <strong>📋 Métodos de pago:</strong><br>
-                📱 Yape: 981 046 861<br>
-                🏦 BCP | Cuenta Corriente: 19178952536034<br>
-                * CCI: 00219117895253603450<br>
-                💥 Titular: Arlene Cruzado Llanos
-            </div>
-            
-            <div class="recibo-importante">
-                <strong>⚠️ Importante:</strong>
-                <ul>
-                    <li>Vigencia de la cotización: 24 horas.</li>
-                    <li>Sin confirmación o pago dentro de ese plazo, las plantas serán liberadas para su venta.</li>
-                    <li>El flete es cobrado directamente por la de transporte elegida por el cliente.</li>
-                </ul>
+            <div>
+                <div class="recibo-pagos">
+                    <strong>📋 Métodos de pago:</strong><br>
+                    📱 Yape: 981 046 861<br>
+                    🏦 BCP | Cuenta Corriente: 19178952536034<br>
+                    * CCI: 00219117895253603450<br>
+                    💥 Titular: Arlene Cruzado Llanos
+                </div>
+                
+                <div class="recibo-importante">
+                    <strong>⚠️ Importante:</strong>
+                    <ul>
+                        <li>Vigencia de la cotización: 24 horas.</li>
+                        <li>Sin confirmación o pago dentro de ese plazo, las plantas serán liberadas para su venta.</li>
+                        <li>El flete es cobrado directamente por la de transporte elegida por el cliente.</li>
+                    </ul>
+                </div>
             </div>
 
         </div>
@@ -272,37 +277,19 @@ function procesarCotizacion() {
     document.getElementById('img-subtotal').innerText = sumaPlantas.toFixed(2);
     document.getElementById('img-embalaje').innerText = embalaje.toFixed(2);
     document.getElementById('img-total').innerText = totalGeneral.toFixed(2);
-
-    document.getElementById('img-total').innerText = totalGeneral.toFixed(2);
-
-ajustarA4();
 }
-function ajustarA4(){
 
-    const hoja = document.getElementById("bloque-imagen");
-
-    hoja.style.transform = "scale(1)";
-
-    const altura = hoja.scrollHeight;
-
-    if(altura > 1123){
-
-        const escala = 1123 / altura;
-
-        hoja.style.transform = `scale(${escala})`;
-    }
-}
 function guardarImagen() {
     procesarCotizacion();
     const contenedor = document.getElementById('bloque-imagen');
     const cliente = document.getElementById('cliente').value || 'Cliente';
     
-    // Dejar que capture TODO el contenido completo sin cortes
-    html2canvas(contenedor,{
-    scale:3,
-    useCORS:true,
-    backgroundColor:"#ffffff"
-})
+    // Forzado nativo de dimensiones limpias para html2canvas
+    html2canvas(contenedor, {
+        scale: 3,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false
     }).then(canvas => {
         const enlace = document.createElement('a');
         enlace.download = `Cotizacion_A4_${cliente.replace(/\s+/g, '_')}.png`;
