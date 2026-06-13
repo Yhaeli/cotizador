@@ -33,7 +33,7 @@
         .subtitle { text-align: center; font-size: 0.85rem; color: #7f8c8d; margin-bottom: 14px; }
         
         label { font-weight: bold; display: block; margin-top: 12px; font-size: 0.9rem; color: #4a5568; }
-        input, textarea { 
+        input, textarea, select { 
             width: 100%; 
             padding: 11px; 
             margin-top: 5px; 
@@ -64,6 +64,16 @@
         }
         .btn-copy { background-color: #10b981; }
         .btn-img { background-color: #2563eb; }
+        .btn-save { background-color: #f59e0b; }
+        .btn-danger { background-color: #ef4444; padding: 8px; font-size: 0.85rem; margin-top: 5px; }
+
+        .historial-section {
+            margin-top: 15px;
+            background: #f1f5f9;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+        }
 
         #zona-captura-recorte {
             margin-top: 20px;
@@ -97,13 +107,15 @@
             padding-bottom: 8px; 
         }
         
-        .recibo-meta { 
-            margin-bottom: 15px; 
-            font-size: 13px; 
+        .recibo-meta-grid {
+            display: flex;
+            justify-content: space-between;
             background: #f8fafc; 
             padding: 10px; 
             border: 1px solid #e2e8f0; 
-            border-radius: 6px; 
+            border-radius: 6px;
+            margin-bottom: 15px; 
+            font-size: 13px;
         }
         
         .tabla-productos { width: 100%; border-collapse: collapse; margin: 10px 0; }
@@ -126,9 +138,20 @@
 <div class="app-container">
     <h2>Vivero Eliel</h2>
     <div class="subtitle">Generador de Cotizaciones A4</div>
+
+    <div class="historial-section">
+        <label style="margin-top:0;">📂 Buscar / Cargar Cotización Guardada:</label>
+        <select id="lista-guardados" onchange="cargarCotizacion()">
+            <option value="">-- Seleccionar cliente guardado --</option>
+        </select>
+        <button type="button" class="btn btn-danger" onclick="eliminarCotizacion()">🗑️ Eliminar de la memoria</button>
+    </div>
     
     <label>Nombre del Cliente:</label> 
     <input type="text" id="cliente" placeholder="Ej: LISA LOWERS" oninput="procesarCotizacion()">
+
+    <label>N° de Cotización (Opcional):</label> 
+    <input type="text" id="num-cotizacion" placeholder="Ej: 001-2026" oninput="procesarCotizacion()">
     
     <label>Detalle del pedido:</label>
     <textarea id="pedido-texto" rows="5" placeholder="2 Pepeomia - 10.00" oninput="procesarCotizacion()"></textarea>
@@ -137,4 +160,314 @@
     <input type="number" id="valPlantas" class="input-readonly" value="0.00" readonly>
     
     <label>Embalaje y traslado (S/.):</label> 
-    <input
+    <input type="number" id="valEmbalaje" placeholder="0.00" step="0.01" value="0.00" oninput="procesarCotizacion()">
+    
+    <label>TOTAL A PAGAR (S/.):</label> 
+    <input type="number" id="valTotal" class="input-total" value="0.00" readonly>
+    
+    <div class="btn-group">
+        <button type="button" class="btn btn-save" onclick="guardarEnMemoria()">💾 Guardar / Actualizar Progreso</button>
+        <button type="button" class="btn btn-copy" onclick="copiarWhatsApp()">📋 Copiar Texto WhatsApp</button>
+        <button type="button" class="btn btn-img" onclick="guardarImagen()">📥 Guardar Imagen en Formato A4</button>
+    </div>
+    
+    <textarea id="output-texto" style="display:none;"></textarea>
+
+    <div id="zona-captura-recorte">
+        <div class="recibo-estilizado" id="bloque-imagen">
+            
+            <div>
+                <div class="recibo-header" style="display: flex; align-items: center; justify-content: center; gap: 15px;">
+                    <img src="logo.png" alt="Logo Vivero Eliel" style="height: 45px; width: auto; object-fit: contain;">
+                    <span>COTIZACIÓN VIVERO ELIEL</span>
+                </div>
+                
+                <div class="recibo-meta-grid">
+                    <div>
+                        👤 <strong>Cliente:</strong> <span id="img-cliente">---</span><br>
+                        ⏳ <strong>Vigencia:</strong> 24 horas
+                    </div>
+                    <div style="text-align: right;">
+                        📅 <strong>Fecha:</strong> <span id="img-fecha">--/--/----</span><br>
+                        📄 <strong id="lbl-img-cotizacion">Cotización:</strong> <span id="img-num-cotizacion">---</span>
+                    </div>
+                </div>
+                
+                <strong>Detalle del pedido:</strong>
+                <table class="tabla-productos">
+                    <thead>
+                        <tr>
+                            <th class="text-center" style="width: 12%;">CANT.</th>
+                            <th>DESCRIPCIÓN ESPECIE</th>
+                            <th class="text-right" style="width: 22%;">P. UNIT</th>
+                            <th class="text-right" style="width: 22%;">TOTAL</th>
+                        </tr>
+                    </thead>
+                    <tbody id="img-tabla-filas"></tbody>
+                </table>
+                
+                <div class="recibo-resumen">
+                    🪴 <strong>Total de plantas:</strong> S/. <span id="img-subtotal">0.00</span><br>
+                    📦 <strong>Embalaje y traslado:</strong> S/. <span id="img-embalaje">0.00</span>
+                    <div class="recibo-total-destacado">💰 TOTAL A CANCELAR: S/. <span id="img-total">0.00</span></div>
+                </div>
+            </div>
+            
+            <div>
+                <div class="recibo-pagos">
+                    <strong>📋 Métodos de pago:</strong><br>
+                    📱 Yape: 981 046 861<br>
+                    🏦 BCP | Cuenta Corriente: 19178952536034<br>
+                    * CCI: 00219117895253603450<br>
+                    💥 Titular: Arlene Cruzado Llanos
+                </div>
+                
+                <div class="recibo-importante">
+                    <strong>⚠️ Importante:</strong>
+                    <ul>
+                        <li>Vigencia de la cotización: 24 horas.</li>
+                        <li>Sin confirmación o pago dentro de ese plazo, las plantas serán liberadas para su venta.</li>
+                        <li>El flete es cobrado directamente por la de transporte elegida por el cliente.</li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+let whatsappDetalleGlobal = "";
+
+function iniciarFecha() {
+    const hoy = new Date();
+    const d = String(hoy.getDate()).padStart(2, '0');
+    const m = String(hoy.getMonth() + 1).padStart(2, '0');
+    const a = hoy.getFullYear();
+    document.getElementById('img-fecha').innerText = `${d}/${m}/${a}`;
+}
+
+function procesarCotizacion() {
+    const texto = document.getElementById('pedido-texto').value;
+    const lineas = texto.split('\n');
+    const tablaFilas = document.getElementById('img-tabla-filas');
+    
+    tablaFilas.innerHTML = ""; 
+    let sumaPlantas = 0;
+    whatsappDetalleGlobal = "";
+
+    lineas.forEach(linea => {
+        if(linea.trim() === "") return;
+
+        let cantidad = 1;
+        let descripcion = linea.trim();
+        let precioUnitario = 0;
+
+        const regexCantidad = linea.match(/^(\d+)\s+(.*)/);
+        if (regexCantidad) {
+            cantidad = parseInt(regexCantidad[1]) || 1;
+            descripcion = regexCantidad[2];
+        }
+
+        if (descripcion.includes('-')) {
+            const partes = descripcion.split('-');
+            let precioStr = partes.pop().replace(/s\/\.?/gi, '').trim();
+            precioUnitario = parseFloat(precioStr) || 0;
+            descripcion = partes.join('-').trim();
+        } else {
+            const regexPrecio = descripcion.match(/[\s\/.]+(\d+(?:\.\d+)?)$/);
+            if(regexPrecio) {
+                precioUnitario = parseFloat(regexPrecio[1]) || 0;
+                descripcion = descripcion.substring(0, descripcion.lastIndexOf(regexPrecio[1])).replace(/s\/\.?/gi, '').trim();
+            }
+        }
+
+        descripcion = descripcion.replace(/^[-–—:\s\./]+|[-–—:\s\./]+$/g, '').trim();
+        if(!descripcion) descripcion = "Planta";
+
+        const totalFila = cantidad * precioUnitario;
+        sumaPlantas += totalFila;
+
+        tablaFilas.innerHTML += `
+            <tr>
+                <td class="text-center">${cantidad}</td>
+                <td>${descripcion}</td>
+                <td class="text-right">S/. ${precioUnitario.toFixed(2)}</td>
+                <td class="text-right">S/. ${totalFila.toFixed(2)}</td>
+            </tr>
+        `;
+
+        whatsappDetalleGlobal += `  🌿 ${cantidad}x *${descripcion}* - S/. ${totalFila.toFixed(2)}\n`;
+    });
+
+    document.getElementById('valPlantas').value = sumaPlantas.toFixed(2);
+    const embalaje = parseFloat(document.getElementById('valEmbalaje').value) || 0;
+    const totalGeneral = sumaPlantas + embalaje;
+    document.getElementById('valTotal').value = totalGeneral.toFixed(2);
+
+    document.getElementById('img-cliente').innerText = document.getElementById('cliente').value || '---';
+    
+    // N° de Cotización dinámico
+    const nCotizacion = document.getElementById('num-cotizacion').value;
+    document.getElementById('img-num-cotizacion').innerText = nCotizacion ? nCotizacion : '---';
+
+    document.getElementById('img-subtotal').innerText = sumaPlantas.toFixed(2);
+    document.getElementById('img-embalaje').innerText = embalaje.toFixed(2);
+    document.getElementById('img-total').innerText = totalGeneral.toFixed(2);
+}
+
+/* ======================================================= */
+/* NUEVA LÓGICA DE ALMACENAMIENTO (LOCALSTORAGE)           */
+/* ======================================================= */
+
+function guardarEnMemoria() {
+    const cliente = document.getElementById('cliente').value.trim().toUpperCase();
+    if (!cliente) {
+        alert("⚠️ Por favor ingresa el nombre del cliente para guardar la cotización.");
+        return;
+    }
+
+    const datosCotizacion = {
+        cliente: cliente,
+        numCotizacion: document.getElementById('num-cotizacion').value,
+        pedido: document.getElementById('pedido-texto').value,
+        embalaje: document.getElementById('valEmbalaje').value,
+        fecha: document.getElementById('img-fecha').innerText
+    };
+
+    localStorage.setItem(`vivero_${cliente}`, JSON.stringify(datosCotizacion));
+    alert(`💾 Cotización de "${cliente}" guardada con éxito.`);
+    actualizarSelectorGuardados();
+    document.getElementById('lista-guardados').value = `vivero_${cliente}`;
+}
+
+function actualizarSelectorGuardados() {
+    const selector = document.getElementById('lista-guardados');
+    selector.innerHTML = '<option value="">-- Seleccionar cliente guardado --</option>';
+
+    for (let i = 0; i < localStorage.length; i++) {
+        const clave = localStorage.key(i);
+        if (clave.startsWith('vivero_')) {
+            const data = JSON.parse(localStorage.getItem(clave));
+            const option = document.createElement('option');
+            option.value = clave;
+            option.textContent = `${data.cliente} (${data.numCotizacion || 'Sin número'})`;
+            selector.appendChild(option);
+        }
+    }
+}
+
+function cargarCotizacion() {
+    const clave = document.getElementById('lista-guardados').value;
+    if (!clave) return;
+
+    const data = JSON.parse(localStorage.getItem(clave));
+    
+    document.getElementById('cliente').value = data.cliente;
+    document.getElementById('num-cotizacion').value = data.numCotizacion || '';
+    document.getElementById('pedido-texto').value = data.pedido;
+    document.getElementById('valEmbalaje').value = data.embalaje || '0.00';
+    document.getElementById('img-fecha').innerText = data.fecha || document.getElementById('img-fecha').innerText;
+
+    procesarCotizacion();
+}
+
+function eliminarCotizacion() {
+    const clave = document.getElementById('lista-guardados').value;
+    if (!clave) {
+        alert("⚠️ Selecciona una cotización de la lista para eliminarla.");
+        return;
+    }
+
+    if (confirm("¿Estás seguro de que deseas eliminar esta cotización permanentemente?")) {
+        localStorage.removeItem(clave);
+        alert("🗑️ Cotización borrada de la memoria.");
+        
+        // Limpiar formulario
+        document.getElementById('cliente').value = '';
+        document.getElementById('num-cotizacion').value = '';
+        document.getElementById('pedido-texto').value = '';
+        document.getElementById('valEmbalaje').value = '0.00';
+        
+        iniciarFecha();
+        procesarCotizacion();
+        actualizarSelectorGuardados();
+    }
+}
+
+/* ======================================================= */
+
+function guardarImagen() {
+    procesarCotizacion();
+    const contenedor = document.getElementById('bloque-imagen');
+    const cliente = document.getElementById('cliente').value || 'Cliente';
+    const nCotizacion = document.getElementById('num-cotizacion').value ? `_N°_${document.getElementById('num-cotizacion').value}` : '';
+    
+    html2canvas(contenedor, {
+        scale: 3,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false
+    }).then(canvas => {
+        const enlace = document.createElement('a');
+        enlace.download = `Cotizacion_A4_${cliente.replace(/\s+/g, '_')}${nCotizacion.replace(/\s+/g, '_')}.png`;
+        enlace.href = canvas.toDataURL('image/png');
+        enlace.click();
+    });
+}
+
+function copiarWhatsApp() {
+    procesarCotizacion();
+    
+    const cliente = document.getElementById('cliente').value || 'Cliente';
+    const fecha = document.getElementById('img-fecha').innerText;
+    const nCotizacion = document.getElementById('num-cotizacion').value ? `N° ${document.getElementById('num-cotizacion').value}` : '---';
+    const subtotal = document.getElementById('valPlantas').value;
+    const embalaje = parseFloat(document.getElementById('valEmbalaje').value) || 0;
+    const total = document.getElementById('valTotal').value;
+
+    const plantillaTexto = 
+`🌿 *COTIZACIÓN VIVERO ELIEL* 🌿
+--------------------------------------------
+👤 *Cliente:* ${cliente}
+📄 *Cotización:* ${nCotizacion}
+📅 *Fecha:* ${fecha}
+⏳ *Vigencia:* 24 horas
+
+*DETALLE DEL PEDIDO:*
+${whatsappDetalleGlobal}
+--------------------------------------------
+🪴 *Total Plantas:* S/. ${subtotal}
+📦 *Embalaje y traslado:* S/. ${embalaje.toFixed(2)}
+💰 *TOTAL A CANCELAR: S/. ${total}*
+
+--------------------------------------------
+📋 *MÉTODOS DE PAGO:*
+📱 *Yape:* 981 046 861
+🏦 *BCP Cta Corriente:* 19178952536034
+💥 *CCI:* 00219117895253603450
+👤 *Titular:* Arlene Cruzado Llanos
+
+⚠️ *Importante:* Por favor enviar el comprobante de pago para procesar su envío. ¡Muchas gracias por su preferencia!`;
+
+    navigator.clipboard.writeText(plantillaTexto).then(() => {
+        alert('📋 ¡Texto formateado y copiado para WhatsApp!');
+    }).catch(err => {
+        const areaTemporal = document.getElementById('output-texto');
+        areaTemporal.style.display = "block";
+        areaTemporal.value = plantillaTexto;
+        areaTemporal.select();
+        document.execCommand('copy');
+        areaTemporal.style.display = "none";
+        alert('📋 ¡Texto copiado al portapapeles!');
+    });
+}
+
+// Inicialización
+iniciarFecha();
+actualizarSelectorGuardados();
+procesarCotizacion();
+</script>
+
+</body>
+</html>
