@@ -218,11 +218,9 @@
 const firebaseConfig = {
     databaseURL: "https://viveroelielapp-default-rtdb.firebaseio.com/"
 };
-// Inicializar Firebase si se cambia el valor por defecto
-if (firebaseConfig.databaseURL !== "https://viveroelielapp-default-rtdb.firebaseio.com/") {
-    firebase.initializeApp(firebaseConfig);
-    var db = firebase.database();
-}
+
+firebase.initializeApp(firebaseConfig);
+var db = firebase.database();
 
 let whatsappDetalleGlobal = "";
 
