@@ -48,24 +48,36 @@
         .input-readonly { background-color: #edf2f7; font-weight: bold; color: #2d3748; }
         .input-total { background-color: #fef2f2; font-weight: bold; color: #b91c1c; }
         
-        .btn-group { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+        /* BOTONES REDUCIDOS EN FILA COMPACTA */
+        .btn-group { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 6px; 
+            margin-top: 16px; 
+        }
         .btn { 
             border: none; 
-            padding: 14px; 
-            border-radius: 8px; 
-            font-size: 0.95rem; 
+            padding: 10px 4px; 
+            border-radius: 7px; 
+            font-size: 0.82rem; 
             font-weight: bold; 
             cursor: pointer; 
             color: white; 
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 6px;
+            gap: 4px;
+            text-align: center;
+            line-height: 1.1;
         }
+        .btn span {
+            font-size: 1.1rem;
+        }
+        .btn-save { background-color: #f59e0b; }
         .btn-copy { background-color: #10b981; }
         .btn-img { background-color: #2563eb; }
-        .btn-save { background-color: #f59e0b; }
-        .btn-danger { background-color: #ef4444; padding: 8px; font-size: 0.85rem; margin-top: 5px; }
+        .btn-danger { background-color: #ef4444; padding: 8px; font-size: 0.85rem; margin-top: 5px; display: block; width: 100%; }
 
         .historial-section {
             margin-top: 15px;
@@ -85,8 +97,8 @@
         /* DISEÑO DE HOJA CON PROPORCIÓN DE ASPECTO A4 REAL        */
         /* ======================================================= */
         .recibo-estilizado {
-            width: 595px;           /* Ancho base A4 estándar */
-            min-height: 842px;      /* Alto mínimo A4 estándar */
+            width: 595px;           
+            min-height: 842px;      
             background-color: white;
             box-sizing: border-box;
             padding: 40px;         
@@ -140,9 +152,9 @@
     <div class="subtitle">Generador de Cotizaciones A4</div>
 
     <div class="historial-section">
-        <label style="margin-top:0;">📂 Buscar / Cargar Cotización Guardada:</label>
+        <label style="margin-top:0;">📂 Buscar / Cargar Cotización:</label>
         <select id="lista-guardados" onchange="cargarCotizacion()">
-            <option value="">-- Seleccionar cliente guardado --</option>
+            <option value="">-- Seleccionar cliente --</option>
         </select>
         <button type="button" class="btn btn-danger" onclick="eliminarCotizacion()">🗑️ Eliminar de la memoria</button>
     </div>
@@ -165,10 +177,11 @@
     <label>TOTAL A PAGAR (S/.):</label> 
     <input type="number" id="valTotal" class="input-total" value="0.00" readonly>
     
+    <!-- BLOQUE DE BOTONES REDUCIDOS -->
     <div class="btn-group">
-        <button type="button" class="btn btn-save" onclick="guardarEnMemoria()">💾 Guardar / Actualizar Progreso</button>
-        <button type="button" class="btn btn-copy" onclick="copiarWhatsApp()">📋 Copiar Texto WhatsApp</button>
-        <button type="button" class="btn btn-img" onclick="guardarImagen()">📥 Guardar Imagen en Formato A4</button>
+        <button type="button" class="btn btn-save" onclick="guardarEnMemoria()"><span>💾</span>Guardar</button>
+        <button type="button" class="btn btn-copy" onclick="copiarWhatsApp()"><span>📋</span>Copiar Texto</button>
+        <button type="button" class="btn btn-img" onclick="guardarImagen()"><span>📥</span>Guardar Imagen</button>
     </div>
     
     <textarea id="output-texto" style="display:none;"></textarea>
@@ -307,7 +320,6 @@ function procesarCotizacion() {
 
     document.getElementById('img-cliente').innerText = document.getElementById('cliente').value || '---';
     
-    // N° de Cotización dinámico
     const nCotizacion = document.getElementById('num-cotizacion').value;
     document.getElementById('img-num-cotizacion').innerText = nCotizacion ? nCotizacion : '---';
 
@@ -315,10 +327,6 @@ function procesarCotizacion() {
     document.getElementById('img-embalaje').innerText = embalaje.toFixed(2);
     document.getElementById('img-total').innerText = totalGeneral.toFixed(2);
 }
-
-/* ======================================================= */
-/* NUEVA LÓGICA DE ALMACENAMIENTO (LOCALSTORAGE)           */
-/* ======================================================= */
 
 function guardarEnMemoria() {
     const cliente = document.getElementById('cliente').value.trim().toUpperCase();
@@ -343,7 +351,7 @@ function guardarEnMemoria() {
 
 function actualizarSelectorGuardados() {
     const selector = document.getElementById('lista-guardados');
-    selector.innerHTML = '<option value="">-- Seleccionar cliente guardado --</option>';
+    selector.innerHTML = '<option value="">-- Seleccionar cliente --</option>';
 
     for (let i = 0; i < localStorage.length; i++) {
         const clave = localStorage.key(i);
@@ -383,7 +391,6 @@ function eliminarCotizacion() {
         localStorage.removeItem(clave);
         alert("🗑️ Cotización borrada de la memoria.");
         
-        // Limpiar formulario
         document.getElementById('cliente').value = '';
         document.getElementById('num-cotizacion').value = '';
         document.getElementById('pedido-texto').value = '';
@@ -394,8 +401,6 @@ function eliminarCotizacion() {
         actualizarSelectorGuardados();
     }
 }
-
-/* ======================================================= */
 
 function guardarImagen() {
     procesarCotizacion();
@@ -463,7 +468,6 @@ ${whatsappDetalleGlobal}
     });
 }
 
-// Inicialización
 iniciarFecha();
 actualizarSelectorGuardados();
 procesarCotizacion();
