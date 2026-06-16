@@ -9,10 +9,14 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="#2e6f40">
     
+    <!-- Librería para capturar imagen -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
+    <!-- Librerías de Firebase para sincronización en tiempo real -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
     <style>
-        /* INTERFAZ DE LA APP */
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; 
             background-color: #f4f9f4; 
@@ -48,18 +52,18 @@
         .input-readonly { background-color: #edf2f7; font-weight: bold; color: #2d3748; }
         .input-total { background-color: #fef2f2; font-weight: bold; color: #b91c1c; }
         
-        /* BOTONES REDUCIDOS EN FILA COMPACTA */
+        /* DOS BOTONES PRINCIPALES EN FILA */
         .btn-group { 
             display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 6px; 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 8px; 
             margin-top: 16px; 
         }
         .btn { 
             border: none; 
-            padding: 10px 4px; 
-            border-radius: 7px; 
-            font-size: 0.82rem; 
+            padding: 12px 4px; 
+            border-radius: 8px; 
+            font-size: 0.88rem; 
             font-weight: bold; 
             cursor: pointer; 
             color: white; 
@@ -69,14 +73,10 @@
             justify-content: center;
             gap: 4px;
             text-align: center;
-            line-height: 1.1;
         }
-        .btn span {
-            font-size: 1.1rem;
-        }
-        .btn-save { background-color: #f59e0b; }
-        .btn-copy { background-color: #10b981; }
+        .btn span { font-size: 1.2rem; }
         .btn-img { background-color: #2563eb; }
+        .btn-copy { background-color: #10b981; }
         .btn-danger { background-color: #ef4444; padding: 8px; font-size: 0.85rem; margin-top: 5px; display: block; width: 100%; }
 
         .historial-section {
@@ -93,9 +93,7 @@
             overflow-x: auto;
         }
         
-        /* ======================================================= */
-        /* DISEÑO DE HOJA CON PROPORCIÓN DE ASPECTO A4 REAL        */
-        /* ======================================================= */
+        /* DISEÑO DE HOJA CON PROPORCIÓN A4 REAL */
         .recibo-estilizado {
             width: 595px;           
             min-height: 842px;      
@@ -108,38 +106,15 @@
             justify-content: space-between;
             position: relative;
         }
-        
-        .recibo-header { 
-            text-align: center; 
-            font-weight: bold; 
-            color: #2e6f40; 
-            font-size: 22px; 
-            margin-bottom: 15px; 
-            border-bottom: 3px solid #2e6f40; 
-            padding-bottom: 8px; 
-        }
-        
-        .recibo-meta-grid {
-            display: flex;
-            justify-content: space-between;
-            background: #f8fafc; 
-            padding: 10px; 
-            border: 1px solid #e2e8f0; 
-            border-radius: 6px;
-            margin-bottom: 15px; 
-            font-size: 13px;
-        }
-        
+        .recibo-header { text-align: center; font-weight: bold; color: #2e6f40; font-size: 22px; margin-bottom: 15px; border-bottom: 3px solid #2e6f40; padding-bottom: 8px; }
+        .recibo-meta-grid { display: flex; justify-content: space-between; background: #f8fafc; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 15px; font-size: 13px; }
         .tabla-productos { width: 100%; border-collapse: collapse; margin: 10px 0; }
         .tabla-productos th { border-bottom: 2px solid #2e6f40; color: #2e6f40; padding: 6px 4px; font-weight: bold; text-align: left; font-size: 12px; }
         .tabla-productos td { border-bottom: 1px dashed #e2e8f0; padding: 6px 4px; color: #334155; font-size: 13px; }
-        
         .text-right { text-align: right; }
         .text-center { text-align: center; }
-        
         .recibo-resumen { background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; margin-top: 15px; font-size: 13px; }
         .recibo-total-destacado { font-size: 16px; font-weight: bold; color: #b91c1c; margin-top: 6px; border-top: 1px solid #e2e8f0; padding-top: 6px; }
-        
         .recibo-pagos { background-color: #fdfdfd; padding: 12px; border-radius: 6px; border-left: 4px solid #10b981; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; font-size: 12.5px; margin-top: 15px; }
         .recibo-importante { font-size: 11.5px; color: #64748b; margin-top: 15px; padding-top: 8px; border-top: 1px solid #e2e8f0; }
         .recibo-importante ul { margin: 4px 0; padding-left: 14px; }
@@ -149,14 +124,14 @@
 
 <div class="app-container">
     <h2>Vivero Eliel</h2>
-    <div class="subtitle">Generador de Cotizaciones A4</div>
+    <div class="subtitle">Generador de Cotizaciones Nube</div>
 
     <div class="historial-section">
-        <label style="margin-top:0;">📂 Buscar / Cargar Cotización:</label>
+        <label style="margin-top:0;">📂 Cotizaciones Compartidas en Línea:</label>
         <select id="lista-guardados" onchange="cargarCotizacion()">
             <option value="">-- Seleccionar cliente --</option>
         </select>
-        <button type="button" class="btn btn-danger" onclick="eliminarCotizacion()">🗑️ Eliminar de la memoria</button>
+        <button type="button" class="btn btn-danger" onclick="eliminarCotizacion()">🗑️ Eliminar Cotización</button>
     </div>
     
     <label>Nombre del Cliente:</label> 
@@ -166,7 +141,7 @@
     <input type="text" id="num-cotizacion" placeholder="Ej: 001-2026" oninput="procesarCotizacion()">
     
     <label>Detalle del pedido:</label>
-    <textarea id="pedido-texto" rows="5" placeholder="2 Pepeomia - 10.00" oninput="procesarCotizacion()"></textarea>
+    <textarea id="pedido-texto" rows="5" placeholder="2 Peperomia - 10.00" oninput="procesarCotizacion()"></textarea>
     
     <label>Valor de las Plantas (S/.):</label> 
     <input type="number" id="valPlantas" class="input-readonly" value="0.00" readonly>
@@ -177,21 +152,19 @@
     <label>TOTAL A PAGAR (S/.):</label> 
     <input type="number" id="valTotal" class="input-total" value="0.00" readonly>
     
-    <!-- BLOQUE DE BOTONES REDUCIDOS -->
     <div class="btn-group">
-        <button type="button" class="btn btn-save" onclick="guardarEnMemoria()"><span>💾</span>Guardar</button>
+        <!-- BOTÓN FUSIONADO: GUARDA EN LA NUBE Y DESCARGA LA IMAGEN -->
+        <button type="button" class="btn btn-img" onclick="guardarYDescargarImagen()"><span>📥</span>Guardar Imagen</button>
         <button type="button" class="btn btn-copy" onclick="copiarWhatsApp()"><span>📋</span>Copiar Texto</button>
-        <button type="button" class="btn btn-img" onclick="guardarImagen()"><span>📥</span>Guardar Imagen</button>
     </div>
     
     <textarea id="output-texto" style="display:none;"></textarea>
 
     <div id="zona-captura-recorte">
         <div class="recibo-estilizado" id="bloque-imagen">
-            
             <div>
                 <div class="recibo-header" style="display: flex; align-items: center; justify-content: center; gap: 15px;">
-                    <img src="logo.png" alt="Logo Vivero Eliel" style="height: 45px; width: auto; object-fit: contain;">
+                    <img src="logo.png" alt="Logo" style="height: 45px; width: auto; object-fit: contain;">
                     <span>COTIZACIÓN VIVERO ELIEL</span>
                 </div>
                 
@@ -202,7 +175,7 @@
                     </div>
                     <div style="text-align: right;">
                         📅 <strong>Fecha:</strong> <span id="img-fecha">--/--/----</span><br>
-                        📄 <strong id="lbl-img-cotizacion">Cotización:</strong> <span id="img-num-cotizacion">---</span>
+                        📄 <strong>Cotización:</strong> <span id="img-num-cotizacion">---</span>
                     </div>
                 </div>
                 
@@ -231,85 +204,54 @@
                     <strong>📋 Métodos de pago:</strong><br>
                     📱 Yape: 981 046 861<br>
                     🏦 BCP | Cuenta Corriente: 19178952536034<br>
-                    * CCI: 00219117895253603450<br>
                     💥 Titular: Arlene Cruzado Llanos
                 </div>
-                
-                <div class="recibo-importante">
-                    <strong>⚠️ Importante:</strong>
-                    <ul>
-                        <li>Vigencia de la cotización: 24 horas.</li>
-                        <li>Sin confirmación o pago dentro de ese plazo, las plantas serán liberadas para su venta.</li>
-                        <li>El flete es cobrado directamente por la de transporte elegida por el cliente.</li>
-                    </ul>
-                </div>
             </div>
-
         </div>
     </div>
 </div>
 
 <script>
+// =======================================================
+// CONFIGURACIÓN DE TU BASE DE DATOS EN LA NUBE
+// =======================================================
+const firebaseConfig = {
+    databaseURL: "https://viveroelielapp-default-rtdb.firebaseio.com/"
+};
+// Inicializar Firebase si se cambia el valor por defecto
+if (firebaseConfig.databaseURL !== "https://viveroelielapp-default-rtdb.firebaseio.com/") {
+    firebase.initializeApp(firebaseConfig);
+    var db = firebase.database();
+}
+
 let whatsappDetalleGlobal = "";
 
 function iniciarFecha() {
     const hoy = new Date();
-    const d = String(hoy.getDate()).padStart(2, '0');
-    const m = String(hoy.getMonth() + 1).padStart(2, '0');
-    const a = hoy.getFullYear();
-    document.getElementById('img-fecha').innerText = `${d}/${m}/${a}`;
+    document.getElementById('img-fecha').innerText = `${String(hoy.getDate()).padStart(2,'0')}/${String(hoy.getMonth()+1).padStart(2,'0')}/${hoy.getFullYear()}`;
 }
 
 function procesarCotizacion() {
     const texto = document.getElementById('pedido-texto').value;
     const lineas = texto.split('\n');
     const tablaFilas = document.getElementById('img-tabla-filas');
-    
-    tablaFilas.innerHTML = ""; 
-    let sumaPlantas = 0;
-    whatsappDetalleGlobal = "";
+    tablaFilas.innerHTML = ""; let sumaPlantas = 0; whatsappDetalleGlobal = "";
 
     lineas.forEach(linea => {
         if(linea.trim() === "") return;
-
-        let cantidad = 1;
-        let descripcion = linea.trim();
-        let precioUnitario = 0;
-
+        let cantidad = 1, descripcion = linea.trim(), precioUnitario = 0;
         const regexCantidad = linea.match(/^(\d+)\s+(.*)/);
-        if (regexCantidad) {
-            cantidad = parseInt(regexCantidad[1]) || 1;
-            descripcion = regexCantidad[2];
-        }
-
+        if (regexCantidad) { cantidad = parseInt(regexCantidad[1]) || 1; descripcion = regexCantidad[2]; }
         if (descripcion.includes('-')) {
             const partes = descripcion.split('-');
             let precioStr = partes.pop().replace(/s\/\.?/gi, '').trim();
             precioUnitario = parseFloat(precioStr) || 0;
             descripcion = partes.join('-').trim();
-        } else {
-            const regexPrecio = descripcion.match(/[\s\/.]+(\d+(?:\.\d+)?)$/);
-            if(regexPrecio) {
-                precioUnitario = parseFloat(regexPrecio[1]) || 0;
-                descripcion = descripcion.substring(0, descripcion.lastIndexOf(regexPrecio[1])).replace(/s\/\.?/gi, '').trim();
-            }
         }
-
         descripcion = descripcion.replace(/^[-–—:\s\./]+|[-–—:\s\./]+$/g, '').trim();
         if(!descripcion) descripcion = "Planta";
-
-        const totalFila = cantidad * precioUnitario;
-        sumaPlantas += totalFila;
-
-        tablaFilas.innerHTML += `
-            <tr>
-                <td class="text-center">${cantidad}</td>
-                <td>${descripcion}</td>
-                <td class="text-right">S/. ${precioUnitario.toFixed(2)}</td>
-                <td class="text-right">S/. ${totalFila.toFixed(2)}</td>
-            </tr>
-        `;
-
+        const totalFila = cantidad * precioUnitario; sumaPlantas += totalFila;
+        tablaFilas.innerHTML += `<tr><td class="text-center">${cantidad}</td><td>${descripcion}</td><td class="text-right">S/. ${precioUnitario.toFixed(2)}</td><td class="text-right">S/. ${totalFila.toFixed(2)}</td></tr>`;
         whatsappDetalleGlobal += `  🌿 ${cantidad}x *${descripcion}* - S/. ${totalFila.toFixed(2)}\n`;
     });
 
@@ -317,161 +259,107 @@ function procesarCotizacion() {
     const embalaje = parseFloat(document.getElementById('valEmbalaje').value) || 0;
     const totalGeneral = sumaPlantas + embalaje;
     document.getElementById('valTotal').value = totalGeneral.toFixed(2);
-
     document.getElementById('img-cliente').innerText = document.getElementById('cliente').value || '---';
-    
-    const nCotizacion = document.getElementById('num-cotizacion').value;
-    document.getElementById('img-num-cotizacion').innerText = nCotizacion ? nCotizacion : '---';
-
+    document.getElementById('img-num-cotizacion').innerText = document.getElementById('num-cotizacion').value || '---';
     document.getElementById('img-subtotal').innerText = sumaPlantas.toFixed(2);
     document.getElementById('img-embalaje').innerText = embalaje.toFixed(2);
     document.getElementById('img-total').innerText = totalGeneral.toFixed(2);
 }
 
-function guardarEnMemoria() {
+// FUSIÓN DE ACCIONES: GUARDAR EN LA NUBE + DESCARGAR IMAGEN
+function guardarYDescargarImagen() {
+    procesarCotizacion();
     const cliente = document.getElementById('cliente').value.trim().toUpperCase();
-    if (!cliente) {
-        alert("⚠️ Por favor ingresa el nombre del cliente para guardar la cotización.");
-        return;
-    }
-
-    const datosCotizacion = {
-        cliente: cliente,
-        numCotizacion: document.getElementById('num-cotizacion').value,
-        pedido: document.getElementById('pedido-texto').value,
-        embalaje: document.getElementById('valEmbalaje').value,
-        fecha: document.getElementById('img-fecha').innerText
-    };
-
-    localStorage.setItem(`vivero_${cliente}`, JSON.stringify(datosCotizacion));
-    alert(`💾 Cotización de "${cliente}" guardada con éxito.`);
-    actualizarSelectorGuardados();
-    document.getElementById('lista-guardados').value = `vivero_${cliente}`;
-}
-
-function actualizarSelectorGuardados() {
-    const selector = document.getElementById('lista-guardados');
-    selector.innerHTML = '<option value="">-- Seleccionar cliente --</option>';
-
-    for (let i = 0; i < localStorage.length; i++) {
-        const clave = localStorage.key(i);
-        if (clave.startsWith('vivero_')) {
-            const data = JSON.parse(localStorage.getItem(clave));
-            const option = document.createElement('option');
-            option.value = clave;
-            option.textContent = `${data.cliente} (${data.numCotizacion || 'Sin número'})`;
-            selector.appendChild(option);
-        }
-    }
-}
-
-function cargarCotizacion() {
-    const clave = document.getElementById('lista-guardados').value;
-    if (!clave) return;
-
-    const data = JSON.parse(localStorage.getItem(clave));
     
-    document.getElementById('cliente').value = data.cliente;
-    document.getElementById('num-cotizacion').value = data.numCotizacion || '';
-    document.getElementById('pedido-texto').value = data.pedido;
-    document.getElementById('valEmbalaje').value = data.embalaje || '0.00';
-    document.getElementById('img-fecha').innerText = data.fecha || document.getElementById('img-fecha').innerText;
-
-    procesarCotizacion();
-}
-
-function eliminarCotizacion() {
-    const clave = document.getElementById('lista-guardados').value;
-    if (!clave) {
-        alert("⚠️ Selecciona una cotización de la lista para eliminarla.");
+    if (!cliente) {
+        alert("⚠️ Ingresa el nombre del cliente para registrar la cotización.");
         return;
     }
 
-    if (confirm("¿Estás seguro de que deseas eliminar esta cotización permanentemente?")) {
-        localStorage.removeItem(clave);
-        alert("🗑️ Cotización borrada de la memoria.");
-        
-        document.getElementById('cliente').value = '';
-        document.getElementById('num-cotizacion').value = '';
-        document.getElementById('pedido-texto').value = '';
-        document.getElementById('valEmbalaje').value = '0.00';
-        
-        iniciarFecha();
-        procesarCotizacion();
-        actualizarSelectorGuardados();
+    // 1. Guardar en la Base de Datos Nube (si está configurada)
+    if (typeof db !== 'undefined') {
+        const idClave = cliente.replace(/[^A-Z0-9]/g, "_");
+        db.ref('cotizaciones/' + idClave).set({
+            cliente: cliente,
+            numCotizacion: document.getElementById('num-cotizacion').value,
+            pedido: document.getElementById('pedido-texto').value,
+            embalaje: document.getElementById('valEmbalaje').value,
+            fecha: document.getElementById('img-fecha').innerText
+        });
     }
-}
 
-function guardarImagen() {
-    procesarCotizacion();
+    // 2. Descargar la imagen A4 de inmediato
     const contenedor = document.getElementById('bloque-imagen');
-    const cliente = document.getElementById('cliente').value || 'Cliente';
     const nCotizacion = document.getElementById('num-cotizacion').value ? `_N°_${document.getElementById('num-cotizacion').value}` : '';
     
-    html2canvas(contenedor, {
-        scale: 3,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-        logging: false
-    }).then(canvas => {
+    html2canvas(contenedor, { scale: 3, useCORS: true, backgroundColor: "#ffffff", logging: false }).then(canvas => {
         const enlace = document.createElement('a');
-        enlace.download = `Cotizacion_A4_${cliente.replace(/\s+/g, '_')}${nCotizacion.replace(/\s+/g, '_')}.png`;
+        enlace.download = `Cotizacion_${cliente.replace(/\s+/g, '_')}${nCotizacion}.png`;
         enlace.href = canvas.toDataURL('image/png');
         enlace.click();
     });
 }
 
-function copiarWhatsApp() {
-    procesarCotizacion();
-    
-    const cliente = document.getElementById('cliente').value || 'Cliente';
-    const fecha = document.getElementById('img-fecha').innerText;
-    const nCotizacion = document.getElementById('num-cotizacion').value ? `N° ${document.getElementById('num-cotizacion').value}` : '---';
-    const subtotal = document.getElementById('valPlantas').value;
-    const embalaje = parseFloat(document.getElementById('valEmbalaje').value) || 0;
-    const total = document.getElementById('valTotal').value;
-
-    const plantillaTexto = 
-`🌿 *COTIZACIÓN VIVERO ELIEL* 🌿
---------------------------------------------
-👤 *Cliente:* ${cliente}
-📄 *Cotización:* ${nCotizacion}
-📅 *Fecha:* ${fecha}
-⏳ *Vigencia:* 24 horas
-
-*DETALLE DEL PEDIDO:*
-${whatsappDetalleGlobal}
---------------------------------------------
-🪴 *Total Plantas:* S/. ${subtotal}
-📦 *Embalaje y traslado:* S/. ${embalaje.toFixed(2)}
-💰 *TOTAL A CANCELAR: S/. ${total}*
-
---------------------------------------------
-📋 *MÉTODOS DE PAGO:*
-📱 *Yape:* 981 046 861
-🏦 *BCP Cta Corriente:* 19178952536034
-💥 *CCI:* 00219117895253603450
-👤 *Titular:* Arlene Cruzado Llanos
-
-⚠️ *Importante:* Por favor enviar el comprobante de pago para procesar su envío. ¡Muchas gracias por su preferencia!`;
-
-    navigator.clipboard.writeText(plantillaTexto).then(() => {
-        alert('📋 ¡Texto formateado y copiado para WhatsApp!');
-    }).catch(err => {
-        const areaTemporal = document.getElementById('output-texto');
-        areaTemporal.style.display = "block";
-        areaTemporal.value = plantillaTexto;
-        areaTemporal.select();
-        document.execCommand('copy');
-        areaTemporal.style.display = "none";
-        alert('📋 ¡Texto copiado al portapapeles!');
+// ESCUCHAR EN TIEMPO REAL LOS CAMBIOS DESDE LA NUBE
+if (typeof db !== 'undefined') {
+    db.ref('cotizaciones').on('value', (snapshot) => {
+        const selector = document.getElementById('lista-guardados');
+        const valorSeleccionado = selector.value;
+        selector.innerHTML = '<option value="">-- Seleccionar cliente --</option>';
+        
+        snapshot.forEach((childSnapshot) => {
+            const data = childSnapshot.val();
+            const option = document.createElement('option');
+            option.value = childSnapshot.key;
+            option.textContent = `${data.cliente} (${data.numCotizacion || 'Sin N°'})`;
+            selector.appendChild(option);
+        });
+        selector.value = valorSeleccionado;
     });
 }
 
+function cargarCotizacion() {
+    const clave = document.getElementById('lista-guardados').value;
+    if (!clave || typeof db === 'undefined') return;
+
+    db.ref('cotizaciones/' + clave).once('value').then((snapshot) => {
+        const data = snapshot.val();
+        if(data) {
+            document.getElementById('cliente').value = data.cliente;
+            document.getElementById('num-cotizacion').value = data.numCotizacion || '';
+            document.getElementById('pedido-texto').value = data.pedido;
+            document.getElementById('valEmbalaje').value = data.embalaje || '0.00';
+            document.getElementById('img-fecha').innerText = data.fecha;
+            procesarCotizacion();
+        }
+    });
+}
+
+function eliminarCotizacion() {
+    const clave = document.getElementById('lista-guardados').value;
+    if (!clave || typeof db === 'undefined') return;
+
+    if (confirm("¿Eliminar esta cotización de la nube para todos?")) {
+        db.ref('cotizaciones/' + clave).remove();
+        document.getElementById('cliente').value = '';
+        document.getElementById('num-cotizacion').value = '';
+        document.getElementById('pedido-texto').value = '';
+        document.getElementById('valEmbalaje').value = '0.00';
+        iniciarFecha(); procesarCotizacion();
+    }
+}
+
+function copiarWhatsApp() {
+    procesarCotizacion();
+    const cliente = document.getElementById('cliente').value || 'Cliente';
+    const nCotizacion = document.getElementById('num-cotizacion').value ? `N° ${document.getElementById('num-cotizacion').value}` : '---';
+    const plantillaTexto = `🌿 *COTIZACIÓN VIVERO ELIEL* 🌿\n--------------------------------------------\n👤 *Cliente:* ${cliente}\n📄 *Cotización:* ${nCotizacion}\n📅 *Fecha:* ${document.getElementById('img-fecha').innerText}\n⏳ *Vigencia:* 24 horas\n\n*DETALLE DEL PEDIDO*:\n${whatsappDetalleGlobal}--------------------------------------------\n🪴 *Total Plantas:* S/. ${document.getElementById('valPlantas').value}\n📦 *Embalaje/Traslado:* S/. ${parseFloat(document.getElementById('valEmbalaje').value).toFixed(2)}\n💰 *TOTAL A CANCELAR: S/. ${document.getElementById('valTotal').value}*\n\n--------------------------------------------\n📋 *MÉTODOS DE PAGO*:\n📱 *Yape:* 981 046 861\n🏦 *BCP Corriente:* 19178952536034\n💥 Titular: Arlene Cruzado Llanos`;
+
+    navigator.clipboard.writeText(plantillaTexto).then(() => alert('📋 ¡Copiado!'));
+}
+
 iniciarFecha();
-actualizarSelectorGuardados();
 procesarCotizacion();
 </script>
-
 </body>
 </html>
