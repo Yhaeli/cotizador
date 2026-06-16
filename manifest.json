@@ -1,17 +1,20 @@
 {
-  "short_name": "CotiEliel",
   "name": "Cotizador Vivero Eliel",
+  "short_name": "Cotizador Eliel",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2e6f40",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/628/628283.png",
-      "type": "image/png",
+      "src": "logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "logo.png",
       "sizes": "512x512",
-      "purpose": "any maskable"
+      "type": "image/png"
     }
-  ],
-  "start_url": "./index.html",
-  "background_color": "#f4f9f4",
-  "theme_color": "#2e6f40",
-  "display": "standalone",
-  "orientation": "portrait"
+  ]
 }
