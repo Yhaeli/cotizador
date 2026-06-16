@@ -153,7 +153,7 @@
     <input type="number" id="valTotal" class="input-total" value="0.00" readonly>
     
     <div class="btn-group">
-        <!-- BOTÓN FUSIONADO: GUARDA EN LA NUBE Y DESCARGA LA IMAGEN -->
+        <!-- BOTÓN FUSIONADO CORRECTAMENTE -->
         <button type="button" class="btn btn-img" onclick="guardarYDescargarImagen()"><span>📥</span>Guardar Imagen</button>
         <button type="button" class="btn btn-copy" onclick="copiarWhatsApp()"><span>📋</span>Copiar Texto</button>
     </div>
@@ -264,7 +264,7 @@ function procesarCotizacion() {
     document.getElementById('img-total').innerText = totalGeneral.toFixed(2);
 }
 
-// FUSIÓN DE ACCIONES: GUARDAR EN LA NUBE + DESCARGAR IMAGEN
+// SE CORRIGIÓ: PRIMERO SUBE SEGURO A LA NUBE Y LUEGO DESCARGA LA IMAGEN
 function guardarYDescargarImagen() {
     procesarCotizacion();
     const cliente = document.getElementById('cliente').value.trim().toUpperCase();
@@ -274,7 +274,12 @@ function guardarYDescargarImagen() {
         return;
     }
 
-    // 1. Guardar en la Base de Datos Nube (si está configurada)
+    // Asegurar la fecha antes de guardar
+    if (document.getElementById('img-fecha').innerText.includes('--')) {
+        iniciarFecha();
+    }
+
+    // 1. Guardar primero en la Base de Datos Nube de Firebase
     if (typeof db !== 'undefined') {
         const idClave = cliente.replace(/[^A-Z0-9]/g, "_");
         db.ref('cotizaciones/' + idClave).set({
@@ -286,16 +291,18 @@ function guardarYDescargarImagen() {
         });
     }
 
-    // 2. Descargar la imagen A4 de inmediato
-    const contenedor = document.getElementById('bloque-imagen');
-    const nCotizacion = document.getElementById('num-cotizacion').value ? `_N°_${document.getElementById('num-cotizacion').value}` : '';
-    
-    html2canvas(contenedor, { scale: 3, useCORS: true, backgroundColor: "#ffffff", logging: false }).then(canvas => {
-        const enlace = document.createElement('a');
-        enlace.download = `Cotizacion_${cliente.replace(/\s+/g, '_')}${nCotizacion}.png`;
-        enlace.href = canvas.toDataURL('image/png');
-        enlace.click();
-    });
+    // 2. Darle un brevísimo momento a internet y descargar el PNG
+    setTimeout(() => {
+        const contenedor = document.getElementById('bloque-imagen');
+        const nCotizacion = document.getElementById('num-cotizacion').value ? `_N°_${document.getElementById('num-cotizacion').value}` : '';
+        
+        html2canvas(contenedor, { scale: 3, useCORS: true, backgroundColor: "#ffffff", logging: false }).then(canvas => {
+            const enlace = document.createElement('a');
+            enlace.download = `Cotizacion_${cliente.replace(/\s+/g, '_')}${nCotizacion}.png`;
+            enlace.href = canvas.toDataURL('image/png');
+            enlace.click();
+        });
+    }, 400); // 400 milisegundos de espera para evitar fallos de red
 }
 
 // ESCUCHAR EN TIEMPO REAL LOS CAMBIOS DESDE LA NUBE
@@ -356,6 +363,7 @@ function copiarWhatsApp() {
     navigator.clipboard.writeText(plantillaTexto).then(() => alert('📋 ¡Copiado!'));
 }
 
+// Inicialización limpia
 iniciarFecha();
 procesarCotizacion();
 </script>
