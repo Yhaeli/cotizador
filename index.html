@@ -6,14 +6,12 @@
     <title>Cotizador Eliel</title>
     
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="logo.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="#2e6f40">
+    <link rel="apple-touch-icon" href="logo.png">
     
-    <!-- Librería para capturar imagen -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
-    <!-- Librerías de Firebase para sincronización en tiempo real -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     
@@ -117,8 +115,9 @@
         .recibo-resumen { background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; margin-top: 15px; font-size: 13px; }
         .recibo-total-destacado { font-size: 16px; font-weight: bold; color: #b91c1c; margin-top: 6px; border-top: 1px solid #e2e8f0; padding-top: 6px; }
         .recibo-pagos { background-color: #fdfdfd; padding: 12px; border-radius: 6px; border-left: 4px solid #10b981; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; font-size: 12.5px; margin-top: 15px; }
-        .recibo-importante { font-size: 11.5px; color: #64748b; margin-top: 15px; padding-top: 8px; border-top: 1px solid #e2e8f0; }
-        .recibo-importante ul { margin: 4px 0; padding-left: 14px; }
+        .recibo-importante { font-size: 11px; color: #475569; margin-top: 15px; padding-top: 8px; border-top: 1px solid #cbd5e1; }
+        .recibo-importante ul { margin: 4px 0; padding-left: 16px; }
+        .recibo-importante li { margin-bottom: 2px; }
     </style>
 </head>
 <body>
@@ -154,7 +153,6 @@
     <input type="number" id="valTotal" class="input-total" value="0.00" readonly>
     
     <div class="btn-group">
-        <!-- BOTÓN FUSIONADO CORRECTAMENTE -->
         <button type="button" class="btn btn-img" onclick="guardarYDescargarImagen()"><span>📥</span>Guardar Imagen</button>
         <button type="button" class="btn btn-copy" onclick="copiarWhatsApp()"><span>📋</span>Copiar Texto</button>
     </div>
@@ -206,6 +204,17 @@
                     📱 Yape: 981 046 861<br>
                     🏦 BCP | Cuenta Corriente: 19178952536034<br>
                     💥 Titular: Arlene Cruzado Llanos
+                </div>
+
+                <div class="recibo-importante">
+                    <strong>⚠️ Importante:</strong>
+                    <ul>
+                        <li>Vigencia de la cotización: 24 horas.</li>
+                        <li>Sin confirmación o pago dentro de ese plazo, las plantas serán liberadas para su venta.</li>
+                        <li>El embalaje y traslado a agencia incluye el acondicionamiento y protección de las plantas para el viaje.</li>
+                        <li>El flete es cobrado directamente por la agencia de transporte elegida por el cliente.</li>
+                        <li>No se realizan reservas sin la confirmación del pago total.</li>
+                    </ul>
                 </div>
             </div>
         </div>
@@ -265,7 +274,6 @@ function procesarCotizacion() {
     document.getElementById('img-total').innerText = totalGeneral.toFixed(2);
 }
 
-// SE CORRIGIÓ: PRIMERO SUBE SEGURO A LA NUBE Y LUEGO DESCARGA LA IMAGEN
 function guardarYDescargarImagen() {
     procesarCotizacion();
     const cliente = document.getElementById('cliente').value.trim().toUpperCase();
@@ -275,12 +283,11 @@ function guardarYDescargarImagen() {
         return;
     }
 
-    // Asegurar la fecha antes de guardar
     if (document.getElementById('img-fecha').innerText.includes('--')) {
         iniciarFecha();
     }
 
-    // 1. Guardar primero en la Base de Datos Nube de Firebase
+    // 1. Guardar en la nube
     if (typeof db !== 'undefined') {
         const idClave = cliente.replace(/[^A-Z0-9]/g, "_");
         db.ref('cotizaciones/' + idClave).set({
@@ -292,7 +299,7 @@ function guardarYDescargarImagen() {
         });
     }
 
-    // 2. Darle un brevísimo momento a internet y descargar el PNG
+    // 2. Descargar imagen con retraso para asegurar red
     setTimeout(() => {
         const contenedor = document.getElementById('bloque-imagen');
         const nCotizacion = document.getElementById('num-cotizacion').value ? `_N°_${document.getElementById('num-cotizacion').value}` : '';
@@ -303,10 +310,9 @@ function guardarYDescargarImagen() {
             enlace.href = canvas.toDataURL('image/png');
             enlace.click();
         });
-    }, 400); // 400 milisegundos de espera para evitar fallos de red
+    }, 400);
 }
 
-// ESCUCHAR EN TIEMPO REAL LOS CAMBIOS DESDE LA NUBE
 if (typeof db !== 'undefined') {
     db.ref('cotizaciones').on('value', (snapshot) => {
         const selector = document.getElementById('lista-guardados');
@@ -359,12 +365,11 @@ function copiarWhatsApp() {
     procesarCotizacion();
     const cliente = document.getElementById('cliente').value || 'Cliente';
     const nCotizacion = document.getElementById('num-cotizacion').value ? `N° ${document.getElementById('num-cotizacion').value}` : '---';
-    const plantillaTexto = `🌿 *COTIZACIÓN VIVERO ELIEL* 🌿\n--------------------------------------------\n👤 *Cliente:* ${cliente}\n📄 *Cotización:* ${nCotizacion}\n📅 *Fecha:* ${document.getElementById('img-fecha').innerText}\n⏳ *Vigencia:* 24 horas\n\n*DETALLE DEL PEDIDO*:\n${whatsappDetalleGlobal}--------------------------------------------\n🪴 *Total Plantas:* S/. ${document.getElementById('valPlantas').value}\n📦 *Embalaje/Traslado:* S/. ${parseFloat(document.getElementById('valEmbalaje').value).toFixed(2)}\n💰 *TOTAL A CANCELAR: S/. ${document.getElementById('valTotal').value}*\n\n--------------------------------------------\n📋 *MÉTODOS DE PAGO*:\n📱 *Yape:* 981 046 861\n🏦 *BCP Corriente:* 19178952536034\n💥 Titular: Arlene Cruzado Llanos`;
+    const plantillaTexto = `🌿 *COTIZACIÓN VIVERO ELIEL* 🌿\n--------------------------------------------\n👤 *Cliente:* ${cliente}\n📄 *Cotización:* ${nCotizacion}\n📅 *Fecha:* ${document.getElementById('img-fecha').innerText}\n⏳ *Vigencia:* 24 horas\n\n*DETALLE DEL PEDIDO*:\n${whatsappDetalleGlobal}--------------------------------------------\n🪴 *Total Plantas:* S/. ${document.getElementById('valPlantas').value}\n📦 *Embalaje/Traslado:* S/. ${parseFloat(document.getElementById('valEmbalaje').value).toFixed(2)}\n💰 *TOTAL A CANCELAR: S/. ${document.getElementById('valTotal').value}*\n\n--------------------------------------------\n📋 *MÉTODOS DE PAGO*:\n📱 *Yape:* 981 046 861\n🏦 *BCP Corriente:* 19178952536034\n💥 Titular: Arlene Cruzado Llanos\n\n⚠️ *Importante:*\n* Vigencia de la cotización: 24 horas.\n* Sin confirmación o pago dentro de ese plazo, las plantas serán liberadas para su venta.\n* El embalaje y traslado a agencia incluye el acondicionamiento y protección de las plantas para el viaje.\n* El flete es cobrado directamente por la agencia de transporte elegida por el cliente.\n* No se realizan reservas sin la confirmación del pago total.`;
 
     navigator.clipboard.writeText(plantillaTexto).then(() => alert('📋 ¡Copiado!'));
 }
 
-// Inicialización limpia
 iniciarFecha();
 procesarCotizacion();
 </script>
