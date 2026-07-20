@@ -22,7 +22,6 @@
       color: var(--text-color);
     }
 
-    /* Navegación por Pestañas */
     nav.main-nav {
       background-color: var(--primary-color);
       display: flex;
@@ -50,7 +49,6 @@
       border-bottom: 4px solid #fff;
     }
 
-    /* Secciones del Programa */
     .tab-content {
       display: none;
       padding: 15px;
@@ -62,7 +60,6 @@
       display: block;
     }
 
-    /* Tarjetas y Formulario Generales */
     .card, .app-container {
       background: var(--card-bg);
       border-radius: 8px;
@@ -80,7 +77,7 @@
       margin-bottom: 12px;
     }
 
-    .form-group label, label {
+    label {
       display: block;
       margin-top: 10px;
       margin-bottom: 5px;
@@ -113,18 +110,8 @@
       margin-top: 5px;
     }
 
-    .btn-primary {
-      background-color: var(--primary-color);
-      color: white;
-      width: 100%;
-    }
-
-    .btn-danger {
-      background-color: var(--danger-color);
-      color: white;
-      width: 100%;
-      margin-top: 8px;
-    }
+    .btn-primary { background-color: var(--primary-color); color: white; width: 100%; }
+    .btn-danger { background-color: var(--danger-color); color: white; width: 100%; margin-top: 8px; }
 
     .btn-group {
       display: flex;
@@ -135,7 +122,6 @@
     .btn-img { background-color: #0288d1; color: white; flex: 1; }
     .btn-copy { background-color: #7b1fa2; color: white; flex: 1; }
 
-    /* Estilos del Recibo en Cotizaciones */
     .recibo-estilizado {
       border: 1px solid #ccc;
       padding: 15px;
@@ -194,22 +180,19 @@
       margin-top: 10px;
     }
 
-    .stock-low {
-      color: var(--danger-color);
-      font-weight: bold;
-    }
+    .stock-low { color: var(--danger-color); font-weight: bold; }
   </style>
 </head>
 <body>
 
-  <!-- MENÚ PRINCIPAL -->
+  <!-- NAVEGACIÓN -->
   <nav class="main-nav">
     <button class="nav-btn active" onclick="switchTab('cotizacion', event)">COTIZACIÓN</button>
     <button class="nav-btn" onclick="switchTab('macetas', event)">CONTROL DE MACETAS</button>
     <button class="nav-btn" onclick="switchTab('sustratos', event)">CONTROL DE SUSTRATOS</button>
   </nav>
 
-  <!-- PESTAÑA 1: GENERADOR DE COTIZACIONES (TU CÓDIGO ORIGINAL) -->
+  <!-- PESTAÑA 1: COTIZADOR -->
   <div id="tab-cotizacion" class="tab-content active">
     <div class="app-container">
       <h2>Vivero Eliel</h2>
@@ -224,29 +207,27 @@
       </div>
       
       <label>Nombre del Cliente:</label> 
-      <input type="text" id="cliente" placeholder="Ej: LISA LOWERS" oninput="procesarCotizacion()">
+      <input type="text" id="cliente" placeholder="Ej: LISA LOWERS" onkeyup="procesarCotizacion()" oninput="procesarCotizacion()">
 
       <label>N° de Cotización (Opcional):</label> 
-      <input type="text" id="num-cotizacion" placeholder="Ej: 001-2026" oninput="procesarCotizacion()">
+      <input type="text" id="num-cotizacion" placeholder="Ej: 001-2026" onkeyup="procesarCotizacion()" oninput="procesarCotizacion()">
       
       <label>Detalle del pedido:</label>
-      <textarea id="pedido-texto" rows="5" placeholder="2 Peperomia - 10.00" oninput="procesarCotizacion()"></textarea>
+      <textarea id="pedido-texto" rows="5" placeholder="2 Peperomia - 10.00" onkeyup="procesarCotizacion()" oninput="procesarCotizacion()"></textarea>
       
       <label>Valor de las Plantas (S/.):</label> 
-      <input type="number" id="valPlantas" class="input-readonly" value="0.00" readonly>
+      <input type="number" id="valPlantas" value="0.00" readonly>
       
       <label>Embalaje y traslado (S/.):</label> 
-      <input type="number" id="valEmbalaje" placeholder="0.00" step="0.01" value="0.00" oninput="procesarCotizacion()">
+      <input type="number" id="valEmbalaje" placeholder="0.00" step="0.01" value="0.00" onkeyup="procesarCotizacion()" oninput="procesarCotizacion()">
       
       <label>TOTAL A PAGAR (S/.):</label> 
-      <input type="number" id="valTotal" class="input-total" value="0.00" readonly>
+      <input type="number" id="valTotal" value="0.00" readonly>
       
       <div class="btn-group">
         <button type="button" class="btn btn-img" onclick="guardarYDescargarImagen()"><span>📥</span> Guardar Imagen</button>
         <button type="button" class="btn btn-copy" onclick="copiarWhatsApp()"><span>📋</span> Copiar Texto</button>
       </div>
-      
-      <textarea id="output-texto" style="display:none;"></textarea>
 
       <div id="zona-captura-recorte">
         <div class="recibo-estilizado" id="bloque-imagen">
@@ -311,13 +292,13 @@
     </div>
   </div>
 
-  <!-- PESTAÑA 2: CONTROL DE MACETAS -->
+  <!-- PESTAÑA 2: MACETAS -->
   <div id="tab-macetas" class="tab-content">
     <div class="card">
       <h2>Venta Rápida de Macetas</h2>
       <form id="form-venta-maceta" onsubmit="registrarVentaMaceta(event)">
         <div class="form-group">
-          <label>Seleccionar Maceta (Modelo y Tamaño)</label>
+          <label>Seleccionar Maceta</label>
           <select id="select-maceta-venta" required onchange="calcularTotalMaceta()">
             <option value="">-- Seleccionar --</option>
           </select>
@@ -342,11 +323,11 @@
         <div class="grid-2">
           <div class="form-group">
             <label>Modelo</label>
-            <input type="text" id="maceta-modelo" placeholder="Ej. Cónica, Cuadrada" required>
+            <input type="text" id="maceta-modelo" placeholder="Ej. Cónica" required>
           </div>
           <div class="form-group">
             <label>Tamaño</label>
-            <input type="text" id="maceta-tamano" placeholder="Ej. N° 12, 15cm" required>
+            <input type="text" id="maceta-tamano" placeholder="Ej. N° 14" required>
           </div>
         </div>
         <div class="grid-2">
@@ -355,7 +336,7 @@
             <input type="number" step="0.01" id="maceta-precio" required>
           </div>
           <div class="form-group">
-            <label>Cantidad en Stock</label>
+            <label>Stock</label>
             <input type="number" id="maceta-cantidad" required>
           </div>
         </div>
@@ -376,13 +357,13 @@
     </div>
   </div>
 
-  <!-- PESTAÑA 3: CONTROL DE SUSTRATOS -->
+  <!-- PESTAÑA 3: SUSTRATOS -->
   <div id="tab-sustratos" class="tab-content">
     <div class="card">
       <h2>Venta Rápida de Sustratos e Insumos</h2>
       <form id="form-venta-sustrato" onsubmit="registrarVentaSustrato(event)">
         <div class="form-group">
-          <label>Seleccionar Sustrato / Material</label>
+          <label>Seleccionar Sustrato</label>
           <select id="select-sustrato-venta" required onchange="calcularTotalSustrato()">
             <option value="">-- Seleccionar --</option>
           </select>
@@ -405,14 +386,13 @@
       <h3>Inventario de Sustratos e Insumos</h3>
       <form id="form-agregar-sustrato" onsubmit="agregarSustrato(event)">
         <div class="form-group">
-          <label>Tipo de Sustrato / Material</label>
+          <label>Sustrato / Material</label>
           <select id="sustrato-nombre" required>
             <option value="Fibra de Coco">Fibra de Coco</option>
             <option value="Plugmix 8">Plugmix 8</option>
             <option value="Perlita">Perlita</option>
             <option value="Piedra Pómez">Piedra Pómez</option>
             <option value="Corteza de Pino">Corteza de Pino</option>
-            <option value="Otro Sustrato">Otro Sustrato</option>
           </select>
         </div>
         <div class="grid-2">
@@ -421,7 +401,7 @@
             <input type="number" step="0.01" id="sustrato-precio" required>
           </div>
           <div class="form-group">
-            <label>Cantidad Disponible</label>
+            <label>Cantidad</label>
             <input type="number" id="sustrato-cantidad" required>
           </div>
         </div>
@@ -442,7 +422,7 @@
   </div>
 
   <script>
-    // CAMBIO DE PESTAÑAS DEL MENÚ
+    // CAMBIO DE PESTAÑAS
     function switchTab(tabId, event) {
       document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
       document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
@@ -451,7 +431,109 @@
       if(event) event.currentTarget.classList.add('active');
     }
 
-    // --- LÓGICA DE INVENTARIOS DE MACETAS Y SUSTRATOS ---
+    // FUNCIÓN DE PROCESAMIENTO Y CÁLCULO DE COTIZACIÓN
+    function procesarCotizacion() {
+      try {
+        const clienteInput = document.getElementById('cliente');
+        const numCotizacionInput = document.getElementById('num-cotizacion');
+        const pedidoTextoInput = document.getElementById('pedido-texto');
+        const valEmbalajeInput = document.getElementById('valEmbalaje');
+
+        if (!pedidoTextoInput) return;
+
+        const cliente = clienteInput ? (clienteInput.value || '---') : '---';
+        const numCotizacion = numCotizacionInput ? (numCotizacionInput.value || '---') : '---';
+        const pedidoTexto = pedidoTextoInput.value || '';
+        
+        let embalajeTexto = valEmbalajeInput ? valEmbalajeInput.value : "0";
+        embalajeTexto = embalajeTexto.replace(',', '.');
+        const valEmbalaje = parseFloat(embalajeTexto) || 0;
+
+        // Actualizar textos de cabecera
+        const hoy = new Date();
+        const fechaStr = `${String(hoy.getDate()).padStart(2, '0')}/${String(hoy.getMonth() + 1).padStart(2, '0')}/${hoy.getFullYear()}`;
+
+        if (document.getElementById('img-cliente')) document.getElementById('img-cliente').innerText = cliente;
+        if (document.getElementById('img-num-cotizacion')) document.getElementById('img-num-cotizacion').innerText = numCotizacion;
+        if (document.getElementById('img-fecha')) document.getElementById('img-fecha').innerText = fechaStr;
+
+        const lineas = pedidoTexto.split('\n');
+        let sumaPlantas = 0;
+        let htmlFilas = '';
+
+        lineas.forEach(linea => {
+          linea = linea.trim();
+          if (!linea) return;
+
+          let cantidad = 1;
+          let descripcion = linea;
+          let precioUnitario = 0;
+
+          // Si incluye guión "-" (ej: 2 peperomias - 10,00)
+          if (linea.includes('-')) {
+            const partes = linea.split('-');
+            const parteIzquierda = partes[0].trim();
+            const parteDerecha = partes[1].trim().replace(',', '.');
+
+            precioUnitario = parseFloat(parteDerecha) || 0;
+
+            const palabras = parteIzquierda.split(' ');
+            if (!isNaN(palabras[0]) && palabras.length > 1) {
+              cantidad = parseInt(palabras[0]);
+              descripcion = palabras.slice(1).join(' ');
+            } else {
+              descripcion = parteIzquierda;
+            }
+          } 
+          // Si no incluye guión (ej: 2 peperomias 10)
+          else {
+            const palabras = linea.split(' ');
+            const ultimaPalabra = palabras[palabras.length - 1].replace(',', '.');
+
+            if (!isNaN(ultimaPalabra) && palabras.length > 1) {
+              precioUnitario = parseFloat(ultimaPalabra) || 0;
+
+              const primerPalabra = palabras[0];
+              if (!isNaN(primerPalabra) && palabras.length > 2) {
+                cantidad = parseInt(primerPalabra);
+                descripcion = palabras.slice(1, -1).join(' ');
+              } else {
+                descripcion = palabras.slice(0, -1).join(' ');
+              }
+            }
+          }
+
+          const subtotalLinea = cantidad * precioUnitario;
+          sumaPlantas += subtotalLinea;
+
+          htmlFilas += `
+            <tr>
+              <td class="text-center">${cantidad}</td>
+              <td>${descripcion}</td>
+              <td class="text-right">S/. ${precioUnitario.toFixed(2)}</td>
+              <td class="text-right">S/. ${subtotalLinea.toFixed(2)}</td>
+            </tr>
+          `;
+        });
+
+        const totalPagar = sumaPlantas + valEmbalaje;
+
+        // Actualizar inputs en pantalla
+        if (document.getElementById('valPlantas')) document.getElementById('valPlantas').value = sumaPlantas.toFixed(2);
+        if (document.getElementById('valTotal')) document.getElementById('valTotal').value = totalPagar.toFixed(2);
+
+        // Actualizar datos del recibo
+        if (document.getElementById('img-tabla-filas')) document.getElementById('img-tabla-filas').innerHTML = htmlFilas;
+        if (document.getElementById('img-subtotal')) document.getElementById('img-subtotal').innerText = sumaPlantas.toFixed(2);
+        if (document.getElementById('img-embalaje')) document.getElementById('img-embalaje').innerText = valEmbalaje.toFixed(2);
+        if (document.getElementById('img-total')) document.getElementById('img-total').innerText = totalPagar.toFixed(2);
+
+      } catch (err) {
+        console.error("Error al procesar cotización:", err);
+      }
+    }
+
+    // INVENTARIOS MACETAS Y SUSTRATOS
     let inventarioMacetas = [
       { id: 1, modelo: 'Clásica', tamano: 'N° 14', precio: 2.50, stock: 50 },
       { id: 2, modelo: 'Premium', tamano: 'N° 18', precio: 5.00, stock: 20 }
@@ -575,215 +657,12 @@
       }
     }
 
-    // Inicializar inventarios
-    renderMacetas();
-    renderSustratos();
+    // Inicialización al cargar la página
+    window.onload = function() {
+      renderMacetas();
+      renderSustratos();
+      procesarCotizacion();
+    };
   </script>
-<script>
-// =======================================================
-// CONFIGURACIÓN DE TU BASE DE DATOS EN LA NUBE
-// =======================================================
-const firebaseConfig = {
-    databaseURL: "https://viveroelielapp-default-rtdb.firebaseio.com/"
-};
-
-firebase.initializeApp(firebaseConfig);
-var db = firebase.database();
-
-let whatsappDetalleGlobal = "";
-
-function iniciarFecha() {
-    const hoy = new Date();
-    document.getElementById('img-fecha').innerText = `${String(hoy.getDate()).padStart(2,'0')}/${String(hoy.getMonth()+1).padStart(2,'0')}/${hoy.getFullYear()}`;
-}
-
-function procesarCotizacion() {
-  const cliente = document.getElementById('cliente').value || '---';
-  const numCotizacion = document.getElementById('num-cotizacion').value || '---';
-  const pedidoTexto = document.getElementById('pedido-texto').value;
-  
-  // Reemplazar comas por puntos en embalaje para evitar fallos
-  const valEmbalajeInput = document.getElementById('valEmbalaje').value.replace(',', '.');
-  const valEmbalaje = parseFloat(valEmbalajeInput) || 0;
-
-  // Actualizar datos del cliente
-  const elemCliente = document.getElementById('img-cliente');
-  const elemNum = document.getElementById('img-num-cotizacion');
-  const elemFecha = document.getElementById('img-fecha');
-  
-  const hoy = new Date();
-  const fechaStr = `${String(hoy.getDate()).padStart(2, '0')}/${String(hoy.getMonth() + 1).padStart(2, '0')}/${hoy.getFullYear()}`;
-
-  if (elemCliente) elemCliente.innerText = cliente;
-  if (elemNum) elemNum.innerText = numCotizacion;
-  if (elemFecha) elemFecha.innerText = fechaStr;
-
-  const lineas = pedidoTexto.split('\n');
-  let sumaPlantas = 0;
-  let htmlFilas = '';
-
-  lineas.forEach(linea => {
-    linea = linea.trim();
-    if (!linea) return;
-
-    // Normalizar comas a puntos para que tome los precios correctamente
-    let lineaNormalizada = linea.replace(',', '.');
-
-    // EXPRESIÓN REGULAR FLEXIBLE:
-    // Busca: [Cantidad Opcional] + [Nombre Producto] + [Opcional - o espacios] + [Precio al final]
-    // Ejemplos válidos: "2 peperomias - 10.00", "2 peperomias 10", "peperomia 15", "3 peperomias-20"
-    const regex = /^(?:(\d+)\s+)?(.*?)(?:\s*[\-]\s*|\s+)(\d+(?:\.\d+)?)$/;
-    const match = lineaNormalizada.match(regex);
-
-    if (match) {
-      let cantidad = parseInt(match[1]) || 1;
-      let descripcion = match[2].trim();
-      let precioUnitario = parseFloat(match[3]) || 0;
-
-      // Si la descripción quedó vacía por algún guión extra
-      if (!descripcion) descripcion = "Planta / Producto";
-
-      const subtotalLinea = cantidad * precioUnitario;
-      sumaPlantas += subtotalLinea;
-
-      htmlFilas += `
-        <tr>
-          <td class="text-center">${cantidad}</td>
-          <td>${descripcion}</td>
-          <td class="text-right">S/. ${precioUnitario.toFixed(2)}</td>
-          <td class="text-right">S/. ${subtotalLinea.toFixed(2)}</td>
-        </tr>
-      `;
-    } else {
-      // Si solo escribes el nombre sin ningún número/precio al final
-      htmlFilas += `
-        <tr>
-          <td class="text-center">1</td>
-          <td>${linea}</td>
-          <td class="text-right">S/. 0.00</td>
-          <td class="text-right">S/. 0.00</td>
-        </tr>
-      `;
-    }
-  });
-
-  // Calcular totales
-  const totalPagar = sumaPlantas + valEmbalaje;
-
-  // Actualizar campos e inputs de la pantalla
-  document.getElementById('valPlantas').value = sumaPlantas.toFixed(2);
-  document.getElementById('valTotal').value = totalPagar.toFixed(2);
-
-  const elemTabla = document.getElementById('img-tabla-filas');
-  const elemSubtotal = document.getElementById('img-subtotal');
-  const elemEmbalaje = document.getElementById('img-embalaje');
-  const elemTotal = document.getElementById('img-total');
-
-  if (elemTabla) elemTabla.innerHTML = htmlFilas;
-  if (elemSubtotal) elemSubtotal.innerText = sumaPlantas.toFixed(2);
-  if (elemEmbalaje) elemEmbalaje.innerText = valEmbalaje.toFixed(2);
-  if (elemTotal) elemTotal.innerText = totalPagar.toFixed(2);
-}
-function guardarYDescargarImagen() {
-    procesarCotizacion();
-    const cliente = document.getElementById('cliente').value.trim().toUpperCase();
-    
-    if (!cliente) {
-        alert("⚠️ Ingresa el nombre del cliente para registrar la cotización.");
-        return;
-    }
-
-    if (document.getElementById('img-fecha').innerText.includes('--')) {
-        iniciarFecha();
-    }
-
-    // 1. Guardar en la nube
-    if (typeof db !== 'undefined') {
-        const idClave = cliente.replace(/[^A-Z0-9]/g, "_");
-        db.ref('cotizaciones/' + idClave).set({
-            cliente: cliente,
-            numCotizacion: document.getElementById('num-cotizacion').value,
-            pedido: document.getElementById('pedido-texto').value,
-            embalaje: document.getElementById('valEmbalaje').value,
-            fecha: document.getElementById('img-fecha').innerText
-        });
-    }
-
-    // 2. Descargar imagen con retraso para asegurar red
-    setTimeout(() => {
-        const contenedor = document.getElementById('bloque-imagen');
-        const nCotizacion = document.getElementById('num-cotizacion').value ? `_N°_${document.getElementById('num-cotizacion').value}` : '';
-        
-        html2canvas(contenedor, { scale: 3, useCORS: true, backgroundColor: "#ffffff", logging: false }).then(canvas => {
-            const enlace = document.createElement('a');
-            enlace.download = `Cotizacion_${cliente.replace(/\s+/g, '_')}${nCotizacion}.png`;
-            enlace.href = canvas.toDataURL('image/png');
-            enlace.click();
-        });
-    }, 400);
-}
-
-if (typeof db !== 'undefined') {
-    db.ref('cotizaciones').on('value', (snapshot) => {
-        const selector = document.getElementById('lista-guardados');
-        const valorSeleccionado = selector.value;
-        selector.innerHTML = '<option value="">-- Seleccionar cliente --</option>';
-        
-        snapshot.forEach((childSnapshot) => {
-            const data = childSnapshot.val();
-            const option = document.createElement('option');
-            option.value = childSnapshot.key;
-            option.textContent = `${data.cliente} (${data.numCotizacion || 'Sin N°'})`;
-            selector.appendChild(option);
-        });
-        selector.value = valorSeleccionado;
-    });
-}
-
-function cargarCotizacion() {
-    const clave = document.getElementById('lista-guardados').value;
-    if (!clave || typeof db === 'undefined') return;
-
-    db.ref('cotizaciones/' + clave).once('value').then((snapshot) => {
-        const data = snapshot.val();
-        if(data) {
-            document.getElementById('cliente').value = data.cliente;
-            document.getElementById('num-cotizacion').value = data.numCotizacion || '';
-            document.getElementById('pedido-texto').value = data.pedido;
-            document.getElementById('valEmbalaje').value = data.embalaje || '0.00';
-            document.getElementById('img-fecha').innerText = data.fecha;
-            procesarCotizacion();
-        }
-    });
-}
-
-function eliminarCotizacion() {
-    const clave = document.getElementById('lista-guardados').value;
-    if (!clave || typeof db === 'undefined') return;
-
-    if (confirm("¿Eliminar esta cotización de la nube para todos?")) {
-        db.ref('cotizaciones/' + clave).remove();
-        document.getElementById('cliente').value = '';
-        document.getElementById('num-cotizacion').value = '';
-        document.getElementById('pedido-texto').value = '';
-        document.getElementById('valEmbalaje').value = '0.00';
-        iniciarFecha(); procesarCotizacion();
-    }
-}
-
-function copiarWhatsApp() {
-    procesarCotizacion();
-    const cliente = document.getElementById('cliente').value || 'Cliente';
-    const nCotizacion = document.getElementById('num-cotizacion').value ? `N° ${document.getElementById('num-cotizacion').value}` : '---';
-    const plantillaTexto = `🌿 *COTIZACIÓN VIVERO ELIEL* 🌿\n--------------------------------------------\n👤 *Cliente:* ${cliente}\n📄 *Cotización:* ${nCotizacion}\n📅 *Fecha:* ${document.getElementById('img-fecha').innerText}\n⏳ *Vigencia:* 24 horas\n\n*DETALLE DEL PEDIDO*:\n${whatsappDetalleGlobal}--------------------------------------------\n🪴 *Total Plantas:* S/. ${document.getElementById('valPlantas').value}\n📦 *Embalaje/Traslado:* S/. ${parseFloat(document.getElementById('valEmbalaje').value).toFixed(2)}\n💰 *TOTAL A CANCELAR: S/. ${document.getElementById('valTotal').value}*\n\n--------------------------------------------\n📋 *MÉTODOS DE PAGO*:\n📱 *Yape:* 981 046 861\n🏦 *BCP Corriente:* 19178952536034\n💥 Titular: Arlene Cruzado Llanos\n\n⚠️ *Importante:*\n* Vigencia de la cotización: 24 horas.\n* Sin confirmación o pago dentro de ese plazo, las plantas serán liberadas para su venta.\n* El embalaje y traslado a agencia incluye el acondicionamiento y protección de las plantas para el viaje.\n* El flete es cobrado directamente por la agencia de transporte elegida por el cliente.\n* No se realizan reservas sin la confirmación del pago total.`;
-
-    navigator.clipboard.writeText(plantillaTexto).then(() => alert('📋 ¡Copiado!'));
-}
-
-iniciarFecha();
-procesarCotizacion();
-</script>
-
-  <!-- AQUÍ ABAJO CONSERVA TUS SCRIPTS ORIGINALES DE FIREBASE Y PROCESARCOTIZACION() -->
 </body>
 </html>
