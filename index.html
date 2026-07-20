@@ -657,6 +657,71 @@
       }
     }
 
+    // FUNCIÓN PARA COPIAR EL TEXTO DE LA COTIZACIÓN (PARA WHATSAPP)
+function copiarWhatsApp() {
+  const cliente = document.getElementById('cliente').value || '---';
+  const numCotizacion = document.getElementById('num-cotizacion').value || '---';
+  const valPlantas = document.getElementById('valPlantas').value || '0.00';
+  const valEmbalaje = document.getElementById('valEmbalaje').value || '0.00';
+  const valTotal = document.getElementById('valTotal').value || '0.00';
+  const pedidoTexto = document.getElementById('pedido-texto').value || '';
+
+  const hoy = new Date();
+  const fechaStr = `${String(hoy.getDate()).padStart(2, '0')}/${String(hoy.getMonth() + 1).padStart(2, '0')}/${hoy.getFullYear()}`;
+
+  let textoCopiar = `*COTIZACIÓN VIVERO ELIEL*\n`;
+  textoCopiar += `👤 *Cliente:* ${cliente}\n`;
+  textoCopiar += `📄 *N° Cotización:* ${numCotizacion}\n`;
+  textoCopiar += `📅 *Fecha:* ${fechaStr}\n\n`;
+  textoCopiar += `*DETALLE DEL PEDIDO:*\n${pedidoTexto}\n\n`;
+  textoCopiar += `🪴 *Total Plantas:* S/. ${valPlantas}\n`;
+  textoCopiar += `📦 *Embalaje y Traslado:* S/. ${valEmbalaje}\n`;
+  textoCopiar += `💰 *TOTAL A PAGAR:* S/. ${valTotal}\n\n`;
+  textoCopiar += `📋 *Métodos de pago:*\n`;
+  textoCopiar += `📱 Yape: 981 046 861\n`;
+  textoCopiar += `🏦 BCP Cuenta Corriente: 19178952536034\n`;
+  textoCopiar += `💥 Titular: Arlene Cruzado Llanos\n\n`;
+  textoCopiar += `⚠️ *Importante:* Vigencia de 24 horas. Sin confirmación de pago, el pedido se libera.`;
+
+  navigator.clipboard.writeText(textoCopiar).then(() => {
+    alert("¡Texto copiado al portapapeles! Ya puedes pegarlo en WhatsApp.");
+  }).catch(err => {
+    // Alternativa por si el navegador bloquea el portapapeles directo
+    const areaTemp = document.createElement("textarea");
+    areaTemp.value = textoCopiar;
+    document.body.appendChild(areaTemp);
+    areaTemp.select();
+    document.execCommand("copy");
+    document.body.removeChild(areaTemp);
+    alert("¡Texto copiado al portapapeles!");
+  });
+}
+
+// FUNCIÓN PARA GENERAR Y DESCARGAR LA IMAGEN DEL RECIBO
+function guardarYDescargarImagen() {
+  const bloque = document.getElementById('bloque-imagen');
+  if (!bloque) {
+    alert("Error: No se encontró el área de la cotización para capturar.");
+    return;
+  }
+
+  // Usar html2canvas para convertir el div en imagen
+  html2canvas(bloque, {
+    scale: 2, // Mayor calidad/resolución de la imagen
+    useCORS: true,
+    backgroundColor: "#ffffff"
+  }).then(canvas => {
+    const enlace = document.createElement('a');
+    const cliente = document.getElementById('cliente').value.trim() || 'Cotizacion';
+    enlace.download = `Cotizacion_Vivero_Eliel_${cliente}.png`;
+    enlace.href = canvas.toDataURL('image/png');
+    enlace.click();
+  }).catch(err => {
+    console.error("Error al generar imagen:", err);
+    alert("Ocurrió un error al intentar generar la imagen.");
+  });
+}
+
     // Inicialización al cargar la página
     window.onload = function() {
       renderMacetas();
