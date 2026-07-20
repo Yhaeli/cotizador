@@ -598,40 +598,92 @@ function iniciarFecha() {
 }
 
 function procesarCotizacion() {
-    const texto = document.getElementById('pedido-texto').value;
-    const lineas = texto.split('\n');
-    const tablaFilas = document.getElementById('img-tabla-filas');
-    tablaFilas.innerHTML = ""; let sumaPlantas = 0; whatsappDetalleGlobal = "";
+  const cliente = document.getElementById('cliente').value || '---';
+  const numCotizacion = document.getElementById('num-cotizacion').value || '---';
+  const pedidoTexto = document.getElementById('pedido-texto').value;
+  
+  // Reemplazar comas por puntos en embalaje para evitar fallos
+  const valEmbalajeInput = document.getElementById('valEmbalaje').value.replace(',', '.');
+  const valEmbalaje = parseFloat(valEmbalajeInput) || 0;
 
-    lineas.forEach(linea => {
-        if(linea.trim() === "") return;
-        let cantidad = 1, descripcion = linea.trim(), precioUnitario = 0;
-        const regexCantidad = linea.match(/^(\d+)\s+(.*)/);
-        if (regexCantidad) { cantidad = parseInt(regexCantidad[1]) || 1; descripcion = regexCantidad[2]; }
-        if (descripcion.includes('-')) {
-            const partes = descripcion.split('-');
-            let precioStr = partes.pop().replace(/s\/\.?/gi, '').trim();
-            precioUnitario = parseFloat(precioStr) || 0;
-            descripcion = partes.join('-').trim();
-        }
-        descripcion = descripcion.replace(/^[-–—:\s\./]+|[-–—:\s\./]+$/g, '').trim();
-        if(!descripcion) descripcion = "Planta";
-        const totalFila = cantidad * precioUnitario; sumaPlantas += totalFila;
-        tablaFilas.innerHTML += `<tr><td class="text-center">${cantidad}</td><td>${descripcion}</td><td class="text-right">S/. ${precioUnitario.toFixed(2)}</td><td class="text-right">S/. ${totalFila.toFixed(2)}</td></tr>`;
-        whatsappDetalleGlobal += `  🌿 ${cantidad}x *${descripcion}* - S/. ${totalFila.toFixed(2)}\n`;
-    });
+  // Actualizar datos del cliente
+  const elemCliente = document.getElementById('img-cliente');
+  const elemNum = document.getElementById('img-num-cotizacion');
+  const elemFecha = document.getElementById('img-fecha');
+  
+  const hoy = new Date();
+  const fechaStr = `${String(hoy.getDate()).padStart(2, '0')}/${String(hoy.getMonth() + 1).padStart(2, '0')}/${hoy.getFullYear()}`;
 
-    document.getElementById('valPlantas').value = sumaPlantas.toFixed(2);
-    const embalaje = parseFloat(document.getElementById('valEmbalaje').value) || 0;
-    const totalGeneral = sumaPlantas + embalaje;
-    document.getElementById('valTotal').value = totalGeneral.toFixed(2);
-    document.getElementById('img-cliente').innerText = document.getElementById('cliente').value || '---';
-    document.getElementById('img-num-cotizacion').innerText = document.getElementById('num-cotizacion').value || '---';
-    document.getElementById('img-subtotal').innerText = sumaPlantas.toFixed(2);
-    document.getElementById('img-embalaje').innerText = embalaje.toFixed(2);
-    document.getElementById('img-total').innerText = totalGeneral.toFixed(2);
+  if (elemCliente) elemCliente.innerText = cliente;
+  if (elemNum) elemNum.innerText = numCotizacion;
+  if (elemFecha) elemFecha.innerText = fechaStr;
+
+  const lineas = pedidoTexto.split('\n');
+  let sumaPlantas = 0;
+  let htmlFilas = '';
+
+  lineas.forEach(linea => {
+    linea = linea.trim();
+    if (!linea) return;
+
+    // Normalizar comas a puntos para que tome los precios correctamente
+    let lineaNormalizada = linea.replace(',', '.');
+
+    // EXPRESIÓN REGULAR FLEXIBLE:
+    // Busca: [Cantidad Opcional] + [Nombre Producto] + [Opcional - o espacios] + [Precio al final]
+    // Ejemplos válidos: "2 peperomias - 10.00", "2 peperomias 10", "peperomia 15", "3 peperomias-20"
+    const regex = /^(?:(\d+)\s+)?(.*?)(?:\s*[\-]\s*|\s+)(\d+(?:\.\d+)?)$/;
+    const match = lineaNormalizada.match(regex);
+
+    if (match) {
+      let cantidad = parseInt(match[1]) || 1;
+      let descripcion = match[2].trim();
+      let precioUnitario = parseFloat(match[3]) || 0;
+
+      // Si la descripción quedó vacía por algún guión extra
+      if (!descripcion) descripcion = "Planta / Producto";
+
+      const subtotalLinea = cantidad * precioUnitario;
+      sumaPlantas += subtotalLinea;
+
+      htmlFilas += `
+        <tr>
+          <td class="text-center">${cantidad}</td>
+          <td>${descripcion}</td>
+          <td class="text-right">S/. ${precioUnitario.toFixed(2)}</td>
+          <td class="text-right">S/. ${subtotalLinea.toFixed(2)}</td>
+        </tr>
+      `;
+    } else {
+      // Si solo escribes el nombre sin ningún número/precio al final
+      htmlFilas += `
+        <tr>
+          <td class="text-center">1</td>
+          <td>${linea}</td>
+          <td class="text-right">S/. 0.00</td>
+          <td class="text-right">S/. 0.00</td>
+        </tr>
+      `;
+    }
+  });
+
+  // Calcular totales
+  const totalPagar = sumaPlantas + valEmbalaje;
+
+  // Actualizar campos e inputs de la pantalla
+  document.getElementById('valPlantas').value = sumaPlantas.toFixed(2);
+  document.getElementById('valTotal').value = totalPagar.toFixed(2);
+
+  const elemTabla = document.getElementById('img-tabla-filas');
+  const elemSubtotal = document.getElementById('img-subtotal');
+  const elemEmbalaje = document.getElementById('img-embalaje');
+  const elemTotal = document.getElementById('img-total');
+
+  if (elemTabla) elemTabla.innerHTML = htmlFilas;
+  if (elemSubtotal) elemSubtotal.innerText = sumaPlantas.toFixed(2);
+  if (elemEmbalaje) elemEmbalaje.innerText = valEmbalaje.toFixed(2);
+  if (elemTotal) elemTotal.innerText = totalPagar.toFixed(2);
 }
-
 function guardarYDescargarImagen() {
     procesarCotizacion();
     const cliente = document.getElementById('cliente').value.trim().toUpperCase();
