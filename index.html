@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vivero Eliel - Cotizaciones y Control</title>
+  
+  <!-- Librería externa necesaria para convertir la cotización a imagen -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
   <style>
     :root {
       --primary-color: #2e7d32;
@@ -71,6 +75,12 @@
     h2, h3 {
       margin-top: 0;
       color: var(--primary-color);
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 15px;
     }
 
     .form-group {
@@ -185,7 +195,7 @@
 </head>
 <body>
 
-  <!-- NAVEGACIÓN -->
+  <!-- MENÚ DE NAVEGACIÓN DE PESTAÑAS -->
   <nav class="main-nav">
     <button class="nav-btn active" onclick="switchTab('cotizacion', event)">COTIZACIÓN</button>
     <button class="nav-btn" onclick="switchTab('macetas', event)">CONTROL DE MACETAS</button>
@@ -196,15 +206,7 @@
   <div id="tab-cotizacion" class="tab-content active">
     <div class="app-container">
       <h2>Vivero Eliel</h2>
-      <div class="subtitle">Generador de Cotizaciones Nube</div>
-
-      <div class="historial-section">
-        <label style="margin-top:0;">📂 Cotizaciones Compartidas en Línea:</label>
-        <select id="lista-guardados" onchange="cargarCotizacion()">
-          <option value="">-- Seleccionar cliente --</option>
-        </select>
-        <button type="button" class="btn btn-danger" onclick="eliminarCotizacion()">🗑️ Eliminar Cotización</button>
-      </div>
+      <div class="subtitle">Generador de Cotizaciones</div>
       
       <label>Nombre del Cliente:</label> 
       <input type="text" id="cliente" placeholder="Ej: LISA LOWERS" onkeyup="procesarCotizacion()" oninput="procesarCotizacion()">
@@ -233,7 +235,7 @@
         <div class="recibo-estilizado" id="bloque-imagen">
           <div>
             <div class="recibo-header" style="display: flex; align-items: center; justify-content: center; gap: 15px;">
-              <img src="logo.png" alt="Logo" style="height: 45px; width: auto; object-fit: contain;">
+              <img src="logo.png" alt="Logo" style="height: 45px; width: auto; object-fit: contain;" onerror="this.style.display='none'">
               <span>COTIZACIÓN VIVERO ELIEL</span>
             </div>
             
@@ -431,7 +433,7 @@
       if(event) event.currentTarget.classList.add('active');
     }
 
-    // FUNCIÓN DE PROCESAMIENTO Y CÁLCULO DE COTIZACIÓN
+    // PROCESAMIENTO Y CÁLCULO DE COTIZACIÓN
     function procesarCotizacion() {
       try {
         const clienteInput = document.getElementById('cliente');
@@ -449,7 +451,6 @@
         embalajeTexto = embalajeTexto.replace(',', '.');
         const valEmbalaje = parseFloat(embalajeTexto) || 0;
 
-        // Actualizar textos de cabecera
         const hoy = new Date();
         const fechaStr = `${String(hoy.getDate()).padStart(2, '0')}/${String(hoy.getMonth() + 1).padStart(2, '0')}/${hoy.getFullYear()}`;
 
@@ -469,7 +470,6 @@
           let descripcion = linea;
           let precioUnitario = 0;
 
-          // Si incluye guión "-" (ej: 2 peperomias - 10,00)
           if (linea.includes('-')) {
             const partes = linea.split('-');
             const parteIzquierda = partes[0].trim();
@@ -484,9 +484,7 @@
             } else {
               descripcion = parteIzquierda;
             }
-          } 
-          // Si no incluye guión (ej: 2 peperomias 10)
-          else {
+          } else {
             const palabras = linea.split(' ');
             const ultimaPalabra = palabras[palabras.length - 1].replace(',', '.');
 
@@ -518,11 +516,9 @@
 
         const totalPagar = sumaPlantas + valEmbalaje;
 
-        // Actualizar inputs en pantalla
         if (document.getElementById('valPlantas')) document.getElementById('valPlantas').value = sumaPlantas.toFixed(2);
         if (document.getElementById('valTotal')) document.getElementById('valTotal').value = totalPagar.toFixed(2);
 
-        // Actualizar datos del recibo
         if (document.getElementById('img-tabla-filas')) document.getElementById('img-tabla-filas').innerHTML = htmlFilas;
         if (document.getElementById('img-subtotal')) document.getElementById('img-subtotal').innerText = sumaPlantas.toFixed(2);
         if (document.getElementById('img-embalaje')) document.getElementById('img-embalaje').innerText = valEmbalaje.toFixed(2);
@@ -530,6 +526,110 @@
 
       } catch (err) {
         console.error("Error al procesar cotización:", err);
+      }
+    }
+
+    // COPIAR TEXTO A WHATSAPP
+    function copiarWhatsApp() {
+      const cliente = document.getElementById('cliente').value || '---';
+      const numCotizacion = document.getElementById('num-cotizacion').value || '---';
+      const valPlantas = document.getElementById('valPlantas').value || '0.00';
+      const valEmbalaje = document.getElementById('valEmbalaje').value || '0.00';
+      const valTotal = document.getElementById('valTotal').value || '0.00';
+      const pedidoTexto = document.getElementById('pedido-texto').value || '';
+
+      const hoy = new Date();
+      const fechaStr = `${String(hoy.getDate()).padStart(2, '0')}/${String(hoy.getMonth() + 1).padStart(2, '0')}/${hoy.getFullYear()}`;
+
+      let textoCopiar = `*COTIZACIÓN VIVERO ELIEL*\n`;
+      textoCopiar += `👤 *Cliente:* ${cliente}\n`;
+      textoCopiar += `📄 *N° Cotización:* ${numCotizacion}\n`;
+      textoCopiar += `📅 *Fecha:* ${fechaStr}\n\n`;
+      textoCopiar += `*DETALLE DEL PEDIDO:*\n${pedidoTexto}\n\n`;
+      textoCopiar += `🪴 *Total Plantas:* S/. ${valPlantas}\n`;
+      textoCopiar += `📦 *Embalaje y Traslado:* S/. ${valEmbalaje}\n`;
+      textoCopiar += `💰 *TOTAL A PAGAR:* S/. ${valTotal}\n\n`;
+      textoCopiar += `📋 *Métodos de pago:*\n`;
+      textoCopiar += `📱 Yape: 981 046 861\n`;
+      textoCopiar += `🏦 BCP Cuenta Corriente: 19178952536034\n`;
+      textoCopiar += `💥 Titular: Arlene Cruzado Llanos\n\n`;
+      textoCopiar += `⚠️ *Importante:* Vigencia de 24 horas. Sin confirmación de pago, el pedido se libera.`;
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(textoCopiar).then(() => {
+          alert("¡Texto copiado al portapapeles! Ya puedes pegarlo en WhatsApp.");
+        }).catch(() => fallbackCopiar(textoCopiar));
+      } else {
+        fallbackCopiar(textoCopiar);
+      }
+    }
+
+    function fallbackCopiar(texto) {
+      const areaTemp = document.createElement("textarea");
+      areaTemp.value = texto;
+      document.body.appendChild(areaTemp);
+      areaTemp.select();
+      document.execCommand("copy");
+      document.body.removeChild(areaTemp);
+      alert("¡Texto copiado al portapapeles!");
+    }
+
+    // GENERAR Y DESCARGAR/COMPARTIR IMAGEN (COMPATIBLE CON MÓVILES)
+    async function guardarYDescargarImagen() {
+      const bloque = document.getElementById('bloque-imagen');
+      if (!bloque) {
+        alert("Error: No se encontró la cotización para capturar.");
+        return;
+      }
+
+      if (typeof html2canvas === 'undefined') {
+        alert("La librería de imagen aún se está cargando. Por favor intenta de nuevo en unos segundos.");
+        return;
+      }
+
+      try {
+        const canvas = await html2canvas(bloque, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: "#ffffff",
+          logging: false
+        });
+
+        const cliente = (document.getElementById('cliente').value.trim() || 'Cotizacion').replace(/[^a-zA-Z0-9]/g, '_');
+        const nombreArchivo = `Cotizacion_Vivero_Eliel_${cliente}.png`;
+
+        canvas.toBlob(async (blob) => {
+          if (!blob) {
+            alert("Error al generar la imagen.");
+            return;
+          }
+
+          const file = new File([blob], nombreArchivo, { type: 'image/png' });
+
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try {
+              await navigator.share({
+                files: [file],
+                title: 'Cotización Vivero Eliel',
+                text: `Cotización para ${cliente}`
+              });
+            } catch (shareErr) {
+              console.log("Compartir cancelado:", shareErr);
+            }
+          } else {
+            const enlace = document.createElement('a');
+            enlace.download = nombreArchivo;
+            enlace.href = URL.createObjectURL(blob);
+            document.body.appendChild(enlace);
+            enlace.click();
+            document.body.removeChild(enlace);
+            setTimeout(() => URL.revokeObjectURL(enlace.href), 1000);
+          }
+        }, 'image/png');
+
+      } catch (error) {
+        console.error("Error al capturar imagen:", error);
+        alert("No se pudo generar la imagen. Verifica tu conexión a internet para cargar los scripts.");
       }
     }
 
@@ -656,71 +756,6 @@
         alert('Stock insuficiente para realizar esta venta.');
       }
     }
-
-    // FUNCIÓN PARA COPIAR EL TEXTO DE LA COTIZACIÓN (PARA WHATSAPP)
-function copiarWhatsApp() {
-  const cliente = document.getElementById('cliente').value || '---';
-  const numCotizacion = document.getElementById('num-cotizacion').value || '---';
-  const valPlantas = document.getElementById('valPlantas').value || '0.00';
-  const valEmbalaje = document.getElementById('valEmbalaje').value || '0.00';
-  const valTotal = document.getElementById('valTotal').value || '0.00';
-  const pedidoTexto = document.getElementById('pedido-texto').value || '';
-
-  const hoy = new Date();
-  const fechaStr = `${String(hoy.getDate()).padStart(2, '0')}/${String(hoy.getMonth() + 1).padStart(2, '0')}/${hoy.getFullYear()}`;
-
-  let textoCopiar = `*COTIZACIÓN VIVERO ELIEL*\n`;
-  textoCopiar += `👤 *Cliente:* ${cliente}\n`;
-  textoCopiar += `📄 *N° Cotización:* ${numCotizacion}\n`;
-  textoCopiar += `📅 *Fecha:* ${fechaStr}\n\n`;
-  textoCopiar += `*DETALLE DEL PEDIDO:*\n${pedidoTexto}\n\n`;
-  textoCopiar += `🪴 *Total Plantas:* S/. ${valPlantas}\n`;
-  textoCopiar += `📦 *Embalaje y Traslado:* S/. ${valEmbalaje}\n`;
-  textoCopiar += `💰 *TOTAL A PAGAR:* S/. ${valTotal}\n\n`;
-  textoCopiar += `📋 *Métodos de pago:*\n`;
-  textoCopiar += `📱 Yape: 981 046 861\n`;
-  textoCopiar += `🏦 BCP Cuenta Corriente: 19178952536034\n`;
-  textoCopiar += `💥 Titular: Arlene Cruzado Llanos\n\n`;
-  textoCopiar += `⚠️ *Importante:* Vigencia de 24 horas. Sin confirmación de pago, el pedido se libera.`;
-
-  navigator.clipboard.writeText(textoCopiar).then(() => {
-    alert("¡Texto copiado al portapapeles! Ya puedes pegarlo en WhatsApp.");
-  }).catch(err => {
-    // Alternativa por si el navegador bloquea el portapapeles directo
-    const areaTemp = document.createElement("textarea");
-    areaTemp.value = textoCopiar;
-    document.body.appendChild(areaTemp);
-    areaTemp.select();
-    document.execCommand("copy");
-    document.body.removeChild(areaTemp);
-    alert("¡Texto copiado al portapapeles!");
-  });
-}
-
-// FUNCIÓN PARA GENERAR Y DESCARGAR LA IMAGEN DEL RECIBO
-function guardarYDescargarImagen() {
-  const bloque = document.getElementById('bloque-imagen');
-  if (!bloque) {
-    alert("Error: No se encontró el área de la cotización para capturar.");
-    return;
-  }
-
-  // Usar html2canvas para convertir el div en imagen
-  html2canvas(bloque, {
-    scale: 2, // Mayor calidad/resolución de la imagen
-    useCORS: true,
-    backgroundColor: "#ffffff"
-  }).then(canvas => {
-    const enlace = document.createElement('a');
-    const cliente = document.getElementById('cliente').value.trim() || 'Cotizacion';
-    enlace.download = `Cotizacion_Vivero_Eliel_${cliente}.png`;
-    enlace.href = canvas.toDataURL('image/png');
-    enlace.click();
-  }).catch(err => {
-    console.error("Error al generar imagen:", err);
-    alert("Ocurrió un error al intentar generar la imagen.");
-  });
-}
 
     // Inicialización al cargar la página
     window.onload = function() {
