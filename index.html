@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vivero Eliel - App de Cotizaciones y Control</title>
+  <title>Vivero Eliel - Cotizaciones y Control</title>
   <style>
     :root {
       --primary-color: #2e7d32;
@@ -29,7 +29,7 @@
       justify-content: space-around;
       position: sticky;
       top: 0;
-      z-index: 100;
+      z-index: 1000;
       box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
 
@@ -62,8 +62,8 @@
       display: block;
     }
 
-    /* Tarjetas y Formulario */
-    .card {
+    /* Tarjetas y Formulario Generales */
+    .card, .app-container {
       background: var(--card-bg);
       border-radius: 8px;
       padding: 15px;
@@ -80,14 +80,15 @@
       margin-bottom: 12px;
     }
 
-    .form-group label {
+    .form-group label, label {
       display: block;
+      margin-top: 10px;
       margin-bottom: 5px;
       font-size: 14px;
       font-weight: 600;
     }
 
-    .form-group input, .form-group select {
+    input, select, textarea {
       width: 100%;
       padding: 10px;
       border: 1px solid #ccc;
@@ -102,56 +103,100 @@
       gap: 10px;
     }
 
-    button.btn-primary {
-      background-color: var(--primary-color);
-      color: white;
-      border: none;
+    .btn {
       padding: 12px;
       border-radius: 5px;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: bold;
-      width: 100%;
       cursor: pointer;
+      border: none;
       margin-top: 5px;
     }
 
-    button.btn-primary:hover {
-      background-color: var(--secondary-color);
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: white;
+      width: 100%;
     }
 
-    /* Tablas de Inventario */
-    table {
+    .btn-danger {
+      background-color: var(--danger-color);
+      color: white;
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .btn-img { background-color: #0288d1; color: white; flex: 1; }
+    .btn-copy { background-color: #7b1fa2; color: white; flex: 1; }
+
+    /* Estilos del Recibo en Cotizaciones */
+    .recibo-estilizado {
+      border: 1px solid #ccc;
+      padding: 15px;
+      border-radius: 8px;
+      background: #fff;
+      margin-top: 15px;
+    }
+
+    .recibo-header {
+      font-weight: bold;
+      font-size: 18px;
+      color: var(--primary-color);
+      margin-bottom: 10px;
+    }
+
+    .recibo-meta-grid {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+
+    .tabla-productos {
       width: 100%;
       border-collapse: collapse;
+      margin: 10px 0;
+    }
+
+    .tabla-productos th, .tabla-productos td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      font-size: 13px;
+    }
+
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+
+    .recibo-resumen {
+      text-align: right;
+      font-size: 14px;
       margin-top: 10px;
     }
 
-    table th, table td {
-      border: 1px solid #ddd;
-      padding: 10px;
-      text-align: left;
-      font-size: 14px;
+    .recibo-total-destacado {
+      font-weight: bold;
+      font-size: 16px;
+      color: var(--primary-color);
+      margin-top: 5px;
     }
 
-    table th {
-      background-color: #e8f5e9;
-      color: var(--primary-color);
+    .recibo-pagos, .recibo-importante {
+      font-size: 12px;
+      background: #f9f9f9;
+      padding: 10px;
+      border-radius: 5px;
+      margin-top: 10px;
     }
 
     .stock-low {
       color: var(--danger-color);
       font-weight: bold;
-    }
-
-    .total-box {
-      background-color: #e8f5e9;
-      padding: 15px;
-      border-radius: 5px;
-      font-size: 18px;
-      font-weight: bold;
-      text-align: right;
-      color: var(--primary-color);
-      margin-top: 10px;
     }
   </style>
 </head>
@@ -159,23 +204,115 @@
 
   <!-- MENÚ PRINCIPAL -->
   <nav class="main-nav">
-    <button class="nav-btn active" onclick="switchTab('cotizacion')">COTIZACIÓN</button>
-    <button class="nav-btn" onclick="switchTab('macetas')">MACETAS</button>
-    <button class="nav-btn" onclick="switchTab('sustratos')">SUSTRATOS</button>
+    <button class="nav-btn active" onclick="switchTab('cotizacion', event)">COTIZACIÓN</button>
+    <button class="nav-btn" onclick="switchTab('macetas', event)">CONTROL DE MACETAS</button>
+    <button class="nav-btn" onclick="switchTab('sustratos', event)">CONTROL DE SUSTRATOS</button>
   </nav>
 
-  <!-- SECCIÓN 1: COTIZACIÓN (Espacio para el módulo actual) -->
+  <!-- PESTAÑA 1: GENERADOR DE COTIZACIONES (TU CÓDIGO ORIGINAL) -->
   <div id="tab-cotizacion" class="tab-content active">
-    <div class="card">
-      <h2>Cotizaciones del Vivero</h2>
-      <p>Aquí se mantiene tu módulo actual de cotizaciones y generación de recibos/etiquetas.</p>
+    <div class="app-container">
+      <h2>Vivero Eliel</h2>
+      <div class="subtitle">Generador de Cotizaciones Nube</div>
+
+      <div class="historial-section">
+        <label style="margin-top:0;">📂 Cotizaciones Compartidas en Línea:</label>
+        <select id="lista-guardados" onchange="cargarCotizacion()">
+          <option value="">-- Seleccionar cliente --</option>
+        </select>
+        <button type="button" class="btn btn-danger" onclick="eliminarCotizacion()">🗑️ Eliminar Cotización</button>
+      </div>
+      
+      <label>Nombre del Cliente:</label> 
+      <input type="text" id="cliente" placeholder="Ej: LISA LOWERS" oninput="procesarCotizacion()">
+
+      <label>N° de Cotización (Opcional):</label> 
+      <input type="text" id="num-cotizacion" placeholder="Ej: 001-2026" oninput="procesarCotizacion()">
+      
+      <label>Detalle del pedido:</label>
+      <textarea id="pedido-texto" rows="5" placeholder="2 Peperomia - 10.00" oninput="procesarCotizacion()"></textarea>
+      
+      <label>Valor de las Plantas (S/.):</label> 
+      <input type="number" id="valPlantas" class="input-readonly" value="0.00" readonly>
+      
+      <label>Embalaje y traslado (S/.):</label> 
+      <input type="number" id="valEmbalaje" placeholder="0.00" step="0.01" value="0.00" oninput="procesarCotizacion()">
+      
+      <label>TOTAL A PAGAR (S/.):</label> 
+      <input type="number" id="valTotal" class="input-total" value="0.00" readonly>
+      
+      <div class="btn-group">
+        <button type="button" class="btn btn-img" onclick="guardarYDescargarImagen()"><span>📥</span> Guardar Imagen</button>
+        <button type="button" class="btn btn-copy" onclick="copiarWhatsApp()"><span>📋</span> Copiar Texto</button>
+      </div>
+      
+      <textarea id="output-texto" style="display:none;"></textarea>
+
+      <div id="zona-captura-recorte">
+        <div class="recibo-estilizado" id="bloque-imagen">
+          <div>
+            <div class="recibo-header" style="display: flex; align-items: center; justify-content: center; gap: 15px;">
+              <img src="logo.png" alt="Logo" style="height: 45px; width: auto; object-fit: contain;">
+              <span>COTIZACIÓN VIVERO ELIEL</span>
+            </div>
+            
+            <div class="recibo-meta-grid">
+              <div>
+                👤 <strong>Cliente:</strong> <span id="img-cliente">---</span><br>
+                ⏳ <strong>Vigencia:</strong> 24 horas
+              </div>
+              <div style="text-align: right;">
+                📅 <strong>Fecha:</strong> <span id="img-fecha">--/--/----</span><br>
+                📄 <strong>Cotización:</strong> <span id="img-num-cotizacion">---</span>
+              </div>
+            </div>
+            
+            <strong>Detalle del pedido:</strong>
+            <table class="tabla-productos">
+              <thead>
+                <tr>
+                  <th class="text-center" style="width: 12%;">CANT.</th>
+                  <th>DESCRIPCIÓN ESPECIE</th>
+                  <th class="text-right" style="width: 22%;">P. UNIT</th>
+                  <th class="text-right" style="width: 22%;">TOTAL</th>
+                </tr>
+              </thead>
+              <tbody id="img-tabla-filas"></tbody>
+            </table>
+            
+            <div class="recibo-resumen">
+              🪴 <strong>Total de plantas:</strong> S/. <span id="img-subtotal">0.00</span><br>
+              📦 <strong>Embalaje y traslado:</strong> S/. <span id="img-embalaje">0.00</span>
+              <div class="recibo-total-destacado">💰 TOTAL A CANCELAR: S/. <span id="img-total">0.00</span></div>
+            </div>
+          </div>
+          
+          <div>
+            <div class="recibo-pagos">
+              <strong>📋 Métodos de pago:</strong><br>
+              📱 Yape: 981 046 861<br>
+              🏦 BCP | Cuenta Corriente: 19178952536034<br>
+              💥 Titular: Arlene Cruzado Llanos
+            </div>
+
+            <div class="recibo-importante">
+              <strong>⚠️ Importante:</strong>
+              <ul>
+                <li>Vigencia de la cotización: 24 horas.</li>
+                <li>Sin confirmación o pago dentro de ese plazo, las plantas serán liberadas para su venta.</li>
+                <li>El embalaje y traslado a agencia incluye el acondicionamiento y protección de las plantas para el viaje.</li>
+                <li>El flete es cobrado directamente por la agencia de transporte elegida por el cliente.</li>
+                <li>No se realizan reservas sin la confirmación del pago total.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- SECCIÓN 2: CONTROL DE MACETAS -->
+  <!-- PESTAÑA 2: CONTROL DE MACETAS -->
   <div id="tab-macetas" class="tab-content">
-    
-    <!-- REGISTRO DE VENTA MACETAS -->
     <div class="card">
       <h2>Venta Rápida de Macetas</h2>
       <form id="form-venta-maceta" onsubmit="registrarVentaMaceta(event)">
@@ -191,22 +328,21 @@
             <input type="number" id="cant-maceta-venta" min="1" value="1" required oninput="calcularTotalMaceta()">
           </div>
           <div class="form-group">
-            <label>Total ($)</label>
+            <label>Total (S/.)</label>
             <input type="text" id="total-maceta-venta" readonly value="0.00">
           </div>
         </div>
-        <button type="submit" class="btn-primary">Registrar Venta</button>
+        <button type="submit" class="btn btn-primary">Registrar Venta</button>
       </form>
     </div>
 
-    <!-- AGREGAR/INVENTARIO MACETAS -->
     <div class="card">
       <h3>Inventario de Macetas</h3>
       <form id="form-agregar-maceta" onsubmit="agregarMaceta(event)">
         <div class="grid-2">
           <div class="form-group">
             <label>Modelo</label>
-            <input type="text" id="maceta-modelo" placeholder="Ej. Conica, Cuadrada" required>
+            <input type="text" id="maceta-modelo" placeholder="Ej. Cónica, Cuadrada" required>
           </div>
           <div class="form-group">
             <label>Tamaño</label>
@@ -215,7 +351,7 @@
         </div>
         <div class="grid-2">
           <div class="form-group">
-            <label>Precio Unitario ($)</label>
+            <label>Precio Unitario (S/.)</label>
             <input type="number" step="0.01" id="maceta-precio" required>
           </div>
           <div class="form-group">
@@ -223,15 +359,15 @@
             <input type="number" id="maceta-cantidad" required>
           </div>
         </div>
-        <button type="submit" class="btn-primary">+ Agregar al Inventario</button>
+        <button type="submit" class="btn btn-primary">+ Agregar al Inventario</button>
       </form>
 
-      <table>
+      <table class="tabla-productos" style="margin-top: 15px;">
         <thead>
           <tr>
             <th>Modelo</th>
             <th>Tamaño</th>
-            <th>Precio</th>
+            <th>Precio (S/.)</th>
             <th>Stock</th>
           </tr>
         </thead>
@@ -240,10 +376,8 @@
     </div>
   </div>
 
-  <!-- SECCIÓN 3: CONTROL DE SUSTRATOS -->
+  <!-- PESTAÑA 3: CONTROL DE SUSTRATOS -->
   <div id="tab-sustratos" class="tab-content">
-    
-    <!-- REGISTRO DE VENTA SUSTRATOS -->
     <div class="card">
       <h2>Venta Rápida de Sustratos e Insumos</h2>
       <form id="form-venta-sustrato" onsubmit="registrarVentaSustrato(event)">
@@ -259,15 +393,14 @@
             <input type="number" id="cant-sustrato-venta" min="1" value="1" required oninput="calcularTotalSustrato()">
           </div>
           <div class="form-group">
-            <label>Total ($)</label>
+            <label>Total (S/.)</label>
             <input type="text" id="total-sustrato-venta" readonly value="0.00">
           </div>
         </div>
-        <button type="submit" class="btn-primary">Registrar Venta</button>
+        <button type="submit" class="btn btn-primary">Registrar Venta</button>
       </form>
     </div>
 
-    <!-- AGREGAR/INVENTARIO SUSTRATOS -->
     <div class="card">
       <h3>Inventario de Sustratos e Insumos</h3>
       <form id="form-agregar-sustrato" onsubmit="agregarSustrato(event)">
@@ -284,7 +417,7 @@
         </div>
         <div class="grid-2">
           <div class="form-group">
-            <label>Precio ($)</label>
+            <label>Precio (S/.)</label>
             <input type="number" step="0.01" id="sustrato-precio" required>
           </div>
           <div class="form-group">
@@ -292,14 +425,14 @@
             <input type="number" id="sustrato-cantidad" required>
           </div>
         </div>
-        <button type="submit" class="btn-primary">+ Agregar al Inventario</button>
+        <button type="submit" class="btn btn-primary">+ Agregar al Inventario</button>
       </form>
 
-      <table>
+      <table class="tabla-productos" style="margin-top: 15px;">
         <thead>
           <tr>
             <th>Material / Sustrato</th>
-            <th>Precio</th>
+            <th>Precio (S/.)</th>
             <th>Stock</th>
           </tr>
         </thead>
@@ -309,7 +442,16 @@
   </div>
 
   <script>
-    // BASE DE DATOS LOCAL (Listo para conectar con Firebase)
+    // CAMBIO DE PESTAÑAS DEL MENÚ
+    function switchTab(tabId, event) {
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+
+      document.getElementById('tab-' + tabId).classList.add('active');
+      if(event) event.currentTarget.classList.add('active');
+    }
+
+    // --- LÓGICA DE INVENTARIOS DE MACETAS Y SUSTRATOS ---
     let inventarioMacetas = [
       { id: 1, modelo: 'Clásica', tamano: 'N° 14', precio: 2.50, stock: 50 },
       { id: 2, modelo: 'Premium', tamano: 'N° 18', precio: 5.00, stock: 20 }
@@ -323,34 +465,22 @@
       { id: 5, nombre: 'Corteza de Pino', precio: 9.00, stock: 18 }
     ];
 
-    // CAMBIO DE PESTAÑAS DEL MENÚ
-    function switchTab(tabId) {
-      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-
-      document.getElementById('tab-' + tabId).classList.add('active');
-      event.currentTarget.classList.add('active');
-    }
-
-    // --- LÓGICA DE MACETAS ---
     function renderMacetas() {
       const tabla = document.getElementById('tabla-macetas');
       const select = document.getElementById('select-maceta-venta');
+      if(!tabla || !select) return;
       tabla.innerHTML = '';
       select.innerHTML = '<option value="">-- Seleccionar --</option>';
 
       inventarioMacetas.forEach(item => {
-        // Render Tabla
         tabla.innerHTML += `
           <tr>
             <td>${item.modelo}</td>
             <td>${item.tamano}</td>
-            <td>$${item.precio.toFixed(2)}</td>
+            <td>S/. ${item.precio.toFixed(2)}</td>
             <td class="${item.stock < 5 ? 'stock-low' : ''}">${item.stock} unids.</td>
           </tr>`;
-
-        // Render Select de Ventas
-        select.innerHTML += `<option value="${item.id}">${item.modelo} - ${item.tamano} ($${item.precio.toFixed(2)})</option>`;
+        select.innerHTML += `<option value="${item.id}">${item.modelo} - ${item.tamano} (S/. ${item.precio.toFixed(2)})</option>`;
       });
     }
 
@@ -381,8 +511,8 @@
       const item = inventarioMacetas.find(m => m.id == id);
 
       if (item && item.stock >= cant) {
-        item.stock -= cant; // Descuenta automáticamente el stock
-        alert(`Venta registrada con éxito. Total: $${(item.precio * cant).toFixed(2)}`);
+        item.stock -= cant;
+        alert(`Venta registrada con éxito. Total: S/. ${(item.precio * cant).toFixed(2)}`);
         document.getElementById('form-venta-maceta').reset();
         document.getElementById('total-maceta-venta').value = "0.00";
         renderMacetas();
@@ -391,24 +521,21 @@
       }
     }
 
-    // --- LÓGICA DE SUSTRATOS ---
     function renderSustratos() {
       const tabla = document.getElementById('tabla-sustratos');
       const select = document.getElementById('select-sustrato-venta');
+      if(!tabla || !select) return;
       tabla.innerHTML = '';
       select.innerHTML = '<option value="">-- Seleccionar --</option>';
 
       inventarioSustratos.forEach(item => {
-        // Render Tabla
         tabla.innerHTML += `
           <tr>
             <td>${item.nombre}</td>
-            <td>$${item.precio.toFixed(2)}</td>
+            <td>S/. ${item.precio.toFixed(2)}</td>
             <td class="${item.stock < 5 ? 'stock-low' : ''}">${item.stock} unids.</td>
           </tr>`;
-
-        // Render Select de Ventas
-        select.innerHTML += `<option value="${item.id}">${item.nombre} ($${item.precio.toFixed(2)})</option>`;
+        select.innerHTML += `<option value="${item.id}">${item.nombre} (S/. ${item.precio.toFixed(2)})</option>`;
       });
     }
 
@@ -438,8 +565,8 @@
       const item = inventarioSustratos.find(s => s.id == id);
 
       if (item && item.stock >= cant) {
-        item.stock -= cant; // Descuenta automáticamente el stock
-        alert(`Venta registrada con éxito. Total: $${(item.precio * cant).toFixed(2)}`);
+        item.stock -= cant;
+        alert(`Venta registrada con éxito. Total: S/. ${(item.precio * cant).toFixed(2)}`);
         document.getElementById('form-venta-sustrato').reset();
         document.getElementById('total-sustrato-venta').value = "0.00";
         renderSustratos();
@@ -448,13 +575,163 @@
       }
     }
 
-    // Inicializar tablas al cargar
+    // Inicializar inventarios
     renderMacetas();
     renderSustratos();
   </script>
+<script>
+// =======================================================
+// CONFIGURACIÓN DE TU BASE DE DATOS EN LA NUBE
+// =======================================================
+const firebaseConfig = {
+    databaseURL: "https://viveroelielapp-default-rtdb.firebaseio.com/"
+};
 
-</body>
-</html>
+firebase.initializeApp(firebaseConfig);
+var db = firebase.database();
+
+let whatsappDetalleGlobal = "";
+
+function iniciarFecha() {
+    const hoy = new Date();
+    document.getElementById('img-fecha').innerText = `${String(hoy.getDate()).padStart(2,'0')}/${String(hoy.getMonth()+1).padStart(2,'0')}/${hoy.getFullYear()}`;
+}
+
+function procesarCotizacion() {
+    const texto = document.getElementById('pedido-texto').value;
+    const lineas = texto.split('\n');
+    const tablaFilas = document.getElementById('img-tabla-filas');
+    tablaFilas.innerHTML = ""; let sumaPlantas = 0; whatsappDetalleGlobal = "";
+
+    lineas.forEach(linea => {
+        if(linea.trim() === "") return;
+        let cantidad = 1, descripcion = linea.trim(), precioUnitario = 0;
+        const regexCantidad = linea.match(/^(\d+)\s+(.*)/);
+        if (regexCantidad) { cantidad = parseInt(regexCantidad[1]) || 1; descripcion = regexCantidad[2]; }
+        if (descripcion.includes('-')) {
+            const partes = descripcion.split('-');
+            let precioStr = partes.pop().replace(/s\/\.?/gi, '').trim();
+            precioUnitario = parseFloat(precioStr) || 0;
+            descripcion = partes.join('-').trim();
+        }
+        descripcion = descripcion.replace(/^[-–—:\s\./]+|[-–—:\s\./]+$/g, '').trim();
+        if(!descripcion) descripcion = "Planta";
+        const totalFila = cantidad * precioUnitario; sumaPlantas += totalFila;
+        tablaFilas.innerHTML += `<tr><td class="text-center">${cantidad}</td><td>${descripcion}</td><td class="text-right">S/. ${precioUnitario.toFixed(2)}</td><td class="text-right">S/. ${totalFila.toFixed(2)}</td></tr>`;
+        whatsappDetalleGlobal += `  🌿 ${cantidad}x *${descripcion}* - S/. ${totalFila.toFixed(2)}\n`;
+    });
+
+    document.getElementById('valPlantas').value = sumaPlantas.toFixed(2);
+    const embalaje = parseFloat(document.getElementById('valEmbalaje').value) || 0;
+    const totalGeneral = sumaPlantas + embalaje;
+    document.getElementById('valTotal').value = totalGeneral.toFixed(2);
+    document.getElementById('img-cliente').innerText = document.getElementById('cliente').value || '---';
+    document.getElementById('img-num-cotizacion').innerText = document.getElementById('num-cotizacion').value || '---';
+    document.getElementById('img-subtotal').innerText = sumaPlantas.toFixed(2);
+    document.getElementById('img-embalaje').innerText = embalaje.toFixed(2);
+    document.getElementById('img-total').innerText = totalGeneral.toFixed(2);
+}
+
+function guardarYDescargarImagen() {
+    procesarCotizacion();
+    const cliente = document.getElementById('cliente').value.trim().toUpperCase();
+    
+    if (!cliente) {
+        alert("⚠️ Ingresa el nombre del cliente para registrar la cotización.");
+        return;
+    }
+
+    if (document.getElementById('img-fecha').innerText.includes('--')) {
+        iniciarFecha();
+    }
+
+    // 1. Guardar en la nube
+    if (typeof db !== 'undefined') {
+        const idClave = cliente.replace(/[^A-Z0-9]/g, "_");
+        db.ref('cotizaciones/' + idClave).set({
+            cliente: cliente,
+            numCotizacion: document.getElementById('num-cotizacion').value,
+            pedido: document.getElementById('pedido-texto').value,
+            embalaje: document.getElementById('valEmbalaje').value,
+            fecha: document.getElementById('img-fecha').innerText
+        });
+    }
+
+    // 2. Descargar imagen con retraso para asegurar red
+    setTimeout(() => {
+        const contenedor = document.getElementById('bloque-imagen');
+        const nCotizacion = document.getElementById('num-cotizacion').value ? `_N°_${document.getElementById('num-cotizacion').value}` : '';
+        
+        html2canvas(contenedor, { scale: 3, useCORS: true, backgroundColor: "#ffffff", logging: false }).then(canvas => {
+            const enlace = document.createElement('a');
+            enlace.download = `Cotizacion_${cliente.replace(/\s+/g, '_')}${nCotizacion}.png`;
+            enlace.href = canvas.toDataURL('image/png');
+            enlace.click();
+        });
+    }, 400);
+}
+
+if (typeof db !== 'undefined') {
+    db.ref('cotizaciones').on('value', (snapshot) => {
+        const selector = document.getElementById('lista-guardados');
+        const valorSeleccionado = selector.value;
+        selector.innerHTML = '<option value="">-- Seleccionar cliente --</option>';
+        
+        snapshot.forEach((childSnapshot) => {
+            const data = childSnapshot.val();
+            const option = document.createElement('option');
+            option.value = childSnapshot.key;
+            option.textContent = `${data.cliente} (${data.numCotizacion || 'Sin N°'})`;
+            selector.appendChild(option);
+        });
+        selector.value = valorSeleccionado;
+    });
+}
+
+function cargarCotizacion() {
+    const clave = document.getElementById('lista-guardados').value;
+    if (!clave || typeof db === 'undefined') return;
+
+    db.ref('cotizaciones/' + clave).once('value').then((snapshot) => {
+        const data = snapshot.val();
+        if(data) {
+            document.getElementById('cliente').value = data.cliente;
+            document.getElementById('num-cotizacion').value = data.numCotizacion || '';
+            document.getElementById('pedido-texto').value = data.pedido;
+            document.getElementById('valEmbalaje').value = data.embalaje || '0.00';
+            document.getElementById('img-fecha').innerText = data.fecha;
+            procesarCotizacion();
+        }
+    });
+}
+
+function eliminarCotizacion() {
+    const clave = document.getElementById('lista-guardados').value;
+    if (!clave || typeof db === 'undefined') return;
+
+    if (confirm("¿Eliminar esta cotización de la nube para todos?")) {
+        db.ref('cotizaciones/' + clave).remove();
+        document.getElementById('cliente').value = '';
+        document.getElementById('num-cotizacion').value = '';
+        document.getElementById('pedido-texto').value = '';
+        document.getElementById('valEmbalaje').value = '0.00';
+        iniciarFecha(); procesarCotizacion();
+    }
+}
+
+function copiarWhatsApp() {
+    procesarCotizacion();
+    const cliente = document.getElementById('cliente').value || 'Cliente';
+    const nCotizacion = document.getElementById('num-cotizacion').value ? `N° ${document.getElementById('num-cotizacion').value}` : '---';
+    const plantillaTexto = `🌿 *COTIZACIÓN VIVERO ELIEL* 🌿\n--------------------------------------------\n👤 *Cliente:* ${cliente}\n📄 *Cotización:* ${nCotizacion}\n📅 *Fecha:* ${document.getElementById('img-fecha').innerText}\n⏳ *Vigencia:* 24 horas\n\n*DETALLE DEL PEDIDO*:\n${whatsappDetalleGlobal}--------------------------------------------\n🪴 *Total Plantas:* S/. ${document.getElementById('valPlantas').value}\n📦 *Embalaje/Traslado:* S/. ${parseFloat(document.getElementById('valEmbalaje').value).toFixed(2)}\n💰 *TOTAL A CANCELAR: S/. ${document.getElementById('valTotal').value}*\n\n--------------------------------------------\n📋 *MÉTODOS DE PAGO*:\n📱 *Yape:* 981 046 861\n🏦 *BCP Corriente:* 19178952536034\n💥 Titular: Arlene Cruzado Llanos\n\n⚠️ *Importante:*\n* Vigencia de la cotización: 24 horas.\n* Sin confirmación o pago dentro de ese plazo, las plantas serán liberadas para su venta.\n* El embalaje y traslado a agencia incluye el acondicionamiento y protección de las plantas para el viaje.\n* El flete es cobrado directamente por la agencia de transporte elegida por el cliente.\n* No se realizan reservas sin la confirmación del pago total.`;
+
+    navigator.clipboard.writeText(plantillaTexto).then(() => alert('📋 ¡Copiado!'));
+}
+
+iniciarFecha();
+procesarCotizacion();
 </script>
+
+  <!-- AQUÍ ABAJO CONSERVA TUS SCRIPTS ORIGINALES DE FIREBASE Y PROCESARCOTIZACION() -->
 </body>
 </html>
