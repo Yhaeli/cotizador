@@ -345,6 +345,67 @@ function registrarVentaSustrato(e) {
   }
 }
 
+// GENERAR Y DESCARGAR/COMPARTIR IMAGEN (COMPATIBLE CON CELULARES Y PC)
+async function guardarYDescargarImagen() {
+  const bloque = document.getElementById('bloque-imagen');
+  if (!bloque) {
+    alert("Error: No se encontró la cotización para capturar.");
+    return;
+  }
+
+  if (typeof html2canvas === 'undefined') {
+    alert("La librería de imagen se está cargando. Intenta de nuevo en unos segundos.");
+    return;
+  }
+
+  try {
+    const canvas = await html2canvas(bloque, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#ffffff",
+      logging: false
+    });
+
+    const cliente = (document.getElementById('cliente').value.trim() || 'Cotizacion').replace(/[^a-zA-Z0-9]/g, '_');
+    const nombreArchivo = `Cotizacion_Vivero_Eliel_${cliente}.png`;
+
+    canvas.toBlob(async (blob) => {
+      if (!blob) {
+        alert("Error al generar la imagen.");
+        return;
+      }
+
+      const file = new File([blob], nombreArchivo, { type: 'image/png' });
+
+      // Si es un celular y soporta compartir archivos nativamente
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: 'Cotización Vivero Eliel',
+            text: `Cotización para ${cliente}`
+          });
+        } catch (shareErr) {
+          console.log("Compartir cancelado:", shareErr);
+        }
+      } else {
+        // Descarga tradicional en PC
+        const enlace = document.createElement('a');
+        enlace.download = nombreArchivo;
+        enlace.href = URL.createObjectURL(blob);
+        document.body.appendChild(enlace);
+        enlace.click();
+        document.body.removeChild(enlace);
+        setTimeout(() => URL.revokeObjectURL(enlace.href), 1000);
+      }
+    }, 'image/png');
+
+  } catch (error) {
+    console.error("Error al capturar imagen:", error);
+    alert("No se pudo generar la imagen. Revisa tu conexión a internet.");
+  }
+}
+
 // Inicialización al cargar la página
 window.onload = function() {
   renderMacetas();
