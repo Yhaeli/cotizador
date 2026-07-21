@@ -208,5 +208,37 @@ input, select, textarea {
   border-radius: 5px;
   margin-top: 10px;
 }
+.tarjeta {
+  background-color: #f1f8e9; /* Un verde muy clarito que combina con tu app */
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+.form-agregar, .form-venta {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+.form-agregar input, .form-venta input, .form-venta select {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+.btn-green { background-color: #4CAF50; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer; }
+.btn-blue { background-color: #0288D1; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer; }
+.btn-red { background-color: #D32F2F; color: white; padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; }
+
+.lista-datos { list-style-type: none; padding: 0; }
+.lista-datos li {
+  background: white;
+  padding: 10px;
+  margin-bottom: 5px;
+  border-radius: 5px;
+  border-left: 4px solid #4CAF50;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
 .stock-low { color: var(--danger-color); font-weight: bold; }
