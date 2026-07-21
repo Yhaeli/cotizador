@@ -119,42 +119,58 @@
 
   <!-- PESTAÑA 2: MACETAS -->
   <!-- Muestra este bloque únicamente dentro de la sección/tab de "CONTROL DE MACETAS" -->
-<div class="contenedor-macetas">
-  <h2>Control de Inventario de Macetas</h2>
-  
-  <!-- SECCIÓN 1: INVENTARIO (Agregar / Eliminar) -->
-  <div class="tarjeta">
-    <h3>Inventario Actual</h3>
+<div id="tab-macetas" class="tab-content">
+  <div class="contenedor-macetas">
+    <h2>Control de Inventario y Ventas de Macetas</h2>
     
-    <div class="form-agregar">
-      <input type="text" id="nombreMaceta" placeholder="Nombre (Ej: Maceta N° 10)">
-      <input type="number" id="costoMaceta" placeholder="Costo Unit. (S/.)">
-      <input type="number" id="stockMaceta" placeholder="Cantidad Inicial">
-      <button id="btnAgregarMaceta" class="btn-green">Agregar al Inventario</button>
+    <!-- SECCIÓN 1: INVENTARIO -->
+    <div class="tarjeta">
+      <h3>Inventario Actual</h3>
+      
+      <div class="form-agregar">
+        <input type="text" id="nombreMaceta" placeholder="Nombre (Ej: Maceta N° 14)">
+        <input type="number" id="costoMaceta" placeholder="Precio Base (S/.)" step="0.10">
+        <input type="number" id="stockMaceta" placeholder="Cantidad Inicial">
+        <button type="button" id="btnAgregarMaceta" class="btn-green">Agregar al Inventario</button>
+      </div>
+
+      <!-- CUADRO/TABLA DE INVENTARIO -->
+      <div class="tabla-responsive">
+        <table class="tabla-inventario">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Precio Base</th>
+              <th>Stock</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody id="tablaInventarioMacetas">
+            <!-- Se llena con JS -->
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <ul id="listaInventarioMacetas" class="lista-datos">
-      <!-- Se llena con JavaScript -->
-    </ul>
-  </div>
+    <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ccc;">
 
-  <hr>
+    <!-- SECCIÓN 2: REGISTRO Y HISTORIAL DE VENTAS -->
+    <div class="tarjeta">
+      <h3>Registrar Salida / Venta</h3>
+      <div class="form-venta">
+        <select id="selectMacetaVenta" onchange="cargarPrecioVentaMaceta()">
+          <option value="">-- Seleccionar Maceta --</option>
+        </select>
+        <input type="number" id="cantidadVenta" placeholder="Cant. vendida" min="1">
+        <input type="number" id="precioVentaMacetaInput" placeholder="Precio Unit. Venta (S/.)" step="0.10">
+        <button type="button" id="btnRegistrarVenta" class="btn-blue">Registrar Venta</button>
+      </div>
 
-  <!-- SECCIÓN 2: REGISTRO Y HISTORIAL DE VENTAS -->
-  <div class="tarjeta">
-    <h3>Registrar Salida / Venta</h3>
-    <div class="form-venta">
-      <select id="selectMacetaVenta">
-        <option value="">-- Seleccionar Maceta --</option>
-      </select>
-      <input type="number" id="cantidadVenta" placeholder="Cant. vendida">
-      <button id="btnRegistrarVenta" class="btn-blue">Registrar Venta</button>
+      <h3>Historial de Ventas</h3>
+      <ul id="listaHistorialVentas" class="lista-datos">
+        <!-- Se llena con JS -->
+      </ul>
     </div>
-
-    <h3>Historial de Ventas</h3>
-    <ul id="listaHistorialVentas" class="lista-datos">
-      <!-- Se llena con JavaScript (Muestra fecha, cantidad y costo) -->
-    </ul>
   </div>
 </div>
     
