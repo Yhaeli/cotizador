@@ -1,501 +1,328 @@
 // ==========================================
-// VARIABLES GLOBALES EN MEMORIA
+// 1. FUNCIONES GENERALES Y NAVEGACIÓN
 // ==========================================
-let cotizacionesGuardadas = [];
-let inventarioMacetas = [];
-let historialVentasMacetas = [];
-let inventarioSustratos = [];
-let historialVentasSustratos = [];
 
-// ==========================================
-// 1. NAVEGACIÓN ENTRE PESTAÑAS
-// ==========================================
 function switchTab(tabId, event) {
-  document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+  // Ocultar todas las pestañas
+  const tabs = document.querySelectorAll('.tab-content');
+  tabs.forEach(tab => tab.classList.remove('active'));
 
+  // Desactivar botones de navegación
+  const navBtns = document.querySelectorAll('.nav-btn');
+  navBtns.forEach(btn => btn.classList.remove('active'));
+
+  // Activar pestaña y botón actual
   document.getElementById('tab-' + tabId).classList.add('active');
   if (event) event.currentTarget.classList.add('active');
 }
 
 // ==========================================
-// 2. ESCUCHADORES EN TIEMPO REAL (FIREBASE FIRESTORE)
+// 2. MÓDULO DE MACETAS
 // ==========================================
 
-// --- A. COTIZACIONES EN TIEMPO REAL ---
-db.collection("cotizaciones").onSnapshot((snapshot) => {
-  cotizacionesGuardadas = [];
-  snapshot.forEach((doc) => {
-    cotizacionesGuardadas.push({ id: doc.id, ...doc.data() });
+// Variables globales de elementos HTML para Macetas
+const nombreMaceta = document.getElementById('nombreMaceta');
+const costoMaceta = document.getElementById('costoMaceta');
+const stockMaceta = document.getElementById('stockMaceta');
+const btnAgregarMaceta = document.getElementById('btnAgregarMaceta');
+const tablaInventarioMacetas = document.getElementById('tablaInventarioMacetas');
+
+const selectMacetaVenta = document.getElementById('selectMacetaVenta');
+const cantidadVenta = document.getElementById('cantidadVenta');
+const precioVentaMacetaInput = document.getElementById('precioVentaMacetaInput');
+const clienteVentaMaceta = document.getElementById('clienteVentaMaceta');
+const metodoPagoMaceta = document.getElementById('metodoPagoMaceta');
+const btnRegistrarVenta = document.getElementById('btnRegistrarVenta');
+const listaHistorialVentas = document.getElementById('listaHistorialVentas');
+
+// A. Agregar Maceta al Inventario
+if (btnAgregarMaceta) {
+  btnAgregarMaceta.addEventListener('click', () => {
+    const nombre = nombreMaceta.value.trim();
+    const costo = parseFloat(costoMaceta.value);
+    const stock = parseInt(stockMaceta.value);
+
+    if (!nombre || isNaN(costo) || isNaN(stock)) {
+      alert("Por favor completa todos los campos del inventario.");
+      return;
+    }
+
+    db.collection('macetas').add({
+      nombre: nombre,
+      costo: costo,
+      stock: stock,
+      fecha: new Date()
+    })
+    .then(() => {
+      alert("Maceta agregada exitosamente.");
+      nombreMaceta.value = '';
+      costoMaceta.value = '';
+      stockMaceta.value = '';
+    })
+    .catch(error => console.error("Error al guardar en Firestore:", error));
   });
-  actualizarListaCotizacionesGuardadas();
-});
-
-// --- B. MACETAS EN TIEMPO REAL ---
-db.collection("inventario_macetas").onSnapshot((snapshot) => {
-  inventarioMacetas = [];
-  snapshot.forEach((doc) => {
-    inventarioMacetas.push({ id: doc.id, ...doc.data() });
-  });
-  actualizarPantallaMacetas();
-});
-
-db.collection("ventas_macetas").orderBy("fechaSort", "desc").onSnapshot((snapshot) => {
-  historialVentasMacetas = [];
-  snapshot.forEach((doc) => {
-    historialVentasMacetas.push({ id: doc.id, ...doc.data() });
-  });
-  actualizarPantallaMacetas();
-});
-
-// --- C. SUSTRATOS EN TIEMPO REAL ---
-db.collection("inventario_sustratos").onSnapshot((snapshot) => {
-  inventarioSustratos = [];
-  snapshot.forEach((doc) => {
-    inventarioSustratos.push({ id: doc.id, ...doc.data() });
-  });
-  actualizarPantallaSustratos();
-});
-
-db.collection("ventas_sustratos").orderBy("fechaSort", "desc").onSnapshot((snapshot) => {
-  historialVentasSustratos = [];
-  snapshot.forEach((doc) => {
-    historialVentasSustratos.push({ id: doc.id, ...doc.data() });
-  });
-  actualizarPantallaSustratos();
-});
-
-// ==========================================
-// 3. PROCESAMIENTO Y CÁLCULO DE COTIZACIÓN
-// ==========================================
-function procesarCotizacion() {
-  try {
-    const clienteInput = document.getElementById('cliente');
-    const numCotizacionInput = document.getElementById('num-cotizacion');
-    const pedidoTextoInput = document.getElementById('pedido-texto');
-    const valEmbalajeInput = document.getElementById('valEmbalaje');
-
-    if (!pedidoTextoInput) return;
-
-    const cliente = clienteInput ? (clienteInput.value || '---') : '---';
-    const numCotizacion = numCotizacionInput ? (numCotizacionInput.value || '---') : '---';
-    const pedidoTexto = pedidoTextoInput.value || '';
-    
-    let embalajeTexto = valEmbalajeInput ? valEmbalajeInput.value : "0";
-    embalajeTexto = embalajeTexto.replace(',', '.');
-    const valEmbalaje = parseFloat(embalajeTexto) || 0;
-
-    const hoy = new Date();
-    const fechaStr = `${String(hoy.getDate()).padStart(2, '0')}/${String(hoy.getMonth() + 1).padStart(2, '0')}/${hoy.getFullYear()}`;
-
-    if (document.getElementById('img-cliente')) document.getElementById('img-cliente').innerText = cliente;
-    if (document.getElementById('img-num-cotizacion')) document.getElementById('img-num-cotizacion').innerText = numCotizacion;
-    if (document.getElementById('img-fecha')) document.getElementById('img-fecha').innerText = fechaStr;
-
-    const lineas = pedidoTexto.split('\n');
-    let sumaPlantas = 0;
-    let htmlFilas = '';
-
-    lineas.forEach(linea => {
-      linea = linea.trim();
-      if (!linea) return;
-
-      let cantidad = 1;
-      let descripcion = linea;
-      let precioUnitario = 0;
-
-      if (linea.includes('-')) {
-        const partes = linea.split('-');
-        const parteIzquierda = partes[0].trim();
-        const parteDerecha = partes[1].trim().replace(',', '.');
-
-        precioUnitario = parseFloat(parteDerecha) || 0;
-
-        const palabras = parteIzquierda.split(' ');
-        if (!isNaN(palabras[0]) && palabras.length > 1) {
-          cantidad = parseInt(palabras[0]);
-          descripcion = palabras.slice(1).join(' ');
-        } else {
-          descripcion = parteIzquierda;
-        }
-      } else {
-        const palabras = linea.split(' ');
-        const ultimaPalabra = palabras[palabras.length - 1].replace(',', '.');
-
-        if (!isNaN(ultimaPalabra) && palabras.length > 1) {
-          precioUnitario = parseFloat(ultimaPalabra) || 0;
-
-          const primerPalabra = palabras[0];
-          if (!isNaN(primerPalabra) && palabras.length > 2) {
-            cantidad = parseInt(primerPalabra);
-            descripcion = palabras.slice(1, -1).join(' ');
-          } else {
-            descripcion = palabras.slice(0, -1).join(' ');
-          }
-        }
-      }
-
-      const subtotalLinea = cantidad * precioUnitario;
-      sumaPlantas += subtotalLinea;
-
-      htmlFilas += `
-        <tr>
-          <td class="text-center">${cantidad}</td>
-          <td>${descripcion}</td>
-          <td class="text-right">S/. ${precioUnitario.toFixed(2)}</td>
-          <td class="text-right">S/. ${subtotalLinea.toFixed(2)}</td>
-        </tr>
-      `;
-    });
-
-    const totalPagar = sumaPlantas + valEmbalaje;
-
-    if (document.getElementById('valPlantas')) document.getElementById('valPlantas').value = sumaPlantas.toFixed(2);
-    if (document.getElementById('valTotal')) document.getElementById('valTotal').value = totalPagar.toFixed(2);
-
-    if (document.getElementById('img-tabla-filas')) document.getElementById('img-tabla-filas').innerHTML = htmlFilas;
-    if (document.getElementById('img-subtotal')) document.getElementById('img-subtotal').innerText = sumaPlantas.toFixed(2);
-    if (document.getElementById('img-embalaje')) document.getElementById('img-embalaje').innerText = valEmbalaje.toFixed(2);
-    if (document.getElementById('img-total')) document.getElementById('img-total').innerText = totalPagar.toFixed(2);
-
-  } catch (err) {
-    console.error("Error al procesar cotización:", err);
-  }
 }
 
-// ==========================================
-// 4. COPIAR TEXTO A WHATSAPP Y GUARDAR EN LA NUBE
-// ==========================================
-function copiarWhatsAppYGuardar() {
-  const cliente = document.getElementById('cliente').value.trim() || 'Cliente Sin Nombre';
-  const numCotizacion = document.getElementById('num-cotizacion').value || '---';
-  const valPlantas = document.getElementById('valPlantas').value || '0.00';
-  const valEmbalaje = document.getElementById('valEmbalaje').value || '0.00';
-  const valTotal = document.getElementById('valTotal').value || '0.00';
-  const pedidoTexto = document.getElementById('pedido-texto').value || '';
+// B. Cargar Inventario de Macetas en Tiempo Real (Sincronización Laptop/Celular)
+db.collection('macetas').onSnapshot(snapshot => {
+  tablaInventarioMacetas.innerHTML = '';
+  selectMacetaVenta.innerHTML = '<option value="">-- Seleccionar Maceta --</option>';
 
-  if (!pedidoTexto.trim()) {
-    alert("Por favor escribe el detalle del pedido antes de copiar o guardar.");
-    return;
-  }
+  snapshot.forEach(doc => {
+    const item = doc.data();
+    const id = doc.id;
 
-  const hoy = new Date();
-  const fechaStr = `${String(hoy.getDate()).padStart(2, '0')}/${String(hoy.getMonth() + 1).padStart(2, '0')}/${hoy.getFullYear()}`;
+    // Llenar Tabla
+    const fila = document.createElement('tr');
+    fila.innerHTML = `
+      <td>${item.nombre}</td>
+      <td>S/. ${parseFloat(item.costo).toFixed(2)}</td>
+      <td>${item.stock}</td>
+      <td>
+        <button onclick="eliminarMaceta('${id}')" style="background:#e74c3c; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer;">Eliminar</button>
+      </td>
+    `;
+    tablaInventarioMacetas.appendChild(fila);
 
-  let textoCopiar = `*COTIZACIÓN VIVERO ELIEL*\n`;
-  textoCopiar += `👤 *Cliente:* ${cliente}\n`;
-  textoCopiar += `📄 *N° Cotización:* ${numCotizacion}\n`;
-  textoCopiar += `📅 *Fecha:* ${fechaStr}\n\n`;
-  textoCopiar += `*DETALLE DEL PEDIDO:*\n${pedidoTexto}\n\n`;
-  textoCopiar += `🪴 *Total Plantas:* S/. ${valPlantas}\n`;
-  textoCopiar += `📦 *Embalaje y Traslado:* S/. ${valEmbalaje}\n`;
-  textoCopiar += `💰 *TOTAL A PAGAR:* S/. ${valTotal}\n\n`;
-  textoCopiar += `📋 *Métodos de pago:*\n`;
-  textoCopiar += `📱 Yape: 981 046 861\n`;
-  textoCopiar += `🏦 BCP Cuenta Corriente: 19178952536034\n`;
-  textoCopiar += `💥 Titular: Arlene Cruzado Llanos\n\n`;
-  textoCopiar += `⚠️ *Importante:* Vigencia de 24 horas. Sin confirmación de pago, el pedido se libera.`;
-
-  // Guardar/Actualizar en Firebase
-  db.collection("cotizaciones").add({
-    cliente,
-    numCotizacion,
-    pedidoTexto,
-    valEmbalaje,
-    fecha: fechaStr,
-    creado: new Date()
-  }).then(() => {
-    console.log("Cotización sincronizada en la nube.");
+    // Llenar Select de Ventas
+    const option = document.createElement('option');
+    option.value = id;
+    option.dataset.precio = item.costo;
+    option.dataset.nombre = item.nombre;
+    option.textContent = `${item.nombre} (Stock: ${item.stock})`;
+    selectMacetaVenta.appendChild(option);
   });
+});
 
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(textoCopiar).then(() => {
-      alert("✅ Texto copiado al portapapeles y cotización guardada en la nube.");
-    }).catch(() => fallbackCopiar(textoCopiar));
+// C. Auto-cargar Precio Base al Seleccionar Maceta
+function cargarPrecioVentaMaceta() {
+  const selectedOption = selectMacetaVenta.options[selectMacetaVenta.selectedIndex];
+  if (selectedOption && selectedOption.dataset.precio) {
+    precioVentaMacetaInput.value = selectedOption.dataset.precio;
   } else {
-    fallbackCopiar(textoCopiar);
+    precioVentaMacetaInput.value = '';
   }
 }
 
-function fallbackCopiar(texto) {
-  const areaTemp = document.createElement("textarea");
-  areaTemp.value = texto;
-  document.body.appendChild(areaTemp);
-  areaTemp.select();
-  document.execCommand("copy");
-  document.body.removeChild(areaTemp);
-  alert("✅ Texto copiado al portapapeles y cotización guardada en la nube.");
-}
+// D. Registrar Venta de Macetas
+if (btnRegistrarVenta) {
+  btnRegistrarVenta.addEventListener('click', () => {
+    const macetaId = selectMacetaVenta.value;
+    const cant = parseInt(cantidadVenta.value);
+    const precio = parseFloat(precioVentaMacetaInput.value);
+    const cliente = clienteVentaMaceta.value.trim() || "Cliente Anónimo";
+    const pago = metodoPagoMaceta.value;
+    const selectedOption = selectMacetaVenta.options[selectMacetaVenta.selectedIndex];
 
-function actualizarListaCotizacionesGuardadas() {
-  const select = document.getElementById('lista-guardados');
-  if (!select) return;
+    if (!macetaId || isNaN(cant) || isNaN(precio) || cant <= 0) {
+      alert("Por favor selecciona un producto y completa una cantidad/precio válidos.");
+      return;
+    }
 
-  select.innerHTML = '<option value="">-- Seleccionar cotización guardada --</option>';
-  cotizacionesGuardadas.forEach((item, index) => {
-    select.innerHTML += `<option value="${index}">${item.cliente} (${item.fecha}) - N° ${item.numCotizacion}</option>`;
+    const nombreProducto = selectedOption.dataset.nombre;
+
+    // Guardar la venta en la colección 'ventasMacetas'
+    db.collection('ventasMacetas').add({
+      producto: nombreProducto,
+      cantidad: cant,
+      precioUnit: precio,
+      total: cant * precio,
+      cliente: cliente,
+      metodoPago: pago,
+      fecha: firebase.firestore.FieldValue.serverTimestamp()
+    })
+    .then(() => {
+      alert("Venta de maceta registrada.");
+      cantidadVenta.value = '';
+      clienteVentaMaceta.value = '';
+      selectMacetaVenta.value = '';
+      precioVentaMacetaInput.value = '';
+    })
+    .catch(error => console.error("Error al registrar venta:", error));
   });
 }
 
-function cargarCotizacion() {
-  const select = document.getElementById('lista-guardados');
-  const idx = select.value;
-  if (idx === "") return;
+// E. Cargar y Mostrar Historial de Ventas de Macetas en Tiempo Real
+db.collection('ventasMacetas').orderBy('fecha', 'desc').onSnapshot(snapshot => {
+  listaHistorialVentas.innerHTML = '';
 
-  const item = cotizacionesGuardadas[idx];
-  if (item) {
-    document.getElementById('cliente').value = item.cliente;
-    document.getElementById('num-cotizacion').value = item.numCotizacion || '';
-    document.getElementById('pedido-texto').value = item.pedidoTexto;
-    document.getElementById('valEmbalaje').value = item.valEmbalaje || '0.00';
-    procesarCotizacion();
-  }
-}
+  snapshot.forEach(doc => {
+    const venta = doc.data();
+    const id = doc.id;
 
-function eliminarCotizacion() {
-  const select = document.getElementById('lista-guardados');
-  const idx = select.value;
-  if (idx === "") {
-    alert("Selecciona una cotización guardada para eliminar.");
-    return;
-  }
-
-  const item = cotizacionesGuardadas[idx];
-  db.collection("cotizaciones").doc(item.id).delete().then(() => {
-    alert("Cotización eliminada correctamente.");
-  });
-}
-
-// ==========================================
-// 5. AUTOCOMPLETADO DE PRECIOS
-// ==========================================
-window.cargarPrecioVentaMaceta = function() {
-  let index = document.getElementById('selectMacetaVenta').value;
-  let inputPrecio = document.getElementById('precioVentaMacetaInput');
-  if (index !== "" && inputPrecio && inventarioMacetas[index]) {
-    inputPrecio.value = inventarioMacetas[index].costo.toFixed(2);
-  } else if (inputPrecio) {
-    inputPrecio.value = '';
-  }
-};
-
-window.cargarPrecioVentaSustrato = function() {
-  let index = document.getElementById('selectSustratoVenta').value;
-  let inputPrecio = document.getElementById('precioVentaSustratoInput');
-  if (index !== "" && inputPrecio && inventarioSustratos[index]) {
-    inputPrecio.value = inventarioSustratos[index].costo.toFixed(2);
-  } else if (inputPrecio) {
-    inputPrecio.value = '';
-  }
-};
-
-// ==========================================
-// 6. RENDERIZADO DE HISTORIAL Y TABLAS (CON OPCIÓN ELIMINAR)
-// ==========================================
-function actualizarPantallaMacetas() {
-  const tablaInventario = document.getElementById('tablaInventarioMacetas');
-  const selectVenta = document.getElementById('selectMacetaVenta');
-  const listaVentas = document.getElementById('listaHistorialVentas');
-  
-  if (!tablaInventario || !selectVenta || !listaVentas) return;
-
-  tablaInventario.innerHTML = '';
-  selectVenta.innerHTML = '<option value="">-- Seleccionar Maceta --</option>';
-  listaVentas.innerHTML = '';
-
-  // Dibujar Inventario
-  inventarioMacetas.forEach((maceta, index) => {
-    let tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><b>${maceta.nombre}</b></td>
-      <td>S/. ${maceta.costo.toFixed(2)}</td>
-      <td><b>${maceta.stock}</b> unids.</td>
-      <td><button type="button" class="btn-red" onclick="eliminarMaceta('${maceta.id}')">Eliminar</button></td>
-    `;
-    tablaInventario.appendChild(tr);
-
-    let option = document.createElement('option');
-    option.value = index;
-    option.textContent = `${maceta.nombre} (Stock: ${maceta.stock})`;
-    selectVenta.appendChild(option);
-  });
-
-  // Dibujar Historial de Ventas (Con Nombre, Método de Pago y Botón Eliminar)
-  historialVentasMacetas.forEach(venta => {
-    let li = document.createElement('li');
-    li.style.borderLeftColor = venta.metodoPago === 'Pago Pendiente' ? '#d32f2f' : '#0288D1';
+    const li = document.createElement('li');
+    li.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:8px; border-bottom:1px solid #ddd;";
     li.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-        <span>
-          <small>${venta.fecha}</small> | 👤 <b>${venta.cliente || 'Cliente Varios'}</b><br>
-          Vendió: <b>${venta.cantidad}x ${venta.nombre}</b> (a S/.${venta.precioUnitario.toFixed(2)} c/u) <br>
-          Total: <b>S/.${venta.total.toFixed(2)}</b> — <i>[${venta.metodoPago || 'Efectivo'}]</i>
-        </span>
-        <button type="button" class="btn-red" style="padding: 4px 8px; font-size: 12px;" onclick="eliminarVentaMaceta('${venta.id}')">Eliminar Venta</button>
+      <div>
+        <strong>${venta.producto}</strong> x${venta.cantidad} - S/. ${(venta.total || 0).toFixed(2)} 
+        <br><small>👤 ${venta.cliente} | 💳 ${venta.metodoPago}</small>
       </div>
+      <button onclick="eliminarVentaMaceta('${id}')" style="background:#e74c3c; color:white; border:none; padding:5px 10px; border-radius:3px; cursor:pointer;">🗑️ Borrar</button>
     `;
-    listaVentas.appendChild(li);
+    listaHistorialVentas.appendChild(li);
   });
-}
-
-function actualizarPantallaSustratos() {
-  const tablaInventario = document.getElementById('tablaInventarioSustratos');
-  const selectVenta = document.getElementById('selectSustratoVenta');
-  const listaVentas = document.getElementById('listaHistorialSustratos');
-  
-  if (!tablaInventario || !selectVenta || !listaVentas) return;
-
-  tablaInventario.innerHTML = '';
-  selectVenta.innerHTML = '<option value="">-- Seleccionar Sustrato --</option>';
-  listaVentas.innerHTML = '';
-
-  // Dibujar Inventario
-  inventarioSustratos.forEach((sustrato, index) => {
-    let tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><b>${sustrato.nombre}</b></td>
-      <td>S/. ${sustrato.costo.toFixed(2)}</td>
-      <td><b>${sustrato.stock}</b> unids.</td>
-      <td><button type="button" class="btn-red" onclick="eliminarSustrato('${sustrato.id}')">Eliminar</button></td>
-    `;
-    tablaInventario.appendChild(tr);
-
-    let option = document.createElement('option');
-    option.value = index;
-    option.textContent = `${sustrato.nombre} (Stock: ${sustrato.stock})`;
-    selectVenta.appendChild(option);
-  });
-
-  // Dibujar Historial de Ventas (Con Nombre, Método de Pago y Botón Eliminar)
-  historialVentasSustratos.forEach(venta => {
-    let li = document.createElement('li');
-    li.style.borderLeftColor = venta.metodoPago === 'Pago Pendiente' ? '#d32f2f' : '#8e24aa';
-    li.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-        <span>
-          <small>${venta.fecha}</small> | 👤 <b>${venta.cliente || 'Cliente Varios'}</b><br>
-          Vendió: <b>${venta.cantidad}x ${venta.nombre}</b> (a S/.${venta.precioUnitario.toFixed(2)} c/u) <br>
-          Total: <b>S/.${venta.total.toFixed(2)}</b> — <i>[${venta.metodoPago || 'Efectivo'}]</i>
-        </span>
-        <button type="button" class="btn-red" style="padding: 4px 8px; font-size: 12px;" onclick="eliminarVentaSustrato('${venta.id}')">Eliminar Venta</button>
-      </div>
-    `;
-    listaVentas.appendChild(li);
-  });
-}
-
-// ==========================================
-// 7. EVENTOS DE REGISTRO
-// ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-  // --- REGISTRAR VENTA MACETA ---
-  const btnRegistrarVentaMaceta = document.getElementById('btnRegistrarVenta');
-  if (btnRegistrarVentaMaceta) {
-    btnRegistrarVentaMaceta.addEventListener('click', function() {
-      let index = document.getElementById('selectMacetaVenta').value;
-      let cantidad = parseInt(document.getElementById('cantidadVenta').value);
-      let precioInput = document.getElementById('precioVentaMacetaInput');
-      let precioUnitario = precioInput ? parseFloat(precioInput.value) : NaN;
-      
-      let cliente = document.getElementById('clienteVentaMaceta').value.trim() || 'Cliente Varios';
-      let metodoPago = document.getElementById('metodoPagoMaceta').value;
-
-      if (index !== "" && !isNaN(cantidad) && cantidad > 0 && !isNaN(precioUnitario) && precioUnitario >= 0) {
-        let maceta = inventarioMacetas[index];
-
-        if (cantidad > maceta.stock) {
-          alert("Stock insuficiente para realizar esta venta.");
-          return;
-        }
-
-        let nuevoStock = maceta.stock - cantidad;
-        db.collection("inventario_macetas").doc(maceta.id).update({ stock: nuevoStock });
-
-        let fecha = new Date().toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' });
-        let total = precioUnitario * cantidad;
-
-        db.collection("ventas_macetas").add({
-          nombre: maceta.nombre,
-          cantidad,
-          precioUnitario,
-          total,
-          cliente,
-          metodoPago,
-          fecha,
-          fechaSort: new Date()
-        });
-
-        document.getElementById('cantidadVenta').value = '';
-        document.getElementById('clienteVentaMaceta').value = '';
-        if (precioInput) precioInput.value = '';
-      } else {
-        alert("Selecciona una maceta, coloca cantidad y confirma el precio de venta.");
-      }
-    });
-  }
-
-  // --- REGISTRAR VENTA SUSTRATO ---
-  const btnRegistrarVentaSustrato = document.getElementById('btnRegistrarVentaSustrato');
-  if (btnRegistrarVentaSustrato) {
-    btnRegistrarVentaSustrato.addEventListener('click', function() {
-      let index = document.getElementById('selectSustratoVenta').value;
-      let cantidad = parseInt(document.getElementById('cantidadSustratoVenta').value);
-      let precioInput = document.getElementById('precioVentaSustratoInput');
-      let precioUnitario = precioInput ? parseFloat(precioInput.value) : NaN;
-      
-      let cliente = document.getElementById('clienteVentaSustrato').value.trim() || 'Cliente Varios';
-      let metodoPago = document.getElementById('metodoPagoSustrato').value;
-
-      if (index !== "" && !isNaN(cantidad) && cantidad > 0 && !isNaN(precioUnitario) && precioUnitario >= 0) {
-        let sustrato = inventarioSustratos[index];
-
-        if (cantidad > sustrato.stock) {
-          alert("Stock insuficiente para realizar esta venta.");
-          return;
-        }
-
-        let nuevoStock = sustrato.stock - cantidad;
-        db.collection("inventario_sustratos").doc(sustrato.id).update({ stock: nuevoStock });
-
-        let fecha = new Date().toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' });
-        let total = precioUnitario * cantidad;
-
-        db.collection("ventas_sustratos").add({
-          nombre: sustrato.nombre,
-          cantidad,
-          precioUnitario,
-          total,
-          cliente,
-          metodoPago,
-          fecha,
-          fechaSort: new Date()
-        });
-
-        document.getElementById('cantidadSustratoVenta').value = '';
-        document.getElementById('clienteVentaSustrato').value = '';
-        if (precioInput) precioInput.value = '';
-      } else {
-        alert("Selecciona un sustrato, coloca cantidad y confirma el precio de venta.");
-      }
-    });
-  }
 });
 
-// ==========================================
-// 8. FUNCIONES PARA ELIMINAR REGISTROS DE VENTAS EN FIREBASE
-// ==========================================
-window.eliminarVentaMaceta = function(idVenta) {
-  if (confirm("¿Deseas eliminar este registro de venta? (Nota: Esto no regresará el stock automáticamente al inventario).")) {
-    db.collection("ventas_macetas").doc(idVenta).delete();
+// F. Funciones de Borrado (Macetas y Ventas)
+function eliminarMaceta(id) {
+  if (confirm("¿Deseas eliminar este producto del inventario?")) {
+    db.collection('macetas').doc(id).delete();
   }
-};
+}
 
-window.eliminarVentaSustrato = function(idVenta) {
-  if (confirm("¿Deseas eliminar este registro de venta? (Nota: Esto no regresará el stock automáticamente al inventario).")) {
-    db.collection("ventas_sustratos").doc(idVenta).delete();
+function eliminarVentaMaceta(id) {
+  if (confirm("¿Estás seguro de eliminar este registro de venta?")) {
+    db.collection('ventasMacetas').doc(id).delete();
   }
-};
-// INICIALIZACIÓN
-window.onload = function() {
-  procesarCotizacion();
-};
+}
+
+
+// ==========================================
+// 3. MÓDULO DE SUSTRATOS
+// ==========================================
+
+const nombreSustrato = document.getElementById('nombreSustrato');
+const costoSustrato = document.getElementById('costoSustrato');
+const stockSustrato = document.getElementById('stockSustrato');
+const btnAgregarSustrato = document.getElementById('btnAgregarSustrato');
+const tablaInventarioSustratos = document.getElementById('tablaInventarioSustratos');
+
+const selectSustratoVenta = document.getElementById('selectSustratoVenta');
+const cantidadSustratoVenta = document.getElementById('cantidadSustratoVenta');
+const precioVentaSustratoInput = document.getElementById('precioVentaSustratoInput');
+const clienteVentaSustrato = document.getElementById('clienteVentaSustrato');
+const metodoPagoSustrato = document.getElementById('metodoPagoSustrato');
+const btnRegistrarVentaSustrato = document.getElementById('btnRegistrarVentaSustrato');
+const listaHistorialSustratos = document.getElementById('listaHistorialSustratos');
+
+// A. Agregar Sustrato
+if (btnAgregarSustrato) {
+  btnAgregarSustrato.addEventListener('click', () => {
+    const nombre = nombreSustrato.value.trim();
+    const costo = parseFloat(costoSustrato.value);
+    const stock = parseInt(stockSustrato.value);
+
+    if (!nombre || isNaN(costo) || isNaN(stock)) {
+      alert("Por favor completa los campos del sustrato.");
+      return;
+    }
+
+    db.collection('sustratos').add({
+      nombre: nombre,
+      costo: costo,
+      stock: stock,
+      fecha: new Date()
+    })
+    .then(() => {
+      alert("Sustrato agregado exitosamente.");
+      nombreSustrato.value = '';
+      costoSustrato.value = '';
+      stockSustrato.value = '';
+    });
+  });
+}
+
+// B. Cargar Inventario de Sustratos
+db.collection('sustratos').onSnapshot(snapshot => {
+  tablaInventarioSustratos.innerHTML = '';
+  selectSustratoVenta.innerHTML = '<option value="">-- Seleccionar Sustrato --</option>';
+
+  snapshot.forEach(doc => {
+    const item = doc.data();
+    const id = doc.id;
+
+    const fila = document.createElement('tr');
+    fila.innerHTML = `
+      <td>${item.nombre}</td>
+      <td>S/. ${parseFloat(item.costo).toFixed(2)}</td>
+      <td>${item.stock}</td>
+      <td>
+        <button onclick="eliminarSustrato('${id}')" style="background:#e74c3c; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer;">Eliminar</button>
+      </td>
+    `;
+    tablaInventarioSustratos.appendChild(fila);
+
+    const option = document.createElement('option');
+    option.value = id;
+    option.dataset.precio = item.costo;
+    option.dataset.nombre = item.nombre;
+    option.textContent = `${item.nombre} (Stock: ${item.stock})`;
+    selectSustratoVenta.appendChild(option);
+  });
+});
+
+function cargarPrecioVentaSustrato() {
+  const selectedOption = selectSustratoVenta.options[selectSustratoVenta.selectedIndex];
+  if (selectedOption && selectedOption.dataset.precio) {
+    precioVentaSustratoInput.value = selectedOption.dataset.precio;
+  } else {
+    precioVentaSustratoInput.value = '';
+  }
+}
+
+// C. Registrar Venta Sustrato
+if (btnRegistrarVentaSustrato) {
+  btnRegistrarVentaSustrato.addEventListener('click', () => {
+    const sustratoId = selectSustratoVenta.value;
+    const cant = parseInt(cantidadSustratoVenta.value);
+    const precio = parseFloat(precioVentaSustratoInput.value);
+    const cliente = clienteVentaSustrato.value.trim() || "Cliente Anónimo";
+    const pago = metodoPagoSustrato.value;
+    const selectedOption = selectSustratoVenta.options[selectSustratoVenta.selectedIndex];
+
+    if (!sustratoId || isNaN(cant) || isNaN(precio) || cant <= 0) {
+      alert("Por favor selecciona un producto y datos válidos.");
+      return;
+    }
+
+    db.collection('ventasSustratos').add({
+      producto: selectedOption.dataset.nombre,
+      cantidad: cant,
+      precioUnit: precio,
+      total: cant * precio,
+      cliente: cliente,
+      metodoPago: pago,
+      fecha: firebase.firestore.FieldValue.serverTimestamp()
+    })
+    .then(() => {
+      alert("Venta de sustrato registrada.");
+      cantidadSustratoVenta.value = '';
+      clienteVentaSustrato.value = '';
+      selectSustratoVenta.value = '';
+      precioVentaSustratoInput.value = '';
+    });
+  });
+}
+
+// D. Historial Sustratos
+db.collection('ventasSustratos').orderBy('fecha', 'desc').onSnapshot(snapshot => {
+  listaHistorialSustratos.innerHTML = '';
+
+  snapshot.forEach(doc => {
+    const venta = doc.data();
+    const id = doc.id;
+
+    const li = document.createElement('li');
+    li.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:8px; border-bottom:1px solid #ddd;";
+    li.innerHTML = `
+      <div>
+        <strong>${venta.producto}</strong> x${venta.cantidad} - S/. ${(venta.total || 0).toFixed(2)} 
+        <br><small>👤 ${venta.cliente} | 💳 ${venta.metodoPago}</small>
+      </div>
+      <button onclick="eliminarVentaSustrato('${id}')" style="background:#e74c3c; color:white; border:none; padding:5px 10px; border-radius:3px; cursor:pointer;">🗑️ Borrar</button>
+    `;
+    listaHistorialSustratos.appendChild(li);
+  });
+});
+
+function eliminarSustrato(id) {
+  if (confirm("¿Deseas eliminar este producto del inventario?")) {
+    db.collection('sustratos').doc(id).delete();
+  }
+}
+
+function eliminarVentaSustrato(id) {
+  if (confirm("¿Estás seguro de eliminar este registro de venta?")) {
+    db.collection('ventasSustratos').doc(id).delete();
+  }
+}
