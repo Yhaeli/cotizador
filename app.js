@@ -3,24 +3,208 @@
 // ==========================================
 
 function switchTab(tabId, event) {
-  // Ocultar todas las pestañas
   const tabs = document.querySelectorAll('.tab-content');
   tabs.forEach(tab => tab.classList.remove('active'));
 
-  // Desactivar botones de navegación
   const navBtns = document.querySelectorAll('.nav-btn');
   navBtns.forEach(btn => btn.classList.remove('active'));
 
-  // Activar pestaña y botón actual
   document.getElementById('tab-' + tabId).classList.add('active');
   if (event) event.currentTarget.classList.add('active');
 }
 
 // ==========================================
-// 2. MÓDULO DE MACETAS
+// 2. MÓDULO COTIZADOR (CÁLCULO AUTOMÁTICO)
 // ==========================================
 
-// Variables globales de elementos HTML para Macetas
+function procesarCotizacion() {
+  const cliente = document.getElementById('cliente').value;
+  const numCotizacion = document.getElementById('num-cotizacion').value;
+  const pedidoTexto = document.getElementById('pedido-texto').value;
+  const valEmbalajeInput = document.getElementById('valEmbalaje');
+  const valEmbalaje = parseFloat(valEmbalajeInput.value) || 0;
+
+  // Actualizar encabezados visuales de la vista previa
+  document.getElementById('img-cliente').textContent = cliente.trim() !== '' ? cliente : '---';
+  document.getElementById('img-num-cotizacion').textContent = numCotizacion.trim() !== '' ? numCotizacion : '---';
+
+  const fechaActual = new Date();
+  const dia = String(fechaActual.getDate()).padStart(2, '0');
+  const mes = String(fechaActual.getMonth() + 1).padStart(2, '0');
+  const anio = fechaActual.getFullYear();
+  document.getElementById('img-fecha').textContent = `${dia}/${mes}/${anio}`;
+
+  const tablaFilas = document.getElementById('img-tabla-filas');
+  tablaFilas.innerHTML = '';
+
+  let totalPlantas = 0;
+
+  // Separar líneas del texto ingresado
+  const lineas = pedidoTexto.split('\n');
+
+  lineas.forEach(linea => {
+    linea = linea.trim();
+    if (!linea) return;
+
+    // Detecta patrones como: "2 rosas 23", "2 rosas - 23.00", "2 x rosas 23"
+    // Extrae: Cantidad (opcional, por defecto 1), Descripción y Precio final
+    const match = linea.match(/^(?:(\d+)\s*x?\s+)?(.+?)\s*[-:\s]+\s*(\d+(?:\.\d+)?)$/i);
+
+    if (match) {
+      const cantidad = parseInt(match[1]) || 1;
+      const descripcion = match[2].trim();
+      const precioTotalItem = parseFloat(match[3]);
+      const precioUnitario = precioTotalItem / cantidad;
+
+      totalPlantas += precioTotalItem;
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="text-center">${cantidad}</td>
+        <td>${descripcion}</td>
+        <td class="text-right">S/. ${precioUnitario.toFixed(2)}</td>
+        <td class="text-right">S/. ${precioTotalItem.toFixed(2)}</td>
+      `;
+      tablaFilas.appendChild(tr);
+    } else {
+      // Si la línea no tiene precio al final, se muestra solo como descripción
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="text-center">1</td>
+        <td>${linea}</td>
+        <td class="text-right">S/. 0.00</td>
+        <td class="text-right">S/. 0.00</td>
+      `;
+      tablaFilas.appendChild(tr);
+    }
+  });
+
+  const totalPagar = totalPlantas + valEmbalaje;
+
+  // Actualizar los campos numéricos de la interfaz
+  document.getElementById('valPlantas').value = totalPlantas.toFixed(2);
+  document.getElementById('valTotal').value = totalPagar.toFixed(2);
+
+  // Actualizar la vista previa de la tarjeta/recibo
+  document.getElementById('img-subtotal').textContent = totalPlantas.toFixed(2);
+  document.getElementById('img-embalaje').textContent = valEmbalaje.toFixed(2);
+  document.getElementById('img-total').textContent = totalPagar.toFixed(2);
+}
+
+// Guardar Cotización en Firestore
+function guardarCotizacion() {
+  const cliente = document.getElementById('cliente').value.trim();
+  const numCotizacion = document.getElementById('num-cotizacion').value.trim();
+  const pedidoTexto = document.getElementById('pedido-texto').value;
+  const valEmbalaje = parseFloat(document.getElementById('valEmbalaje').value) || 0;
+
+  if (!cliente) {
+    alert("Ingresa al menos el nombre del cliente para guardar.");
+    return;
+  }
+
+  db.collection('cotizaciones').add({
+    cliente: cliente,
+    numCotizacion: numCotizacion,
+    pedidoTexto: pedidoTexto,
+    valEmbalaje: valEmbalaje,
+    fecha: firebase.firestore.FieldValue.serverTimestamp()
+  })
+  .then(() => alert("Cotización guardada exitosamente."))
+  .catch(err => console.error("Error al guardar cotización:", err));
+}
+
+// Escuchar Cotizaciones Guardadas en Tiempo Real para el <select>
+db.collection('cotizaciones').orderBy('fecha', 'desc').onSnapshot(snapshot => {
+  const selectHistorial = document.getElementById('lista-guardados');
+  if (!selectHistorial) return;
+
+  selectHistorial.innerHTML = '<option value="">-- Seleccionar cotización guardada --</option>';
+
+  snapshot.forEach(doc => {
+    const cot = doc.data();
+    const option = document.createElement('option');
+    option.value = doc.id;
+    option.dataset.cliente = cot.cliente || '';
+    option.dataset.num = cot.numCotizacion || '';
+    option.dataset.pedido = cot.pedidoTexto || '';
+    option.dataset.embalaje = cot.valEmbalaje || 0;
+    option.textContent = `${cot.cliente} (${cot.numCotizacion || 'S/N'})`;
+    selectHistorial.appendChild(option);
+  });
+});
+
+function cargarCotizacion() {
+  const selectHistorial = document.getElementById('lista-guardados');
+  const selectedOption = selectHistorial.options[selectHistorial.selectedIndex];
+
+  if (selectedOption && selectedOption.value) {
+    document.getElementById('cliente').value = selectedOption.dataset.cliente;
+    document.getElementById('num-cotizacion').value = selectedOption.dataset.num;
+    document.getElementById('pedido-texto').value = selectedOption.dataset.pedido;
+    document.getElementById('valEmbalaje').value = selectedOption.dataset.embalaje;
+    procesarCotizacion();
+  }
+}
+
+function eliminarCotizacion() {
+  const selectHistorial = document.getElementById('lista-guardados');
+  const id = selectHistorial.value;
+
+  if (!id) {
+    alert("Selecciona una cotización de la lista para eliminar.");
+    return;
+  }
+
+  if (confirm("¿Seguro de que deseas eliminar esta cotización guardada?")) {
+    db.collection('cotizaciones').doc(id).delete()
+    .then(() => {
+      alert("Cotización eliminada.");
+      document.getElementById('cliente').value = '';
+      document.getElementById('num-cotizacion').value = '';
+      document.getElementById('pedido-texto').value = '';
+      document.getElementById('valEmbalaje').value = '0.00';
+      procesarCotizacion();
+    });
+  }
+}
+
+// Botones de Acción de Cotizador
+function copiarWhatsAppYGuardar() {
+  guardarCotizacion();
+
+  const cliente = document.getElementById('cliente').value;
+  const total = document.getElementById('valTotal').value;
+  const pedido = document.getElementById('pedido-texto').value;
+
+  const mensaje = `🌱 *COTIZACIÓN VIVERO ELIEL*\n👤 Cliente: ${cliente}\n📋 Detalle:\n${pedido}\n\n💰 *TOTAL A CANCELAR: S/. ${total}*\n💳 Yape: 981 046 861 (Arlene Cruzado Llanos)`;
+
+  navigator.clipboard.writeText(mensaje)
+    .then(() => alert("¡Texto copiado al portapapeles y cotización guardada!"))
+    .catch(() => alert("Cotización guardada. (No se pudo copiar el texto automáticamente)"));
+}
+
+function guardarYDescargarImagen() {
+  guardarCotizacion();
+  const bloque = document.getElementById('bloque-imagen');
+
+  if (typeof html2canvas !== 'undefined') {
+    html2canvas(bloque).then(canvas => {
+      const enlace = document.createElement('a');
+      enlace.download = `Cotizacion_${document.getElementById('cliente').value || 'Vivero'}.png`;
+      enlace.href = canvas.toDataURL();
+      enlace.click();
+    });
+  } else {
+    alert("Librería de imagen no disponible.");
+  }
+}
+
+
+// ==========================================
+// 3. MÓDULO DE MACETAS
+// ==========================================
+
 const nombreMaceta = document.getElementById('nombreMaceta');
 const costoMaceta = document.getElementById('costoMaceta');
 const stockMaceta = document.getElementById('stockMaceta');
@@ -35,7 +219,6 @@ const metodoPagoMaceta = document.getElementById('metodoPagoMaceta');
 const btnRegistrarVenta = document.getElementById('btnRegistrarVenta');
 const listaHistorialVentas = document.getElementById('listaHistorialVentas');
 
-// A. Agregar Maceta al Inventario
 if (btnAgregarMaceta) {
   btnAgregarMaceta.addEventListener('click', () => {
     const nombre = nombreMaceta.value.trim();
@@ -58,13 +241,12 @@ if (btnAgregarMaceta) {
       nombreMaceta.value = '';
       costoMaceta.value = '';
       stockMaceta.value = '';
-    })
-    .catch(error => console.error("Error al guardar en Firestore:", error));
+    });
   });
 }
 
-// B. Cargar Inventario de Macetas en Tiempo Real (Sincronización Laptop/Celular)
 db.collection('macetas').onSnapshot(snapshot => {
+  if (!tablaInventarioMacetas || !selectMacetaVenta) return;
   tablaInventarioMacetas.innerHTML = '';
   selectMacetaVenta.innerHTML = '<option value="">-- Seleccionar Maceta --</option>';
 
@@ -72,7 +254,6 @@ db.collection('macetas').onSnapshot(snapshot => {
     const item = doc.data();
     const id = doc.id;
 
-    // Llenar Tabla
     const fila = document.createElement('tr');
     fila.innerHTML = `
       <td>${item.nombre}</td>
@@ -84,7 +265,6 @@ db.collection('macetas').onSnapshot(snapshot => {
     `;
     tablaInventarioMacetas.appendChild(fila);
 
-    // Llenar Select de Ventas
     const option = document.createElement('option');
     option.value = id;
     option.dataset.precio = item.costo;
@@ -94,7 +274,6 @@ db.collection('macetas').onSnapshot(snapshot => {
   });
 });
 
-// C. Auto-cargar Precio Base al Seleccionar Maceta
 function cargarPrecioVentaMaceta() {
   const selectedOption = selectMacetaVenta.options[selectMacetaVenta.selectedIndex];
   if (selectedOption && selectedOption.dataset.precio) {
@@ -104,7 +283,6 @@ function cargarPrecioVentaMaceta() {
   }
 }
 
-// D. Registrar Venta de Macetas
 if (btnRegistrarVenta) {
   btnRegistrarVenta.addEventListener('click', () => {
     const macetaId = selectMacetaVenta.value;
@@ -119,11 +297,8 @@ if (btnRegistrarVenta) {
       return;
     }
 
-    const nombreProducto = selectedOption.dataset.nombre;
-
-    // Guardar la venta en la colección 'ventasMacetas'
     db.collection('ventasMacetas').add({
-      producto: nombreProducto,
+      producto: selectedOption.dataset.nombre,
       cantidad: cant,
       precioUnit: precio,
       total: cant * precio,
@@ -137,13 +312,12 @@ if (btnRegistrarVenta) {
       clienteVentaMaceta.value = '';
       selectMacetaVenta.value = '';
       precioVentaMacetaInput.value = '';
-    })
-    .catch(error => console.error("Error al registrar venta:", error));
+    });
   });
 }
 
-// E. Cargar y Mostrar Historial de Ventas de Macetas en Tiempo Real
 db.collection('ventasMacetas').orderBy('fecha', 'desc').onSnapshot(snapshot => {
+  if (!listaHistorialVentas) return;
   listaHistorialVentas.innerHTML = '';
 
   snapshot.forEach(doc => {
@@ -163,7 +337,6 @@ db.collection('ventasMacetas').orderBy('fecha', 'desc').onSnapshot(snapshot => {
   });
 });
 
-// F. Funciones de Borrado (Macetas y Ventas)
 function eliminarMaceta(id) {
   if (confirm("¿Deseas eliminar este producto del inventario?")) {
     db.collection('macetas').doc(id).delete();
@@ -178,7 +351,7 @@ function eliminarVentaMaceta(id) {
 
 
 // ==========================================
-// 3. MÓDULO DE SUSTRATOS
+// 4. MÓDULO DE SUSTRATOS
 // ==========================================
 
 const nombreSustrato = document.getElementById('nombreSustrato');
@@ -195,7 +368,6 @@ const metodoPagoSustrato = document.getElementById('metodoPagoSustrato');
 const btnRegistrarVentaSustrato = document.getElementById('btnRegistrarVentaSustrato');
 const listaHistorialSustratos = document.getElementById('listaHistorialSustratos');
 
-// A. Agregar Sustrato
 if (btnAgregarSustrato) {
   btnAgregarSustrato.addEventListener('click', () => {
     const nombre = nombreSustrato.value.trim();
@@ -222,8 +394,8 @@ if (btnAgregarSustrato) {
   });
 }
 
-// B. Cargar Inventario de Sustratos
 db.collection('sustratos').onSnapshot(snapshot => {
+  if (!tablaInventarioSustratos || !selectSustratoVenta) return;
   tablaInventarioSustratos.innerHTML = '';
   selectSustratoVenta.innerHTML = '<option value="">-- Seleccionar Sustrato --</option>';
 
@@ -260,7 +432,6 @@ function cargarPrecioVentaSustrato() {
   }
 }
 
-// C. Registrar Venta Sustrato
 if (btnRegistrarVentaSustrato) {
   btnRegistrarVentaSustrato.addEventListener('click', () => {
     const sustratoId = selectSustratoVenta.value;
@@ -294,8 +465,8 @@ if (btnRegistrarVentaSustrato) {
   });
 }
 
-// D. Historial Sustratos
 db.collection('ventasSustratos').orderBy('fecha', 'desc').onSnapshot(snapshot => {
+  if (!listaHistorialSustratos) return;
   listaHistorialSustratos.innerHTML = '';
 
   snapshot.forEach(doc => {
