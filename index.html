@@ -118,31 +118,7 @@
   </div>
 
   <!-- PESTAÑA 2: MACETAS -->
-  <div id="tab-macetas" class="tab-content">
-    <div class="card">
-      <h2>Venta Rápida de Macetas</h2>
-      <form id="form-venta-maceta" onsubmit="registrarVentaMaceta(event)">
-        <div class="form-group">
-          <label>Seleccionar Maceta</label>
-          <select id="select-maceta-venta" required onchange="calcularTotalMaceta()">
-            <option value="">-- Seleccionar --</option>
-          </select>
-        </div>
-        <div class="grid-2">
-          <div class="form-group">
-            <label>Cantidad a Vender</label>
-            <input type="number" id="cant-maceta-venta" min="1" value="1" required oninput="calcularTotalMaceta()">
-          </div>
-          <div class="form-group">
-            <label>Total (S/.)</label>
-            <input type="text" id="total-maceta-venta" readonly value="0.00">
-          </div>
-        </div>
-        <button type="submit" class="btn btn-primary">Registrar Venta</button>
-      </form>
-    </div>
-
-    <!-- Muestra este bloque únicamente dentro de la sección/tab de "CONTROL DE MACETAS" -->
+  <!-- Muestra este bloque únicamente dentro de la sección/tab de "CONTROL DE MACETAS" -->
 <div class="contenedor-macetas">
   <h2>Control de Inventario de Macetas</h2>
   
