@@ -1,5 +1,14 @@
 // ==========================================
-// 1. CAMBIO DE PESTAÑAS
+// VARIABLES GLOBALES EN MEMORIA
+// ==========================================
+let cotizacionesGuardadas = [];
+let inventarioMacetas = [];
+let historialVentasMacetas = [];
+let inventarioSustratos = [];
+let historialVentasSustratos = [];
+
+// ==========================================
+// 1. NAVEGACIÓN ENTRE PESTAÑAS
 // ==========================================
 function switchTab(tabId, event) {
   document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -10,7 +19,54 @@ function switchTab(tabId, event) {
 }
 
 // ==========================================
-// 2. PROCESAMIENTO Y CÁLCULO DE COTIZACIÓN
+// 2. ESCUCHADORES EN TIEMPO REAL (FIREBASE FIRESTORE)
+// ==========================================
+
+// --- A. COTIZACIONES EN TIEMPO REAL ---
+db.collection("cotizaciones").onSnapshot((snapshot) => {
+  cotizacionesGuardadas = [];
+  snapshot.forEach((doc) => {
+    cotizacionesGuardadas.push({ id: doc.id, ...doc.data() });
+  });
+  actualizarListaCotizacionesGuardadas();
+});
+
+// --- B. MACETAS EN TIEMPO REAL ---
+db.collection("inventario_macetas").onSnapshot((snapshot) => {
+  inventarioMacetas = [];
+  snapshot.forEach((doc) => {
+    inventarioMacetas.push({ id: doc.id, ...doc.data() });
+  });
+  actualizarPantallaMacetas();
+});
+
+db.collection("ventas_macetas").orderBy("fechaSort", "desc").onSnapshot((snapshot) => {
+  historialVentasMacetas = [];
+  snapshot.forEach((doc) => {
+    historialVentasMacetas.push({ id: doc.id, ...doc.data() });
+  });
+  actualizarPantallaMacetas();
+});
+
+// --- C. SUSTRATOS EN TIEMPO REAL ---
+db.collection("inventario_sustratos").onSnapshot((snapshot) => {
+  inventarioSustratos = [];
+  snapshot.forEach((doc) => {
+    inventarioSustratos.push({ id: doc.id, ...doc.data() });
+  });
+  actualizarPantallaSustratos();
+});
+
+db.collection("ventas_sustratos").orderBy("fechaSort", "desc").onSnapshot((snapshot) => {
+  historialVentasSustratos = [];
+  snapshot.forEach((doc) => {
+    historialVentasSustratos.push({ id: doc.id, ...doc.data() });
+  });
+  actualizarPantallaSustratos();
+});
+
+// ==========================================
+// 3. PROCESAMIENTO Y CÁLCULO DE COTIZACIÓN
 // ==========================================
 function procesarCotizacion() {
   try {
@@ -108,7 +164,7 @@ function procesarCotizacion() {
 }
 
 // ==========================================
-// 3. COPIAR TEXTO A WHATSAPP Y GUARDAR
+// 4. COPIAR TEXTO A WHATSAPP Y GUARDAR EN LA NUBE
 // ==========================================
 function copiarWhatsAppYGuardar() {
   const cliente = document.getElementById('cliente').value.trim() || 'Cliente Sin Nombre';
@@ -140,17 +196,21 @@ function copiarWhatsAppYGuardar() {
   textoCopiar += `💥 Titular: Arlene Cruzado Llanos\n\n`;
   textoCopiar += `⚠️ *Importante:* Vigencia de 24 horas. Sin confirmación de pago, el pedido se libera.`;
 
-  guardarCotizacionEnLocal({
+  // Guardar/Actualizar en Firebase
+  db.collection("cotizaciones").add({
     cliente,
     numCotizacion,
     pedidoTexto,
     valEmbalaje,
-    fecha: fechaStr
+    fecha: fechaStr,
+    creado: new Date()
+  }).then(() => {
+    console.log("Cotización sincronizada en la nube.");
   });
 
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(textoCopiar).then(() => {
-      alert("✅ Texto copiado al portapapeles y cotización guardada automáticamente.");
+      alert("✅ Texto copiado al portapapeles y cotización guardada en la nube.");
     }).catch(() => fallbackCopiar(textoCopiar));
   } else {
     fallbackCopiar(textoCopiar);
@@ -164,34 +224,15 @@ function fallbackCopiar(texto) {
   areaTemp.select();
   document.execCommand("copy");
   document.body.removeChild(areaTemp);
-  alert("✅ Texto copiado al portapapeles y cotización guardada automáticamente.");
-}
-
-// ==========================================
-// 4. ALMACENAMIENTO DE COTIZACIONES
-// ==========================================
-function guardarCotizacionEnLocal(datos) {
-  let cotizaciones = JSON.parse(localStorage.getItem('vivero_cotizaciones') || '[]');
-  
-  const index = cotizaciones.findIndex(c => c.cliente.toLowerCase() === datos.cliente.toLowerCase());
-  if (index !== -1) {
-    cotizaciones[index] = datos;
-  } else {
-    cotizaciones.push(datos);
-  }
-
-  localStorage.setItem('vivero_cotizaciones', JSON.stringify(cotizaciones));
-  actualizarListaCotizacionesGuardadas();
+  alert("✅ Texto copiado al portapapeles y cotización guardada en la nube.");
 }
 
 function actualizarListaCotizacionesGuardadas() {
   const select = document.getElementById('lista-guardados');
   if (!select) return;
 
-  const cotizaciones = JSON.parse(localStorage.getItem('vivero_cotizaciones') || '[]');
   select.innerHTML = '<option value="">-- Seleccionar cotización guardada --</option>';
-
-  cotizaciones.forEach((item, index) => {
+  cotizacionesGuardadas.forEach((item, index) => {
     select.innerHTML += `<option value="${index}">${item.cliente} (${item.fecha}) - N° ${item.numCotizacion}</option>`;
   });
 }
@@ -201,9 +242,7 @@ function cargarCotizacion() {
   const idx = select.value;
   if (idx === "") return;
 
-  const cotizaciones = JSON.parse(localStorage.getItem('vivero_cotizaciones') || '[]');
-  const item = cotizaciones[idx];
-
+  const item = cotizacionesGuardadas[idx];
   if (item) {
     document.getElementById('cliente').value = item.cliente;
     document.getElementById('num-cotizacion').value = item.numCotizacion || '';
@@ -221,25 +260,15 @@ function eliminarCotizacion() {
     return;
   }
 
-  let cotizaciones = JSON.parse(localStorage.getItem('vivero_cotizaciones') || '[]');
-  cotizaciones.splice(idx, 1);
-  localStorage.setItem('vivero_cotizaciones', JSON.stringify(cotizaciones));
-  
-  actualizarListaCotizacionesGuardadas();
-  alert("Cotización eliminada correctamente.");
+  const item = cotizacionesGuardadas[idx];
+  db.collection("cotizaciones").doc(item.id).delete().then(() => {
+    alert("Cotización eliminada correctamente.");
+  });
 }
 
 // ==========================================
-// 5. CONTROL DE INVENTARIO Y VENTAS (MACETAS Y SUSTRATOS)
+// 5. AUTOCOMPLETADO DE PRECIOS
 // ==========================================
-
-let inventarioMacetas = JSON.parse(localStorage.getItem('inventarioMacetas')) || [];
-let historialVentasMacetas = JSON.parse(localStorage.getItem('historialVentasMacetas')) || [];
-
-let inventarioSustratos = JSON.parse(localStorage.getItem('inventarioSustratos')) || [];
-let historialVentasSustratos = JSON.parse(localStorage.getItem('historialVentasSustratos')) || [];
-
-// AUTOCOMPLETAR PRECIO DE VENTA AL SELECCIONAR PRODUCTO
 window.cargarPrecioVentaMaceta = function() {
   let index = document.getElementById('selectMacetaVenta').value;
   let inputPrecio = document.getElementById('precioVentaMacetaInput');
@@ -260,7 +289,9 @@ window.cargarPrecioVentaSustrato = function() {
   }
 };
 
-// --- PANTALLA MACETAS ---
+// ==========================================
+// 6. RENDERIZADO DE TABLAS EN TIEMPO REAL
+// ==========================================
 function actualizarPantallaMacetas() {
   const tablaInventario = document.getElementById('tablaInventarioMacetas');
   const selectVenta = document.getElementById('selectMacetaVenta');
@@ -278,7 +309,7 @@ function actualizarPantallaMacetas() {
       <td><b>${maceta.nombre}</b></td>
       <td>S/. ${maceta.costo.toFixed(2)}</td>
       <td><b>${maceta.stock}</b> unids.</td>
-      <td><button type="button" class="btn-red" onclick="eliminarMaceta(${index})">Eliminar</button></td>
+      <td><button type="button" class="btn-red" onclick="eliminarMaceta('${maceta.id}')">Eliminar</button></td>
     `;
     tablaInventario.appendChild(tr);
 
@@ -302,7 +333,6 @@ function actualizarPantallaMacetas() {
   });
 }
 
-// --- PANTALLA SUSTRATOS ---
 function actualizarPantallaSustratos() {
   const tablaInventario = document.getElementById('tablaInventarioSustratos');
   const selectVenta = document.getElementById('selectSustratoVenta');
@@ -320,7 +350,7 @@ function actualizarPantallaSustratos() {
       <td><b>${sustrato.nombre}</b></td>
       <td>S/. ${sustrato.costo.toFixed(2)}</td>
       <td><b>${sustrato.stock}</b> unids.</td>
-      <td><button type="button" class="btn-red" onclick="eliminarSustrato(${index})">Eliminar</button></td>
+      <td><button type="button" class="btn-red" onclick="eliminarSustrato('${sustrato.id}')">Eliminar</button></td>
     `;
     tablaInventario.appendChild(tr);
 
@@ -344,9 +374,11 @@ function actualizarPantallaSustratos() {
   });
 }
 
-// --- EVENTOS DE INTERACCIÓN ---
+// ==========================================
+// 7. EVENTOS DE INTERACCIÓN Y NUBE
+// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-  // Agregar Maceta
+  // --- AGREGAR MACETA ---
   const btnAgregarMaceta = document.getElementById('btnAgregarMaceta');
   if (btnAgregarMaceta) {
     btnAgregarMaceta.addEventListener('click', function() {
@@ -355,21 +387,18 @@ document.addEventListener('DOMContentLoaded', () => {
       let stock = parseInt(document.getElementById('stockMaceta').value);
 
       if (nombre && !isNaN(costo) && !isNaN(stock)) {
-        inventarioMacetas.push({ nombre, costo, stock });
-        localStorage.setItem('inventarioMacetas', JSON.stringify(inventarioMacetas));
+        db.collection("inventario_macetas").add({ nombre, costo, stock });
         
         document.getElementById('nombreMaceta').value = '';
         document.getElementById('costoMaceta').value = '';
         document.getElementById('stockMaceta').value = '';
-        
-        actualizarPantallaMacetas();
       } else {
         alert("Completa todos los campos con valores válidos.");
       }
     });
   }
 
-  // Registrar Venta Maceta
+  // --- REGISTRAR VENTA MACETA ---
   const btnRegistrarVentaMaceta = document.getElementById('btnRegistrarVenta');
   if (btnRegistrarVentaMaceta) {
     btnRegistrarVentaMaceta.addEventListener('click', function() {
@@ -386,25 +415,30 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
 
-        maceta.stock -= cantidad;
-        localStorage.setItem('inventarioMacetas', JSON.stringify(inventarioMacetas));
+        let nuevoStock = maceta.stock - cantidad;
+        db.collection("inventario_macetas").doc(maceta.id).update({ stock: nuevoStock });
 
         let fecha = new Date().toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' });
         let total = precioUnitario * cantidad;
 
-        historialVentasMacetas.unshift({ fecha, nombre: maceta.nombre, cantidad, precioUnitario, total });
-        localStorage.setItem('historialVentasMacetas', JSON.stringify(historialVentasMacetas));
+        db.collection("ventas_macetas").add({
+          nombre: maceta.nombre,
+          cantidad,
+          precioUnitario,
+          total,
+          fecha,
+          fechaSort: new Date()
+        });
 
         document.getElementById('cantidadVenta').value = '';
         if (precioInput) precioInput.value = '';
-        actualizarPantallaMacetas();
       } else {
         alert("Selecciona una maceta, coloca cantidad y confirma el precio de venta.");
       }
     });
   }
 
-  // Agregar Sustrato
+  // --- AGREGAR SUSTRATO ---
   const btnAgregarSustrato = document.getElementById('btnAgregarSustrato');
   if (btnAgregarSustrato) {
     btnAgregarSustrato.addEventListener('click', function() {
@@ -413,21 +447,18 @@ document.addEventListener('DOMContentLoaded', () => {
       let stock = parseInt(document.getElementById('stockSustrato').value);
 
       if (nombre && !isNaN(costo) && !isNaN(stock)) {
-        inventarioSustratos.push({ nombre, costo, stock });
-        localStorage.setItem('inventarioSustratos', JSON.stringify(inventarioSustratos));
+        db.collection("inventario_sustratos").add({ nombre, costo, stock });
         
         document.getElementById('nombreSustrato').value = '';
         document.getElementById('costoSustrato').value = '';
         document.getElementById('stockSustrato').value = '';
-        
-        actualizarPantallaSustratos();
       } else {
         alert("Completa todos los campos con valores válidos.");
       }
     });
   }
 
-  // Registrar Venta Sustrato
+  // --- REGISTRAR VENTA SUSTRATO ---
   const btnRegistrarVentaSustrato = document.getElementById('btnRegistrarVentaSustrato');
   if (btnRegistrarVentaSustrato) {
     btnRegistrarVentaSustrato.addEventListener('click', function() {
@@ -444,18 +475,23 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
 
-        sustrato.stock -= cantidad;
-        localStorage.setItem('inventarioSustratos', JSON.stringify(inventarioSustratos));
+        let nuevoStock = sustrato.stock - cantidad;
+        db.collection("inventario_sustratos").doc(sustrato.id).update({ stock: nuevoStock });
 
         let fecha = new Date().toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' });
         let total = precioUnitario * cantidad;
 
-        historialVentasSustratos.unshift({ fecha, nombre: sustrato.nombre, cantidad, precioUnitario, total });
-        localStorage.setItem('historialVentasSustratos', JSON.stringify(historialVentasSustratos));
+        db.collection("ventas_sustratos").add({
+          nombre: sustrato.nombre,
+          cantidad,
+          precioUnitario,
+          total,
+          fecha,
+          fechaSort: new Date()
+        });
 
         document.getElementById('cantidadSustratoVenta').value = '';
         if (precioInput) precioInput.value = '';
-        actualizarPantallaSustratos();
       } else {
         alert("Selecciona un sustrato, coloca cantidad y confirma el precio de venta.");
       }
@@ -463,29 +499,20 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// Funciones globales de eliminación
-window.eliminarMaceta = function(index) {
+// Funciones globales de eliminación en Firebase
+window.eliminarMaceta = function(id) {
   if (confirm("¿Seguro que deseas eliminar esta maceta del inventario?")) {
-    inventarioMacetas.splice(index, 1);
-    localStorage.setItem('inventarioMacetas', JSON.stringify(inventarioMacetas));
-    actualizarPantallaMacetas();
+    db.collection("inventario_macetas").doc(id).delete();
   }
 };
 
-window.eliminarSustrato = function(index) {
+window.eliminarSustrato = function(id) {
   if (confirm("¿Seguro que deseas eliminar este sustrato del inventario?")) {
-    inventarioSustratos.splice(index, 1);
-    localStorage.setItem('inventarioSustratos', JSON.stringify(inventarioSustratos));
-    actualizarPantallaSustratos();
+    db.collection("inventario_sustratos").doc(id).delete();
   }
 };
 
-// ==========================================
-// 6. INICIALIZACIÓN AL CARGAR LA PÁGINA
-// ==========================================
+// INICIALIZACIÓN
 window.onload = function() {
-  actualizarListaCotizacionesGuardadas();
   procesarCotizacion();
-  actualizarPantallaMacetas();
-  actualizarPantallaSustratos();
 };
