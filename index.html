@@ -5,6 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vivero Eliel - Cotizaciones y Control</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- Cargar SDK Compat de Firebase (Versión fácil para script directo) -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<script>
+  // Reemplaza esto con las credenciales exactas de ViveroElielApp:
+  const firebaseConfig = {
+    apiKey: "TU_API_KEY",
+    authDomain: "viveroelielapp.firebaseapp.com",
+    projectId: "viveroelielapp",
+    storageBucket: "viveroelielapp.appspot.com",
+    messagingSenderId: "123456789",
+    appId: "1:123456789:web:abcdef"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
   <!-- Estilos externos -->
   <link rel="stylesheet" href="styles.css">
 </head>
