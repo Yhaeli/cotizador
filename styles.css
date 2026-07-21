@@ -41,6 +41,25 @@ nav.main-nav button.active {
   background-color: var(--secondary-color);
   border-bottom: 4px solid #fff;
 }
+.btn-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.btn-img { 
+  background-color: #0288d1; 
+  color: white; 
+  flex: 1; 
+  padding: 12px;
+}
+
+.btn-copy { 
+  background-color: #7b1fa2; 
+  color: white; 
+  flex: 1; 
+  padding: 12px;
+}
 
 .tab-content {
   display: none;
