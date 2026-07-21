@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vivero Eliel - Cotizaciones y Control</title>
-  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <!-- Estilos externos -->
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -28,7 +28,7 @@
         <select id="lista-guardados" onchange="cargarCotizacion()">
           <option value="">-- Seleccionar cotización guardada --</option>
         </select>
-        <button type="button" class="btn btn-danger" onclick="eliminarCotizacion()">🗑️ Eliminar Cotización Guardada</button>
+        <button type="button" class="btn btn-danger" onclick="eliminarCotizacion()">Eliminar Cotización Guardada</button>
       </div>
       
       <label>Nombre del Cliente:</label> 
@@ -49,7 +49,10 @@
       <label>TOTAL A PAGAR (S/.):</label> 
       <input type="number" id="valTotal" value="0.00" readonly>
       
-      <button type="button" class="btn btn-copy" onclick="copiarWhatsAppYGuardar()">📋 Copiar Texto y Guardar Cotización</button>
+      <div class="btn-group">
+  <button type="button" class="btn btn-img" onclick="guardarYDescargarImagen()">Guardar Imagen</button>
+  <button type="button" class="btn btn-copy" onclick="copiarWhatsAppYGuardar()">Copiar Texto y Guardar</button>
+      </div>
 
       <div id="zona-captura-recorte">
         <div class="recibo-estilizado" id="bloque-imagen">
