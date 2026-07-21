@@ -176,67 +176,59 @@
     
   <!-- PESTAÑA 3: SUSTRATOS -->
   <div id="tab-sustratos" class="tab-content">
-    <div class="card">
-      <h2>Venta Rápida de Sustratos e Insumos</h2>
-      <form id="form-venta-sustrato" onsubmit="registrarVentaSustrato(event)">
-        <div class="form-group">
-          <label>Seleccionar Sustrato</label>
-          <select id="select-sustrato-venta" required onchange="calcularTotalSustrato()">
-            <option value="">-- Seleccionar --</option>
-          </select>
-        </div>
-        <div class="grid-2">
-          <div class="form-group">
-            <label>Cantidad a Vender</label>
-            <input type="number" id="cant-sustrato-venta" min="1" value="1" required oninput="calcularTotalSustrato()">
-          </div>
-          <div class="form-group">
-            <label>Total (S/.)</label>
-            <input type="text" id="total-sustrato-venta" readonly value="0.00">
-          </div>
-        </div>
-        <button type="submit" class="btn btn-primary">Registrar Venta</button>
-      </form>
+  <div class="contenedor-sustratos">
+    <h2>Control de Inventario y Ventas de Sustratos</h2>
+    
+    <!-- SECCIÓN 1: INVENTARIO -->
+    <div class="tarjeta">
+      <h3>Inventario Actual</h3>
+      
+      <div class="form-agregar">
+        <input type="text" id="nombreSustrato" placeholder="Nombre (Ej: Fibra de Coco 5L)">
+        <input type="number" id="costoSustrato" placeholder="Precio Base (S/.)" step="0.10">
+        <input type="number" id="stockSustrato" placeholder="Cantidad Inicial">
+        <button type="button" id="btnAgregarSustrato" class="btn-green">Agregar al Inventario</button>
+      </div>
+
+      <!-- CUADRO/TABLA DE INVENTARIO -->
+      <div class="tabla-responsive">
+        <table class="tabla-inventario">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Precio Base</th>
+              <th>Stock</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody id="tablaInventarioSustratos">
+            <!-- Se llena con JS -->
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <div class="card">
-      <h3>Inventario de Sustratos e Insumos</h3>
-      <form id="form-agregar-sustrato" onsubmit="agregarSustrato(event)">
-        <div class="form-group">
-          <label>Sustrato / Material</label>
-          <select id="sustrato-nombre" required>
-            <option value="Fibra de Coco">Fibra de Coco</option>
-            <option value="Plugmix 8">Plugmix 8</option>
-            <option value="Perlita">Perlita</option>
-            <option value="Piedra Pómez">Piedra Pómez</option>
-            <option value="Corteza de Pino">Corteza de Pino</option>
-          </select>
-        </div>
-        <div class="grid-2">
-          <div class="form-group">
-            <label>Precio (S/.)</label>
-            <input type="number" step="0.01" id="sustrato-precio" required>
-          </div>
-          <div class="form-group">
-            <label>Cantidad</label>
-            <input type="number" id="sustrato-cantidad" required>
-          </div>
-        </div>
-        <button type="submit" class="btn btn-primary">+ Agregar al Inventario</button>
-      </form>
+    <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ccc;">
 
-      <table class="tabla-productos" style="margin-top: 15px;">
-        <thead>
-          <tr>
-            <th>Material / Sustrato</th>
-            <th>Precio (S/.)</th>
-            <th>Stock</th>
-          </tr>
-        </thead>
-        <tbody id="tabla-sustratos"></tbody>
-      </table>
+    <!-- SECCIÓN 2: REGISTRO Y HISTORIAL DE VENTAS -->
+    <div class="tarjeta">
+      <h3>Registrar Salida / Venta</h3>
+      <div class="form-venta">
+        <select id="selectSustratoVenta" onchange="cargarPrecioVentaSustrato()">
+          <option value="">-- Seleccionar Sustrato --</option>
+        </select>
+        <input type="number" id="cantidadSustratoVenta" placeholder="Cant. vendida" min="1">
+        <input type="number" id="precioVentaSustratoInput" placeholder="Precio Unit. Venta (S/.)" step="0.10">
+        <button type="button" id="btnRegistrarVentaSustrato" class="btn-blue">Registrar Venta</button>
+      </div>
+
+      <h3>Historial de Ventas</h3>
+      <ul id="listaHistorialSustratos" class="lista-datos">
+        <!-- Se llena con JS -->
+      </ul>
     </div>
   </div>
+</div>
 
   <!-- Lógica externa -->
   <script src="app.js"></script>
