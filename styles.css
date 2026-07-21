@@ -41,25 +41,6 @@ nav.main-nav button.active {
   background-color: var(--secondary-color);
   border-bottom: 4px solid #fff;
 }
-.btn-group {
-  display: flex;
-  gap: 10px;
-  margin-top: 15px;
-}
-
-.btn-img { 
-  background-color: #0288d1; 
-  color: white; 
-  flex: 1; 
-  padding: 12px;
-}
-
-.btn-copy { 
-  background-color: #7b1fa2; 
-  color: white; 
-  flex: 1; 
-  padding: 12px;
-}
 
 .tab-content {
   display: none;
@@ -139,13 +120,35 @@ input, select, textarea {
 .btn-primary { background-color: var(--primary-color); color: white; width: 100%; }
 .btn-danger { background-color: var(--danger-color); color: white; width: 100%; margin-top: 8px; }
 
+/* Grupo de botones principales */
+.btn-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.btn-img { 
+  background-color: #0288d1; 
+  color: white; 
+  flex: 1; 
+  padding: 14px;
+  border-radius: 5px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+}
+
 .btn-copy { 
   background-color: #7b1fa2; 
   color: white; 
-  width: 100%; 
-  font-size: 16px;
+  flex: 1; 
   padding: 14px;
-  margin-top: 15px;
+  border-radius: 5px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
 }
 
 .recibo-estilizado {
