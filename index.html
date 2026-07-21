@@ -173,17 +173,23 @@
     <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ccc;">
 
     <!-- SECCIÓN 2: REGISTRO Y HISTORIAL DE VENTAS -->
-    <div class="tarjeta">
-      <h3>Registrar Salida / Venta</h3>
-      <div class="form-venta">
-        <select id="selectMacetaVenta" onchange="cargarPrecioVentaMaceta()">
-          <option value="">-- Seleccionar Maceta --</option>
-        </select>
-        <input type="number" id="cantidadVenta" placeholder="Cant. vendida" min="1">
-        <input type="number" id="precioVentaMacetaInput" placeholder="Precio Unit. Venta (S/.)" step="0.10">
-        <button type="button" id="btnRegistrarVenta" class="btn-blue">Registrar Venta</button>
-      </div>
+    <div class="form-venta">
+  <select id="selectMacetaVenta" onchange="cargarPrecioVentaMaceta()">
+    <option value="">-- Seleccionar Maceta --</option>
+  </select>
+  <input type="number" id="cantidadVenta" placeholder="Cant. vendida" min="1">
+  <input type="number" id="precioVentaMacetaInput" placeholder="Precio Unit. (S/.)" step="0.10">
+  
+  <!-- NUEVOS CAMPOS -->
+  <input type="text" id="clienteVentaMaceta" placeholder="Nombre del cliente">
+  <select id="metodoPagoMaceta">
+    <option value="Yape">Yape</option>
+    <option value="Efectivo">Efectivo</option>
+    <option value="Pago Pendiente">Pago Pendiente</option>
+  </select>
 
+  <button type="button" id="btnRegistrarVenta" class="btn-blue">Registrar Venta</button>
+</div>
       <h3>Historial de Ventas</h3>
       <ul id="listaHistorialVentas" class="lista-datos">
         <!-- Se llena con JS -->
@@ -232,13 +238,22 @@
     <div class="tarjeta">
       <h3>Registrar Salida / Venta</h3>
       <div class="form-venta">
-        <select id="selectSustratoVenta" onchange="cargarPrecioVentaSustrato()">
-          <option value="">-- Seleccionar Sustrato --</option>
-        </select>
-        <input type="number" id="cantidadSustratoVenta" placeholder="Cant. vendida" min="1">
-        <input type="number" id="precioVentaSustratoInput" placeholder="Precio Unit. Venta (S/.)" step="0.10">
-        <button type="button" id="btnRegistrarVentaSustrato" class="btn-blue">Registrar Venta</button>
-      </div>
+  <select id="selectSustratoVenta" onchange="cargarPrecioVentaSustrato()">
+    <option value="">-- Seleccionar Sustrato --</option>
+  </select>
+  <input type="number" id="cantidadSustratoVenta" placeholder="Cant. vendida" min="1">
+  <input type="number" id="precioVentaSustratoInput" placeholder="Precio Unit. (S/.)" step="0.10">
+  
+  <!-- NUEVOS CAMPOS -->
+  <input type="text" id="clienteVentaSustrato" placeholder="Nombre del cliente">
+  <select id="metodoPagoSustrato">
+    <option value="Yape">Yape</option>
+    <option value="Efectivo">Efectivo</option>
+    <option value="Pago Pendiente">Pago Pendiente</option>
+  </select>
+
+  <button type="button" id="btnRegistrarVentaSustrato" class="btn-blue">Registrar Venta</button>
+</div>
 
       <h3>Historial de Ventas</h3>
       <ul id="listaHistorialSustratos" class="lista-datos">
