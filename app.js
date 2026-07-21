@@ -239,25 +239,48 @@ let historialVentasMacetas = JSON.parse(localStorage.getItem('historialVentasMac
 let inventarioSustratos = JSON.parse(localStorage.getItem('inventarioSustratos')) || [];
 let historialVentasSustratos = JSON.parse(localStorage.getItem('historialVentasSustratos')) || [];
 
+// AUTOCOMPLETAR PRECIO DE VENTA AL SELECCIONAR PRODUCTO
+window.cargarPrecioVentaMaceta = function() {
+  let index = document.getElementById('selectMacetaVenta').value;
+  let inputPrecio = document.getElementById('precioVentaMacetaInput');
+  if (index !== "" && inputPrecio && inventarioMacetas[index]) {
+    inputPrecio.value = inventarioMacetas[index].costo.toFixed(2);
+  } else if (inputPrecio) {
+    inputPrecio.value = '';
+  }
+};
+
+window.cargarPrecioVentaSustrato = function() {
+  let index = document.getElementById('selectSustratoVenta').value;
+  let inputPrecio = document.getElementById('precioVentaSustratoInput');
+  if (index !== "" && inputPrecio && inventarioSustratos[index]) {
+    inputPrecio.value = inventarioSustratos[index].costo.toFixed(2);
+  } else if (inputPrecio) {
+    inputPrecio.value = '';
+  }
+};
+
 // --- PANTALLA MACETAS ---
 function actualizarPantallaMacetas() {
-  const listaInventario = document.getElementById('listaInventarioMacetas');
+  const tablaInventario = document.getElementById('tablaInventarioMacetas');
   const selectVenta = document.getElementById('selectMacetaVenta');
   const listaVentas = document.getElementById('listaHistorialVentas');
   
-  if (!listaInventario || !selectVenta || !listaVentas) return;
+  if (!tablaInventario || !selectVenta || !listaVentas) return;
 
-  listaInventario.innerHTML = '';
+  tablaInventario.innerHTML = '';
   selectVenta.innerHTML = '<option value="">-- Seleccionar Maceta --</option>';
   listaVentas.innerHTML = '';
 
   inventarioMacetas.forEach((maceta, index) => {
-    let li = document.createElement('li');
-    li.innerHTML = `
-      <span><b>${maceta.nombre}</b> <br> Stock: ${maceta.stock} | Precio: S/.${maceta.costo.toFixed(2)}</span>
-      <button type="button" class="btn-red" onclick="eliminarMaceta(${index})">Eliminar</button>
+    let tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><b>${maceta.nombre}</b></td>
+      <td>S/. ${maceta.costo.toFixed(2)}</td>
+      <td><b>${maceta.stock}</b> unids.</td>
+      <td><button type="button" class="btn-red" onclick="eliminarMaceta(${index})">Eliminar</button></td>
     `;
-    listaInventario.appendChild(li);
+    tablaInventario.appendChild(tr);
 
     let option = document.createElement('option');
     option.value = index;
@@ -271,7 +294,7 @@ function actualizarPantallaMacetas() {
     li.innerHTML = `
       <span>
         <small>${venta.fecha}</small><br>
-        Vendió: <b>${venta.cantidad}x ${venta.nombre}</b> <br>
+        Vendió: <b>${venta.cantidad}x ${venta.nombre}</b> (a S/.${venta.precioUnitario.toFixed(2)} c/u) <br>
         Total: <b>S/.${venta.total.toFixed(2)}</b>
       </span>
     `;
@@ -281,23 +304,25 @@ function actualizarPantallaMacetas() {
 
 // --- PANTALLA SUSTRATOS ---
 function actualizarPantallaSustratos() {
-  const listaInventario = document.getElementById('listaInventarioSustratos');
+  const tablaInventario = document.getElementById('tablaInventarioSustratos');
   const selectVenta = document.getElementById('selectSustratoVenta');
   const listaVentas = document.getElementById('listaHistorialSustratos');
   
-  if (!listaInventario || !selectVenta || !listaVentas) return;
+  if (!tablaInventario || !selectVenta || !listaVentas) return;
 
-  listaInventario.innerHTML = '';
+  tablaInventario.innerHTML = '';
   selectVenta.innerHTML = '<option value="">-- Seleccionar Sustrato --</option>';
   listaVentas.innerHTML = '';
 
   inventarioSustratos.forEach((sustrato, index) => {
-    let li = document.createElement('li');
-    li.innerHTML = `
-      <span><b>${sustrato.nombre}</b> <br> Stock: ${sustrato.stock} | Precio: S/.${sustrato.costo.toFixed(2)}</span>
-      <button type="button" class="btn-red" onclick="eliminarSustrato(${index})">Eliminar</button>
+    let tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><b>${sustrato.nombre}</b></td>
+      <td>S/. ${sustrato.costo.toFixed(2)}</td>
+      <td><b>${sustrato.stock}</b> unids.</td>
+      <td><button type="button" class="btn-red" onclick="eliminarSustrato(${index})">Eliminar</button></td>
     `;
-    listaInventario.appendChild(li);
+    tablaInventario.appendChild(tr);
 
     let option = document.createElement('option');
     option.value = index;
@@ -311,7 +336,7 @@ function actualizarPantallaSustratos() {
     li.innerHTML = `
       <span>
         <small>${venta.fecha}</small><br>
-        Vendió: <b>${venta.cantidad}x ${venta.nombre}</b> <br>
+        Vendió: <b>${venta.cantidad}x ${venta.nombre}</b> (a S/.${venta.precioUnitario.toFixed(2)} c/u) <br>
         Total: <b>S/.${venta.total.toFixed(2)}</b>
       </span>
     `;
@@ -319,8 +344,9 @@ function actualizarPantallaSustratos() {
   });
 }
 
-// --- EVENTOS MACETAS ---
+// --- EVENTOS DE INTERACCIÓN ---
 document.addEventListener('DOMContentLoaded', () => {
+  // Agregar Maceta
   const btnAgregarMaceta = document.getElementById('btnAgregarMaceta');
   if (btnAgregarMaceta) {
     btnAgregarMaceta.addEventListener('click', function() {
@@ -343,13 +369,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Registrar Venta Maceta
   const btnRegistrarVentaMaceta = document.getElementById('btnRegistrarVenta');
   if (btnRegistrarVentaMaceta) {
     btnRegistrarVentaMaceta.addEventListener('click', function() {
       let index = document.getElementById('selectMacetaVenta').value;
       let cantidad = parseInt(document.getElementById('cantidadVenta').value);
+      let precioInput = document.getElementById('precioVentaMacetaInput');
+      let precioUnitario = precioInput ? parseFloat(precioInput.value) : NaN;
 
-      if (index !== "" && !isNaN(cantidad) && cantidad > 0) {
+      if (index !== "" && !isNaN(cantidad) && cantidad > 0 && !isNaN(precioUnitario) && precioUnitario >= 0) {
         let maceta = inventarioMacetas[index];
 
         if (cantidad > maceta.stock) {
@@ -361,20 +390,21 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('inventarioMacetas', JSON.stringify(inventarioMacetas));
 
         let fecha = new Date().toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' });
-        let total = maceta.costo * cantidad;
+        let total = precioUnitario * cantidad;
 
-        historialVentasMacetas.unshift({ fecha, nombre: maceta.nombre, cantidad, total });
+        historialVentasMacetas.unshift({ fecha, nombre: maceta.nombre, cantidad, precioUnitario, total });
         localStorage.setItem('historialVentasMacetas', JSON.stringify(historialVentasMacetas));
 
         document.getElementById('cantidadVenta').value = '';
+        if (precioInput) precioInput.value = '';
         actualizarPantallaMacetas();
       } else {
-        alert("Selecciona una maceta y coloca una cantidad válida.");
+        alert("Selecciona una maceta, coloca cantidad y confirma el precio de venta.");
       }
     });
   }
 
-  // --- EVENTOS SUSTRATOS ---
+  // Agregar Sustrato
   const btnAgregarSustrato = document.getElementById('btnAgregarSustrato');
   if (btnAgregarSustrato) {
     btnAgregarSustrato.addEventListener('click', function() {
@@ -397,13 +427,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Registrar Venta Sustrato
   const btnRegistrarVentaSustrato = document.getElementById('btnRegistrarVentaSustrato');
   if (btnRegistrarVentaSustrato) {
     btnRegistrarVentaSustrato.addEventListener('click', function() {
       let index = document.getElementById('selectSustratoVenta').value;
       let cantidad = parseInt(document.getElementById('cantidadSustratoVenta').value);
+      let precioInput = document.getElementById('precioVentaSustratoInput');
+      let precioUnitario = precioInput ? parseFloat(precioInput.value) : NaN;
 
-      if (index !== "" && !isNaN(cantidad) && cantidad > 0) {
+      if (index !== "" && !isNaN(cantidad) && cantidad > 0 && !isNaN(precioUnitario) && precioUnitario >= 0) {
         let sustrato = inventarioSustratos[index];
 
         if (cantidad > sustrato.stock) {
@@ -415,15 +448,16 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('inventarioSustratos', JSON.stringify(inventarioSustratos));
 
         let fecha = new Date().toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' });
-        let total = sustrato.costo * cantidad;
+        let total = precioUnitario * cantidad;
 
-        historialVentasSustratos.unshift({ fecha, nombre: sustrato.nombre, cantidad, total });
+        historialVentasSustratos.unshift({ fecha, nombre: sustrato.nombre, cantidad, precioUnitario, total });
         localStorage.setItem('historialVentasSustratos', JSON.stringify(historialVentasSustratos));
 
         document.getElementById('cantidadSustratoVenta').value = '';
+        if (precioInput) precioInput.value = '';
         actualizarPantallaSustratos();
       } else {
-        alert("Selecciona un sustrato y coloca una cantidad válida.");
+        alert("Selecciona un sustrato, coloca cantidad y confirma el precio de venta.");
       }
     });
   }
