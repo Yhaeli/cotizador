@@ -290,7 +290,7 @@ window.cargarPrecioVentaSustrato = function() {
 };
 
 // ==========================================
-// 6. RENDERIZADO DE TABLAS EN TIEMPO REAL
+// 6. RENDERIZADO DE HISTORIAL Y TABLAS (CON OPCIÓN ELIMINAR)
 // ==========================================
 function actualizarPantallaMacetas() {
   const tablaInventario = document.getElementById('tablaInventarioMacetas');
@@ -303,6 +303,7 @@ function actualizarPantallaMacetas() {
   selectVenta.innerHTML = '<option value="">-- Seleccionar Maceta --</option>';
   listaVentas.innerHTML = '';
 
+  // Dibujar Inventario
   inventarioMacetas.forEach((maceta, index) => {
     let tr = document.createElement('tr');
     tr.innerHTML = `
@@ -319,15 +320,19 @@ function actualizarPantallaMacetas() {
     selectVenta.appendChild(option);
   });
 
+  // Dibujar Historial de Ventas (Con Nombre, Método de Pago y Botón Eliminar)
   historialVentasMacetas.forEach(venta => {
     let li = document.createElement('li');
-    li.style.borderLeftColor = "#0288D1";
+    li.style.borderLeftColor = venta.metodoPago === 'Pago Pendiente' ? '#d32f2f' : '#0288D1';
     li.innerHTML = `
-      <span>
-        <small>${venta.fecha}</small><br>
-        Vendió: <b>${venta.cantidad}x ${venta.nombre}</b> (a S/.${venta.precioUnitario.toFixed(2)} c/u) <br>
-        Total: <b>S/.${venta.total.toFixed(2)}</b>
-      </span>
+      <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+        <span>
+          <small>${venta.fecha}</small> | 👤 <b>${venta.cliente || 'Cliente Varios'}</b><br>
+          Vendió: <b>${venta.cantidad}x ${venta.nombre}</b> (a S/.${venta.precioUnitario.toFixed(2)} c/u) <br>
+          Total: <b>S/.${venta.total.toFixed(2)}</b> — <i>[${venta.metodoPago || 'Efectivo'}]</i>
+        </span>
+        <button type="button" class="btn-red" style="padding: 4px 8px; font-size: 12px;" onclick="eliminarVentaMaceta('${venta.id}')">Eliminar Venta</button>
+      </div>
     `;
     listaVentas.appendChild(li);
   });
@@ -344,6 +349,7 @@ function actualizarPantallaSustratos() {
   selectVenta.innerHTML = '<option value="">-- Seleccionar Sustrato --</option>';
   listaVentas.innerHTML = '';
 
+  // Dibujar Inventario
   inventarioSustratos.forEach((sustrato, index) => {
     let tr = document.createElement('tr');
     tr.innerHTML = `
@@ -360,44 +366,28 @@ function actualizarPantallaSustratos() {
     selectVenta.appendChild(option);
   });
 
+  // Dibujar Historial de Ventas (Con Nombre, Método de Pago y Botón Eliminar)
   historialVentasSustratos.forEach(venta => {
     let li = document.createElement('li');
-    li.style.borderLeftColor = "#8e24aa";
+    li.style.borderLeftColor = venta.metodoPago === 'Pago Pendiente' ? '#d32f2f' : '#8e24aa';
     li.innerHTML = `
-      <span>
-        <small>${venta.fecha}</small><br>
-        Vendió: <b>${venta.cantidad}x ${venta.nombre}</b> (a S/.${venta.precioUnitario.toFixed(2)} c/u) <br>
-        Total: <b>S/.${venta.total.toFixed(2)}</b>
-      </span>
+      <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+        <span>
+          <small>${venta.fecha}</small> | 👤 <b>${venta.cliente || 'Cliente Varios'}</b><br>
+          Vendió: <b>${venta.cantidad}x ${venta.nombre}</b> (a S/.${venta.precioUnitario.toFixed(2)} c/u) <br>
+          Total: <b>S/.${venta.total.toFixed(2)}</b> — <i>[${venta.metodoPago || 'Efectivo'}]</i>
+        </span>
+        <button type="button" class="btn-red" style="padding: 4px 8px; font-size: 12px;" onclick="eliminarVentaSustrato('${venta.id}')">Eliminar Venta</button>
+      </div>
     `;
     listaVentas.appendChild(li);
   });
 }
 
 // ==========================================
-// 7. EVENTOS DE INTERACCIÓN Y NUBE
+// 7. EVENTOS DE REGISTRO
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-  // --- AGREGAR MACETA ---
-  const btnAgregarMaceta = document.getElementById('btnAgregarMaceta');
-  if (btnAgregarMaceta) {
-    btnAgregarMaceta.addEventListener('click', function() {
-      let nombre = document.getElementById('nombreMaceta').value.trim();
-      let costo = parseFloat(document.getElementById('costoMaceta').value);
-      let stock = parseInt(document.getElementById('stockMaceta').value);
-
-      if (nombre && !isNaN(costo) && !isNaN(stock)) {
-        db.collection("inventario_macetas").add({ nombre, costo, stock });
-        
-        document.getElementById('nombreMaceta').value = '';
-        document.getElementById('costoMaceta').value = '';
-        document.getElementById('stockMaceta').value = '';
-      } else {
-        alert("Completa todos los campos con valores válidos.");
-      }
-    });
-  }
-
   // --- REGISTRAR VENTA MACETA ---
   const btnRegistrarVentaMaceta = document.getElementById('btnRegistrarVenta');
   if (btnRegistrarVentaMaceta) {
@@ -406,6 +396,9 @@ document.addEventListener('DOMContentLoaded', () => {
       let cantidad = parseInt(document.getElementById('cantidadVenta').value);
       let precioInput = document.getElementById('precioVentaMacetaInput');
       let precioUnitario = precioInput ? parseFloat(precioInput.value) : NaN;
+      
+      let cliente = document.getElementById('clienteVentaMaceta').value.trim() || 'Cliente Varios';
+      let metodoPago = document.getElementById('metodoPagoMaceta').value;
 
       if (index !== "" && !isNaN(cantidad) && cantidad > 0 && !isNaN(precioUnitario) && precioUnitario >= 0) {
         let maceta = inventarioMacetas[index];
@@ -426,34 +419,17 @@ document.addEventListener('DOMContentLoaded', () => {
           cantidad,
           precioUnitario,
           total,
+          cliente,
+          metodoPago,
           fecha,
           fechaSort: new Date()
         });
 
         document.getElementById('cantidadVenta').value = '';
+        document.getElementById('clienteVentaMaceta').value = '';
         if (precioInput) precioInput.value = '';
       } else {
         alert("Selecciona una maceta, coloca cantidad y confirma el precio de venta.");
-      }
-    });
-  }
-
-  // --- AGREGAR SUSTRATO ---
-  const btnAgregarSustrato = document.getElementById('btnAgregarSustrato');
-  if (btnAgregarSustrato) {
-    btnAgregarSustrato.addEventListener('click', function() {
-      let nombre = document.getElementById('nombreSustrato').value.trim();
-      let costo = parseFloat(document.getElementById('costoSustrato').value);
-      let stock = parseInt(document.getElementById('stockSustrato').value);
-
-      if (nombre && !isNaN(costo) && !isNaN(stock)) {
-        db.collection("inventario_sustratos").add({ nombre, costo, stock });
-        
-        document.getElementById('nombreSustrato').value = '';
-        document.getElementById('costoSustrato').value = '';
-        document.getElementById('stockSustrato').value = '';
-      } else {
-        alert("Completa todos los campos con valores válidos.");
       }
     });
   }
@@ -466,6 +442,9 @@ document.addEventListener('DOMContentLoaded', () => {
       let cantidad = parseInt(document.getElementById('cantidadSustratoVenta').value);
       let precioInput = document.getElementById('precioVentaSustratoInput');
       let precioUnitario = precioInput ? parseFloat(precioInput.value) : NaN;
+      
+      let cliente = document.getElementById('clienteVentaSustrato').value.trim() || 'Cliente Varios';
+      let metodoPago = document.getElementById('metodoPagoSustrato').value;
 
       if (index !== "" && !isNaN(cantidad) && cantidad > 0 && !isNaN(precioUnitario) && precioUnitario >= 0) {
         let sustrato = inventarioSustratos[index];
@@ -486,11 +465,14 @@ document.addEventListener('DOMContentLoaded', () => {
           cantidad,
           precioUnitario,
           total,
+          cliente,
+          metodoPago,
           fecha,
           fechaSort: new Date()
         });
 
         document.getElementById('cantidadSustratoVenta').value = '';
+        document.getElementById('clienteVentaSustrato').value = '';
         if (precioInput) precioInput.value = '';
       } else {
         alert("Selecciona un sustrato, coloca cantidad y confirma el precio de venta.");
@@ -499,19 +481,20 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// Funciones globales de eliminación en Firebase
-window.eliminarMaceta = function(id) {
-  if (confirm("¿Seguro que deseas eliminar esta maceta del inventario?")) {
-    db.collection("inventario_macetas").doc(id).delete();
+// ==========================================
+// 8. FUNCIONES PARA ELIMINAR REGISTROS DE VENTAS EN FIREBASE
+// ==========================================
+window.eliminarVentaMaceta = function(idVenta) {
+  if (confirm("¿Deseas eliminar este registro de venta? (Nota: Esto no regresará el stock automáticamente al inventario).")) {
+    db.collection("ventas_macetas").doc(idVenta).delete();
   }
 };
 
-window.eliminarSustrato = function(id) {
-  if (confirm("¿Seguro que deseas eliminar este sustrato del inventario?")) {
-    db.collection("inventario_sustratos").doc(id).delete();
+window.eliminarVentaSustrato = function(idVenta) {
+  if (confirm("¿Deseas eliminar este registro de venta? (Nota: Esto no regresará el stock automáticamente al inventario).")) {
+    db.collection("ventas_sustratos").doc(idVenta).delete();
   }
 };
-
 // INICIALIZACIÓN
 window.onload = function() {
   procesarCotizacion();
