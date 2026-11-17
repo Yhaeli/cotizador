@@ -47,7 +47,6 @@ function procesarCotizacion() {
     if (!linea) return;
 
     // Detecta patrones como: "2 rosas 23", "2 rosas - 23.00", "2 x rosas 23"
-    // Extrae: Cantidad (opcional, por defecto 1), Descripción y Precio final
     const match = linea.match(/^(?:(\d+)\s*x?\s+)?(.+?)\s*[-:\s]+\s*(\d+(?:\.\d+)?)$/i);
 
     if (match) {
@@ -67,7 +66,6 @@ function procesarCotizacion() {
       `;
       tablaFilas.appendChild(tr);
     } else {
-      // Si la línea no tiene precio al final, se muestra solo como descripción
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td class="text-center">1</td>
@@ -110,7 +108,7 @@ function guardarCotizacion() {
     valEmbalaje: valEmbalaje,
     fecha: firebase.firestore.FieldValue.serverTimestamp()
   })
-  .then(() => alert("Cotización guardada exitosamente."))
+  .then(() => console.log("Cotización guardada en Firestore."))
   .catch(err => console.error("Error al guardar cotización:", err));
 }
 
@@ -171,28 +169,50 @@ function eliminarCotizacion() {
 
 // Botones de Acción de Cotizador
 function copiarWhatsAppYGuardar() {
+  procesarCotizacion();
   guardarCotizacion();
 
-  const cliente = document.getElementById('cliente').value;
-  const total = document.getElementById('valTotal').value;
-  const pedido = document.getElementById('pedido-texto').value;
+  const cliente = document.getElementById('cliente').value.trim() || '---';
+  const numCotizacion = document.getElementById('num-cotizacion').value.trim();
+  const pedido = document.getElementById('pedido-texto').value.trim();
+  const valPlantas = (parseFloat(document.getElementById('valPlantas').value) || 0).toFixed(2);
+  const valEmbalaje = (parseFloat(document.getElementById('valEmbalaje').value) || 0).toFixed(2);
+  const total = (parseFloat(document.getElementById('valTotal').value) || 0).toFixed(2);
 
-  const mensaje = `🌱 *COTIZACIÓN VIVERO ELIEL*\n👤 Cliente: ${cliente}\n📋 Detalle:\n${pedido}\n\n💰 *TOTAL A CANCELAR: S/. ${total}*\n💳 Yape: 981 046 861 (Arlene Cruzado Llanos)`;
+  const lineaCotizacion = numCotizacion ? `📄 Cotización: ${numCotizacion}\n` : '';
+
+  const mensaje = `🌱 *COTIZACIÓN VIVERO ELIEL*\n` +
+                  `👤 Cliente: ${cliente}\n` +
+                  lineaCotizacion +
+                  `📋 *Detalle del pedido:*\n${pedido}\n\n` +
+                  `🪴 Total de plantas: S/. ${valPlantas}\n` +
+                  `📦 Embalaje y traslado: S/. ${valEmbalaje}\n` +
+                  `💰 *TOTAL A CANCELAR: S/. ${total}*\n\n` +
+                  `💳 *Métodos de pago:*\n` +
+                  `📱 Yape: 981 046 861\n` +
+                  `🏦 BCP Cta. Cte.: 19178952536034\n` +
+                  `💥 Titular: Arlene Cruzado Llanos`;
 
   navigator.clipboard.writeText(mensaje)
-    .then(() => alert("¡Texto copiado al portapapeles y cotización guardada!"))
+    .then(() => alert("¡Texto copiado al portapapeles (con embalaje incluido) y cotización guardada!"))
     .catch(() => alert("Cotización guardada. (No se pudo copiar el texto automáticamente)"));
 }
 
 function guardarYDescargarImagen() {
+  procesarCotizacion();
   guardarCotizacion();
   const bloque = document.getElementById('bloque-imagen');
 
   if (typeof html2canvas !== 'undefined') {
-    html2canvas(bloque).then(canvas => {
+    html2canvas(bloque, {
+      scale: 2,
+      useCORS: true,
+      scrollX: 0,
+      scrollY: 0
+    }).then(canvas => {
       const enlace = document.createElement('a');
-      enlace.download = `Cotizacion_${document.getElementById('cliente').value || 'Vivero'}.png`;
-      enlace.href = canvas.toDataURL();
+      enlace.download = `Cotizacion_${document.getElementById('cliente').value.trim() || 'Vivero'}.png`;
+      enlace.href = canvas.toDataURL('image/png');
       enlace.click();
     });
   } else {
