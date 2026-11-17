@@ -15,42 +15,86 @@ body {
   color: var(--text-color);
 }
 
+/* MENÚ LATERAL FIJO A LA DERECHA */
 nav.main-nav {
   background-color: var(--primary-color);
   display: flex;
-  justify-content: space-around;
-  position: sticky;
-  top: 0;
+  flex-direction: column;
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 220px;
+  border-radius: 8px;
+  overflow: hidden;
   z-index: 1000;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 nav.main-nav button {
   background: none;
   border: none;
   color: white;
-  padding: 15px 10px;
-  font-size: 14px;
+  padding: 15px 18px;
+  font-size: 13.5px;
   font-weight: bold;
+  text-align: left;
   cursor: pointer;
   width: 100%;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
   transition: background 0.3s;
+}
+
+nav.main-nav button:last-child {
+  border-bottom: none;
+}
+
+nav.main-nav button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 nav.main-nav button.active {
   background-color: var(--secondary-color);
-  border-bottom: 4px solid #fff;
+  border-left: 5px solid #fff;
+  border-bottom: none;
 }
 
+/* Ajuste del contenedor principal para dejar espacio libre al menú derecho */
 .tab-content {
   display: none;
-  padding: 15px;
+  padding: 20px 260px 20px 20px;
   max-width: 900px;
   margin: 0 auto;
 }
 
 .tab-content.active {
   display: block;
+}
+
+/* En pantallas pequeñas/celulares vuelve arriba para no tapar el contenido */
+@media (max-width: 950px) {
+  nav.main-nav {
+    position: sticky;
+    top: 0;
+    right: auto;
+    width: 100%;
+    flex-direction: row;
+    border-radius: 0;
+  }
+
+  nav.main-nav button {
+    text-align: center;
+    padding: 15px 10px;
+    border-bottom: none;
+  }
+
+  nav.main-nav button.active {
+    border-left: none;
+    border-bottom: 4px solid #fff;
+  }
+
+  .tab-content {
+    padding: 15px;
+  }
 }
 
 .card, .app-container {
@@ -156,7 +200,7 @@ input, select, textarea {
   padding: 15px;
   border-radius: 8px;
   background: #fff;
-  margin-top: 15px;
+  margin-top: 0;
 }
 
 .recibo-header {
@@ -208,23 +252,27 @@ input, select, textarea {
   border-radius: 5px;
   margin-top: 10px;
 }
+
 .tarjeta {
-  background-color: #f1f8e9; /* Un verde muy clarito que combina con tu app */
+  background-color: #f1f8e9;
   padding: 15px;
   border-radius: 8px;
   margin-bottom: 20px;
 }
+
 .form-agregar, .form-venta {
   display: flex;
   flex-direction: column;
   gap: 10px;
   margin-bottom: 15px;
 }
+
 .form-agregar input, .form-venta input, .form-venta select {
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 5px;
 }
+
 .btn-green { background-color: #4CAF50; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer; }
 .btn-blue { background-color: #0288D1; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer; }
 .btn-red { background-color: #D32F2F; color: white; padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; }
@@ -240,6 +288,7 @@ input, select, textarea {
   justify-content: space-between;
   align-items: center;
 }
+
 .tabla-responsive {
   overflow-x: auto;
   margin-top: 15px;
@@ -255,7 +304,7 @@ input, select, textarea {
 }
 
 .tabla-inventario th {
-  background-color: #2e7d32; /* Verde del vivero */
+  background-color: #2e7d32;
   color: white;
   text-align: left;
   padding: 10px;
@@ -271,4 +320,5 @@ input, select, textarea {
 .tabla-inventario tr:hover {
   background-color: #f5f5f5;
 }
+
 .stock-low { color: var(--danger-color); font-weight: bold; }
