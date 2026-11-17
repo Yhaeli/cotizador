@@ -68,11 +68,12 @@
       <input type="number" id="valTotal" value="0.00" readonly>
       
       <div class="btn-group">
-  <button type="button" class="btn btn-img" onclick="guardarYDescargarImagen()">Guardar Imagen</button>
-  <button type="button" class="btn btn-copy" onclick="copiarWhatsAppYGuardar()">Copiar Texto y Guardar</button>
+        <button type="button" class="btn btn-img" onclick="guardarYDescargarImagen()">Guardar Imagen</button>
+        <button type="button" class="btn btn-copy" onclick="copiarWhatsAppYGuardar()">Copiar Texto y Guardar</button>
       </div>
 
-      <div id="zona-captura-recorte">
+      <!-- BLOQUE OCULTO VISUALMENTE PERO ACTIVO PARA CAPTURA DE IMAGEN -->
+      <div id="zona-captura-recorte" style="position: fixed; left: -9999px; top: 0; width: 450px; z-index: -1;">
         <div class="recibo-estilizado" id="bloque-imagen">
           <div>
             <div class="recibo-header" style="display: flex; align-items: center; justify-content: center; gap: 15px;">
