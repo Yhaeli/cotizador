@@ -640,7 +640,7 @@ input, select, textarea {
    DISEÑO DEL MÓDULO DE SUSTRATOS
 ========================================== */
 
-#tab-sustratos .modulo-layout {
+#tab-sustratos .panel-sustratos {
   display: flex;
   min-height: 700px;
   background: #f5f7f5;
@@ -650,7 +650,7 @@ input, select, textarea {
 
 /* MENÚ LATERAL */
 
-#tab-sustratos .sidebar-modulo {
+#tab-sustratos .menu-sustratos {
   width: 230px;
   min-width: 230px;
   background: #174d36;
@@ -660,26 +660,22 @@ input, select, textarea {
   gap: 9px;
 }
 
-#tab-sustratos .sidebar-titulo {
+#tab-sustratos .logo-sustratos {
   color: white;
   text-align: center;
   margin-bottom: 25px;
 }
 
-#tab-sustratos .sidebar-titulo h2 {
+#tab-sustratos .logo-sustratos h2 {
   font-size: 21px;
   margin-bottom: 5px;
+  color: white;
 }
 
-#tab-sustratos .sidebar-titulo p {
+#tab-sustratos .logo-sustratos p {
   font-size: 13px;
   color: #d5e8dc;
-}
-
-#tab-sustratos .sidebar-modulo nav {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
+  margin: 0;
 }
 
 #tab-sustratos .nav-sustratos {
@@ -701,18 +697,18 @@ input, select, textarea {
 
 /* CONTENIDO */
 
-#tab-sustratos .contenido-modulo {
+#tab-sustratos .contenido-sustratos {
   flex: 1;
   padding: 28px;
   min-width: 0;
 }
 
-#tab-sustratos .encabezado-pagina h2 {
+#tab-sustratos .contenido-sustratos h2 {
   color: #174d36;
   margin-top: 0;
 }
 
-#tab-sustratos .encabezado-pagina p {
+#tab-sustratos .subtitulo-sustratos {
   color: #777;
   margin-bottom: 25px;
 }
@@ -727,9 +723,9 @@ input, select, textarea {
   display: block;
 }
 
-/* TARJETAS / PANELES */
+/* TARJETAS */
 
-#tab-sustratos .panel-modulo {
+#tab-sustratos .tarjeta-sustratos {
   background: white;
   padding: 22px;
   border-radius: 10px;
@@ -737,50 +733,45 @@ input, select, textarea {
   box-shadow: 0 2px 9px rgba(0,0,0,.05);
 }
 
-#tab-sustratos .panel-modulo h3 {
+#tab-sustratos .tarjeta-sustratos h3 {
   color: #245c40;
   margin-top: 0;
 }
 
 /* RESUMEN / ESTADÍSTICAS */
 
-#tab-sustratos .estadisticas-grid {
+#tab-sustratos .resumen-sustratos {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 15px;
   margin-bottom: 25px;
 }
 
-#tab-sustratos .tarjeta-estadistica,
-#tab-sustratos .tarjeta-ventas-mes-sustratos {
+#tab-sustratos .tarjeta-resumen-sustratos {
   background: white;
   border-radius: 10px;
   padding: 22px 15px;
   box-shadow: 0 2px 9px rgba(0,0,0,.05);
 }
 
-#tab-sustratos .tarjeta-estadistica span,
-#tab-sustratos .tarjeta-ventas-mes-sustratos span {
+#tab-sustratos .tarjeta-resumen-sustratos span {
   display: block;
   color: #777;
   font-size: 13px;
   margin-bottom: 12px;
 }
 
-#tab-sustratos .tarjeta-estadistica h3,
-#tab-sustratos .tarjeta-ventas-mes-sustratos h3 {
+#tab-sustratos .tarjeta-resumen-sustratos strong {
   font-size: 25px;
   color: #174d36;
-  margin: 0;
 }
 
 /* FORMULARIOS */
 
-#tab-sustratos .formulario-grid {
+#tab-sustratos .formulario-sustratos {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 13px;
-  margin-bottom: 15px;
 }
 
 #tab-sustratos input,
@@ -807,17 +798,16 @@ input, select, textarea {
   cursor: pointer;
 }
 
-#tab-sustratos .btn-principal {
+#tab-sustratos .btn-principal-sustratos {
   background: #247548;
   color: white;
   border: none;
   border-radius: 6px;
   padding: 12px 18px;
   font-weight: bold;
-  transition: .2s;
 }
 
-#tab-sustratos .btn-principal:hover {
+#tab-sustratos .btn-principal-sustratos:hover {
   background: #185b35;
 }
 
@@ -828,133 +818,58 @@ input, select, textarea {
   font-size: 15px;
 }
 
-/* ENCABEZADOS DE TABLA Y FILTROS */
+/* RESUMEN DE VENTA */
 
-#tab-sustratos .encabezado-tabla {
+#tab-sustratos .resumen-venta-sustratos {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 18px;
+  justify-content: flex-end;
+  margin-top: 20px;
 }
 
-#tab-sustratos .encabezado-tabla h3 {
-  margin-bottom: 0;
-}
-
-#tab-sustratos .encabezado-tabla input,
-#tab-sustratos .encabezado-tabla select {
-  width: auto;
-  min-width: 220px;
-}
-
-#tab-sustratos .encabezado-tabla label {
-  margin-bottom: 0;
-  margin-left: auto;
-}
-
-/* TABLAS */
-
-#tab-sustratos .tabla-responsive {
-  width: 100%;
-  overflow-x: auto;
-}
-
-#tab-sustratos table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 650px;
-}
-
-#tab-sustratos th {
-  background: #edf4ee;
-  color: #245c40;
-  padding: 13px;
-  text-align: left;
-  font-size: 13px;
-}
-
-#tab-sustratos td {
-  padding: 12px;
-  border-bottom: 1px solid #eee;
-  font-size: 13px;
-}
-
-/* VENTAS */
-
-#tab-sustratos .resumen-venta {
-  margin: 20px 0;
-  padding: 15px;
-  background: #f5f7f5;
-  border-radius: 8px;
+#tab-sustratos .total-venta-sustratos {
   text-align: right;
 }
 
-#tab-sustratos .resumen-venta h3 {
-  margin: 0;
-  font-size: 16px;
-  color: #555;
+#tab-sustratos .total-venta-sustratos span {
+  display: block;
+  color: #777;
+  font-size: 14px;
 }
 
-#tab-sustratos .resumen-venta span {
-  font-size: 26px;
+#tab-sustratos .total-venta-sustratos strong {
+  font-size: 28px;
   color: #174d36;
-  margin-left: 8px;
-}
-
-/* ALERTAS */
-
-#tab-sustratos .panel-alertas-sustratos tbody td {
-  background: #fff4df;
-  color: #946200;
 }
 
 /* RESPONSIVE */
 
 @media (max-width: 850px) {
-
-  #tab-sustratos .modulo-layout {
+  #tab-sustratos .panel-sustratos {
     flex-direction: column;
   }
 
-  #tab-sustratos .sidebar-modulo {
+  #tab-sustratos .menu-sustratos {
     width: auto;
     min-width: 0;
-  }
-
-  #tab-sustratos .sidebar-modulo nav {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
   }
 
-  #tab-sustratos .estadisticas-grid {
+  #tab-sustratos .logo-sustratos {
+    grid-column: 1 / -1;
+  }
+
+  #tab-sustratos .resumen-sustratos {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  #tab-sustratos .contenido-modulo {
+  #tab-sustratos .contenido-sustratos {
     padding: 18px;
   }
-
 }
 
 @media (max-width: 500px) {
-
-  #tab-sustratos .formulario-grid {
+  #tab-sustratos .formulario-sustratos {
     grid-template-columns: 1fr;
   }
-
-  #tab-sustratos .encabezado-tabla input,
-  #tab-sustratos .encabezado-tabla select {
-    width: 100%;
-  }
-
-  #tab-sustratos .encabezado-tabla label {
-    margin-left: 0;
-  }
-
-  #tab-sustratos .resumen-venta {
-    text-align: left;
-  }
-
 }
