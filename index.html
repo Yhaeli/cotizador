@@ -137,286 +137,125 @@
   </div>
 
 <!-- ==========================================
-     PESTAÑA 2: CONTROL DE MACETAS
      MÓDULO DE MACETAS - VIVERO ELIEL
 ========================================== -->
 
 <div id="tab-macetas" class="tab-content">
-  <div class="contenedor-macetas">
 
-    <h2>Control de Inventario y Ventas de Macetas</h2>
   <div class="panel-macetas">
 
-    <!-- PANEL DE RESUMEN -->
-    <div class="resumen-macetas">
     <!-- MENÚ LATERAL -->
     <aside class="menu-macetas">
 
-      <div class="tarjeta-resumen">
-        <h4>Productos registrados</h4>
-        <strong id="totalProductosMacetas">0</strong>
       <div class="logo-macetas">
         <h2>🌿 Vivero Eliel</h2>
         <p>Control de macetas</p>
       </div>
 
-      <div class="tarjeta-resumen">
-        <h4>Unidades disponibles</h4>
-        <strong id="totalStockMacetas">0</strong>
-      </div>
       <button class="nav-macetas activo" data-pagina="inicioMacetas">
         🏠 Inicio
       </button>
 
-      <div class="tarjeta-resumen">
-        <h4>Unidades vendidas</h4>
-        <strong id="totalVendidasMacetas">0</strong>
-      </div>
       <button class="nav-macetas" data-pagina="inventarioMacetas">
         📦 Inventario
       </button>
 
-      <div class="tarjeta-resumen">
-        <h4>Ventas del mes</h4>
-        <strong id="ventasMesMacetas">S/. 0.00</strong>
-      </div>
       <button class="nav-macetas" data-pagina="entradasMacetas">
         📥 Entradas
       </button>
 
-    </div>
       <button class="nav-macetas" data-pagina="ventasMacetas">
         🛒 Registrar venta
       </button>
 
-    <!-- ======================================
-         1. INVENTARIO
-    ====================================== -->
       <button class="nav-macetas" data-pagina="historialMacetas">
         📋 Historial de ventas
       </button>
 
-    <div class="tarjeta">
       <button class="nav-macetas" data-pagina="movimientosMacetas">
         🔄 Movimientos
       </button>
 
-      <h3>Inventario de macetas</h3>
     </aside>
 
-      <div class="form-agregar">
 
-        <input
-          type="text"
-          id="nombreMaceta"
-          placeholder="Nombre de la maceta"
-        >
-
-        <input
-          type="number"
-          id="costoMaceta"
-          placeholder="Costo de compra (S/.)"
-          min="0"
-          step="0.01"
-        >
-
-        <input
-          type="number"
-          id="precioVentaMaceta"
-          placeholder="Precio de venta (S/.)"
-          min="0"
-          step="0.01"
-        >
-
-        <input
-          type="number"
-          id="stockMaceta"
-          placeholder="Stock inicial"
-          min="0"
-          step="1"
-        >
-
-        <button
-          type="button"
-          id="btnAgregarMaceta"
-          class="btn-green"
-        >
-          Agregar producto
-        </button>
     <!-- CONTENIDO PRINCIPAL -->
     <main class="contenido-macetas">
 
-      </div>
 
-      <div class="tabla-responsive">
       <!-- ======================================
            PÁGINA 1: INICIO
       ====================================== -->
 
-        <table class="tabla-inventario">
       <section id="inicioMacetas" class="pagina-macetas activa">
 
-          <thead>
-            <tr>
-              <th>Producto</th>
-              <th>Costo</th>
-              <th>Precio venta</th>
-              <th>Stock</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
         <h2>Panel de control</h2>
 
-          <tbody id="tablaInventarioMacetas"></tbody>
         <p class="subtitulo-macetas">
           Resumen general del inventario de macetas.
         </p>
 
-        </table>
         <div class="resumen-macetas">
 
-      </div>
           <div class="tarjeta-resumen">
             <span>Productos registrados</span>
             <strong id="totalProductosMacetas">0</strong>
           </div>
 
-    </div>
           <div class="tarjeta-resumen">
             <span>Unidades disponibles</span>
             <strong id="totalStockMacetas">0</strong>
           </div>
 
-    <!-- ======================================
-         2. ENTRADAS DE INVENTARIO
-    ====================================== -->
           <div class="tarjeta-resumen">
             <span>Unidades vendidas</span>
             <strong id="totalVendidasMacetas">0</strong>
           </div>
 
-    <div class="tarjeta">
           <div class="tarjeta-resumen">
             <span>Ventas del mes</span>
             <strong id="ventasMesMacetas">S/. 0.00</strong>
           </div>
 
-      <h3>Registrar entrada de macetas</h3>
         </div>
 
-      <div class="form-agregar">
         <div class="tarjeta-macetas">
 
-        <select id="productoEntradaMaceta">
-          <option value="">Seleccionar maceta</option>
-        </select>
           <h3>⚠️ Productos con stock bajo</h3>
 
-        <input
-          type="number"
-          id="cantidadEntradaMaceta"
-          placeholder="Cantidad recibida"
-          min="1"
-          step="1"
-        >
-
-        <input
-          type="number"
-          id="costoEntradaMaceta"
-          placeholder="Costo unitario (S/.)"
-          min="0"
-          step="0.01"
-        >
-
-        <input
-          type="text"
-          id="observacionEntradaMaceta"
-          placeholder="Observación (opcional)"
-        >
-
-        <button
-          type="button"
-          id="btnRegistrarEntradaMaceta"
-          class="btn-green"
-        >
-          Registrar entrada
-        </button>
           <div id="alertasStockMacetas">
             No hay alertas de stock.
           </div>
 
-      </div>
         </div>
 
-    </div>
       </section>
 
-    <!-- ======================================
-         3. REGISTRO DE VENTAS
-    ====================================== -->
 
-    <div class="tarjeta">
       <!-- ======================================
            PÁGINA 2: INVENTARIO
       ====================================== -->
 
-      <h3>Registrar venta</h3>
       <section id="inventarioMacetas" class="pagina-macetas">
 
-      <input
-        type="text"
-        id="clienteVentaMaceta"
-        placeholder="Nombre del cliente (opcional)"
-      >
         <h2>Inventario de macetas</h2>
 
-      <div class="form-venta">
         <p class="subtitulo-macetas">
           Registra y administra los productos disponibles.
         </p>
 
-        <select id="productoVentaMaceta">
-          <option value="">Seleccionar maceta</option>
-        </select>
         <div class="tarjeta-macetas">
 
-        <input
-          type="number"
-          id="cantidadVentaMaceta"
-          placeholder="Cantidad"
-          min="1"
-          step="1"
-        >
-
-        <input
-          type="number"
-          id="precioUnitarioVentaMaceta"
-          placeholder="Precio unitario"
-          min="0"
-          step="0.01"
-        >
-
-        <button
-          type="button"
-          id="btnAgregarProductoVentaMaceta"
-          class="btn-blue"
-        >
-          Agregar a la venta
-        </button>
           <h3>Registrar nueva maceta</h3>
 
-      </div>
           <div class="formulario-macetas">
 
-      <div class="tabla-responsive">
             <input
               type="text"
               id="nombreMaceta"
               placeholder="Nombre de la maceta"
             >
 
-        <table>
             <input
               type="number"
               id="costoMaceta"
@@ -425,15 +264,6 @@
               step="0.01"
             >
 
-          <thead>
-            <tr>
-              <th>Producto</th>
-              <th>Cantidad</th>
-              <th>Precio unitario</th>
-              <th>Subtotal</th>
-              <th>Acción</th>
-            </tr>
-          </thead>
             <input
               type="number"
               id="precioVentaMaceta"
@@ -442,7 +272,6 @@
               step="0.01"
             >
 
-          <tbody id="detalleVentaMacetas"></tbody>
             <input
               type="number"
               id="stockMaceta"
@@ -451,44 +280,23 @@
               step="1"
             >
 
-        </table>
             <button id="btnAgregarMaceta" class="btn-principal-macetas">
               Registrar producto
             </button>
 
-      </div>
           </div>
 
-      <h3>
-        Total de la venta:
-        <span id="totalVentaMacetas">S/. 0.00</span>
-      </h3>
         </div>
 
-      <label for="medioPagoMacetas">Método de pago:</label>
 
-      <select id="medioPagoMacetas">
         <div class="tarjeta-macetas">
 
-        <option value="Efectivo">Efectivo</option>
-        <option value="Yape">Yape</option>
-        <option value="Transferencia">Transferencia</option>
-        <option value="Pago Pendiente">Pago pendiente</option>
           <h3>Productos registrados</h3>
 
-      </select>
           <div class="tabla-responsive">
 
-      <br><br>
             <table>
 
-      <button
-        type="button"
-        id="btnRegistrarVentaMaceta"
-        class="btn-green"
-      >
-        Registrar venta completa
-      </button>
               <thead>
                 <tr>
                   <th>Producto</th>
@@ -500,82 +308,39 @@
                 </tr>
               </thead>
 
-    </div>
               <tbody id="tablaInventarioMacetas"></tbody>
 
-    <!-- ======================================
-         4. HISTORIAL DE VENTAS
-    ====================================== -->
             </table>
 
-    <div class="tarjeta">
           </div>
 
-      <h3>Historial de ventas</h3>
         </div>
 
-      <div class="filtros-macetas">
       </section>
 
-        <label>Desde:</label>
 
-        <input
-          type="date"
-          id="fechaDesdeMacetas"
-        >
       <!-- ======================================
            PÁGINA 3: ENTRADAS
       ====================================== -->
 
-        <label>Hasta:</label>
       <section id="entradasMacetas" class="pagina-macetas">
 
-        <input
-          type="date"
-          id="fechaHastaMacetas"
-        >
         <h2>Entradas de inventario</h2>
 
-        <button
-          type="button"
-          id="btnFiltrarVentasMacetas"
-        >
-          Filtrar
-        </button>
         <p class="subtitulo-macetas">
           Registra las compras y reposiciones de macetas.
         </p>
 
-        <button
-          type="button"
-          id="btnLimpiarFiltrosMacetas"
-        >
-          Limpiar
-        </button>
         <div class="tarjeta-macetas">
 
-      </div>
           <h3>Registrar nueva entrada</h3>
 
-      <div class="tabla-responsive">
           <div class="formulario-macetas">
 
-        <table>
             <select id="productoEntradaMaceta">
               <option value="">Seleccionar maceta</option>
             </select>
 
-          <thead>
-            <tr>
-              <th>Fecha</th>
-              <th>Productos</th>
-              <th>Cliente</th>
-              <th>Total</th>
-              <th>Pago</th>
-              <th>Estado</th>
-              <th>Acción</th>
-            </tr>
-          </thead>
             <input
               type="number"
               id="cantidadEntradaMaceta"
@@ -584,7 +349,6 @@
               step="1"
             >
 
-          <tbody id="historialVentasMacetas"></tbody>
             <input
               type="number"
               id="costoEntradaMaceta"
@@ -593,14 +357,12 @@
               step="0.01"
             >
 
-        </table>
             <input
               type="text"
               id="observacionEntradaMaceta"
               placeholder="Observación (opcional)"
             >
 
-      </div>
             <button
               id="btnRegistrarEntradaMaceta"
               class="btn-principal-macetas"
@@ -608,47 +370,27 @@
               Registrar entrada
             </button>
 
-    </div>
           </div>
 
-    <!-- ======================================
-         5. MOVIMIENTOS DE INVENTARIO
-    ====================================== -->
         </div>
 
-    <div class="tarjeta">
       </section>
 
-      <h3>Movimientos de inventario</h3>
 
-      <div class="tabla-responsive">
       <!-- ======================================
            PÁGINA 4: REGISTRAR VENTA
       ====================================== -->
 
-        <table>
       <section id="ventasMacetas" class="pagina-macetas">
 
-          <thead>
-            <tr>
-              <th>Fecha</th>
-              <th>Producto</th>
-              <th>Movimiento</th>
-              <th>Cantidad</th>
-              <th>Detalle</th>
-            </tr>
-          </thead>
         <h2>Registrar venta</h2>
 
-          <tbody id="movimientosInventarioMacetas"></tbody>
         <p class="subtitulo-macetas">
           Selecciona las macetas que deseas vender e indica sus cantidades.
         </p>
 
-        </table>
         <div class="tarjeta-macetas">
 
-      </div>
           <label>Nombre del cliente (opcional)</label>
 
           <input
@@ -659,7 +401,6 @@
 
         </div>
 
-    </div>
 
         <div class="tarjeta-macetas">
 
@@ -830,72 +571,674 @@
 
 </div>
 
-  <!-- PESTAÑA 3: SUSTRATOS -->
-  <div id="tab-sustratos" class="tab-content">
-  <div class="contenedor-sustratos">
-    <h2>Control de Inventario y Ventas de Sustratos</h2>
+<!-- ==========================================
+     MÓDULO DE SUSTRATOS - VIVERO ELIEL
+========================================== -->
 
-    <!-- SECCIÓN 1: INVENTARIO -->
-    <div class="tarjeta">
-      <h3>Inventario Actual</h3>
+<div id="tab-sustratos" class="tab-content">
 
-      <div class="form-agregar">
-        <input type="text" id="nombreSustrato" placeholder="Nombre (Ej: Fibra de Coco 5L)">
-        <input type="number" id="costoSustrato" placeholder="Precio Base (S/.)" step="0.10">
-        <input type="number" id="stockSustrato" placeholder="Cantidad Inicial">
-        <button type="button" id="btnAgregarSustrato" class="btn-green">Agregar al Inventario</button>
-      </div>
+    <div class="modulo-layout">
 
-      <!-- CUADRO/TABLA DE INVENTARIO -->
-      <div class="tabla-responsive">
-        <table class="tabla-inventario">
-          <thead>
-            <tr>
-              <th>Producto</th>
-              <th>Precio Base</th>
-              <th>Stock</th>
-              <th>Acción</th>
-            </tr>
-          </thead>
-          <tbody id="tablaInventarioSustratos">
-            <!-- Se llena con JS -->
-          </tbody>
-        </table>
-      </div>
+        <!-- MENÚ LATERAL -->
+        <aside class="sidebar-modulo">
+
+            <div class="sidebar-titulo">
+                <h2>🌱 Sustratos</h2>
+                <p>Vivero Eliel</p>
+            </div>
+
+            <nav class="nav-sustratos">
+
+                <button class="nav-sustratos activo"
+                        data-pagina="inicioSustratos">
+                    🏠 Inicio
+                </button>
+
+                <button class="nav-sustratos"
+                        data-pagina="inventarioSustratos">
+                    📦 Inventario
+                </button>
+
+                <button class="nav-sustratos"
+                        data-pagina="entradasSustratos">
+                    📥 Entradas
+                </button>
+
+                <button class="nav-sustratos"
+                        data-pagina="ventasSustratos">
+                    🛒 Registrar venta
+                </button>
+
+                <button class="nav-sustratos"
+                        data-pagina="historialSustratos">
+                    📋 Historial de ventas
+                </button>
+
+                <button class="nav-sustratos"
+                        data-pagina="movimientosSustratos">
+                    🔄 Movimientos
+                </button>
+
+            </nav>
+
+        </aside>
+
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main class="contenido-modulo">
+
+
+            <!-- ==================================
+                 1. INICIO
+            ================================== -->
+
+            <section id="inicioSustratos"
+                     class="pagina-sustratos activa">
+
+                <div class="encabezado-pagina">
+                    <div>
+                        <h2>Panel de Sustratos</h2>
+                        <p>Resumen general de tu inventario y ventas.</p>
+                    </div>
+                </div>
+
+                <div class="estadisticas-grid">
+
+                    <div class="tarjeta-estadistica">
+                        <span>Productos registrados</span>
+                        <h3 id="totalProductosSustratos">0</h3>
+                    </div>
+
+                    <div class="tarjeta-estadistica">
+                        <span>Stock en kilogramos</span>
+                        <h3 id="stockKgSustratos">0</h3>
+                    </div>
+
+                    <div class="tarjeta-estadistica">
+                        <span>Stock en litros</span>
+                        <h3 id="stockLitrosSustratos">0</h3>
+                    </div>
+
+                    <div class="tarjeta-estadistica">
+                        <span>Stock en bolsas / unidades</span>
+                        <h3 id="stockUnidadesSustratos">0</h3>
+                    </div>
+
+                    <div class="tarjeta-estadistica">
+                        <span>Ventas del mes</span>
+                        <h3 id="ventasMesSustratos">S/ 0.00</h3>
+                    </div>
+
+                    <div class="tarjeta-estadistica">
+                        <span>Productos con stock bajo</span>
+                        <h3 id="alertasSustratos">0</h3>
+                    </div>
+
+                </div>
+
+                <div class="panel-modulo">
+                    <h3>Productos con stock bajo</h3>
+
+                    <div class="tabla-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Stock disponible</th>
+                                    <th>Unidad</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="alertasInventarioSustratos">
+                                <tr>
+                                    <td colspan="4">
+                                        No hay alertas registradas.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </section>
+
+
+
+            <!-- ==================================
+                 2. INVENTARIO
+            ================================== -->
+
+            <section id="inventarioSustratos"
+                     class="pagina-sustratos">
+
+                <div class="encabezado-pagina">
+                    <div>
+                        <h2>Inventario de Sustratos</h2>
+                        <p>Administra tus productos, precios y existencias.</p>
+                    </div>
+                </div>
+
+
+                <!-- FORMULARIO DE PRODUCTOS -->
+
+                <div class="panel-modulo">
+
+                    <h3>Registrar nuevo producto</h3>
+
+                    <div class="formulario-grid">
+
+                        <div class="campo-formulario">
+                            <label>Nombre del producto</label>
+
+                            <input type="text"
+                                   id="nombreSustrato"
+                                   placeholder="Ej. Perlita">
+                        </div>
+
+
+                        <div class="campo-formulario">
+                            <label>Unidad de venta</label>
+
+                            <select id="unidadSustrato">
+                                <option value="kg">Kilogramos (kg)</option>
+                                <option value="L">Litros (L)</option>
+                                <option value="und">Unidades (bolsas)</option>
+                            </select>
+                        </div>
+
+
+                        <div class="campo-formulario">
+                            <label>Costo unitario (S/)</label>
+
+                            <input type="number"
+                                   id="costoSustrato"
+                                   min="0"
+                                   step="0.01"
+                                   placeholder="0.00">
+                        </div>
+
+
+                        <div class="campo-formulario">
+                            <label>Precio de venta (S/)</label>
+
+                            <input type="number"
+                                   id="precioVentaSustrato"
+                                   min="0"
+                                   step="0.01"
+                                   placeholder="0.00">
+                        </div>
+
+
+                        <div class="campo-formulario">
+                            <label>Stock inicial</label>
+
+                            <input type="number"
+                                   id="stockSustrato"
+                                   min="0"
+                                   step="0.01"
+                                   placeholder="Cantidad disponible">
+                        </div>
+
+                    </div>
+
+
+                    <button id="btnAgregarSustrato"
+                            class="btn-principal">
+                        + Registrar producto
+                    </button>
+
+                </div>
+
+
+                <!-- TABLA DE INVENTARIO -->
+
+                <div class="panel-modulo">
+
+                    <div class="encabezado-tabla">
+                        <h3>Productos registrados</h3>
+
+                        <input type="text"
+                               id="buscarSustrato"
+                               placeholder="Buscar producto...">
+                    </div>
+
+
+                    <div class="tabla-responsive">
+
+                        <table>
+
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Unidad</th>
+                                    <th>Costo unitario</th>
+                                    <th>Precio de venta</th>
+                                    <th>Stock</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="tablaInventarioSustratos">
+                                <tr>
+                                    <td colspan="6">
+                                        Cargando inventario...
+                                    </td>
+                                </tr>
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- ==================================
+                 3. ENTRADAS
+            ================================== -->
+
+            <section id="entradasSustratos"
+                     class="pagina-sustratos">
+
+                <div class="encabezado-pagina">
+                    <div>
+                        <h2>Entradas de Sustratos</h2>
+                        <p>Registra las compras y el ingreso de productos.</p>
+                    </div>
+                </div>
+
+
+                <div class="panel-modulo">
+
+                    <h3>Registrar entrada de productos</h3>
+
+                    <div class="formulario-grid">
+
+                        <div class="campo-formulario">
+                            <label>Seleccionar producto</label>
+
+                            <select id="selectEntradaSustrato">
+                                <option value="">
+                                    Selecciona un producto
+                                </option>
+                            </select>
+                        </div>
+
+
+                        <div class="campo-formulario">
+                            <label>Cantidad ingresada</label>
+
+                            <input type="number"
+                                   id="cantidadEntradaSustrato"
+                                   min="0.01"
+                                   step="0.01"
+                                   placeholder="Cantidad">
+                        </div>
+
+
+                        <div class="campo-formulario">
+                            <label>Costo unitario (S/)</label>
+
+                            <input type="number"
+                                   id="costoEntradaSustrato"
+                                   min="0"
+                                   step="0.01"
+                                   placeholder="0.00">
+                        </div>
+
+
+                        <div class="campo-formulario">
+                            <label>Observación</label>
+
+                            <input type="text"
+                                   id="observacionEntradaSustrato"
+                                   placeholder="Detalle de la entrada">
+                        </div>
+<!-- ==================================
+     1. INICIO - SUSTRATOS
+================================== -->
+
+                    </div>
+<section id="inicioSustratos" class="pagina-sustratos activa">
+
+    <div class="encabezado-pagina">
+        <div>
+            <h2>Panel de control</h2>
+            <p>Resumen general del inventario de sustratos.</p>
+        </div>
     </div>
 
-    <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ccc;">
+                    <button id="btnRegistrarEntradaSustrato"
+                            class="btn-principal">
+                        Registrar entrada
+                    </button>
 
-    <!-- SECCIÓN 2: REGISTRO Y HISTORIAL DE VENTAS -->
-    <div class="tarjeta">
-      <h3>Registrar Salida / Venta</h3>
-      <div class="form-venta">
-  <select id="selectSustratoVenta" onchange="cargarPrecioVentaSustrato()">
-    <option value="">-- Seleccionar Sustrato --</option>
-  </select>
-  <input type="number" id="cantidadSustratoVenta" placeholder="Cant. vendida" min="1">
-  <input type="number" id="precioVentaSustratoInput" placeholder="Precio Unit. (S/.)" step="0.10">
+                </div>
 
-  <!-- NUEVOS CAMPOS -->
-  <input type="text" id="clienteVentaSustrato" placeholder="Nombre del cliente">
-  <select id="metodoPagoSustrato">
-    <option value="Yape">Yape</option>
-    <option value="Efectivo">Efectivo</option>
-    <option value="Pago Pendiente">Pago Pendiente</option>
-  </select>
 
-  <button type="button" id="btnRegistrarVentaSustrato" class="btn-blue">Registrar Venta</button>
-</div>
+                <div class="panel-modulo">
 
-      <h3>Historial de Ventas</h3>
-      <ul id="listaHistorialSustratos" class="lista-datos">
-        <!-- Se llena con JS -->
-      </ul>
+                    <h3>Historial de entradas</h3>
+
+                    <div class="tabla-responsive">
+
+                        <table>
+
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Producto</th>
+                                    <th>Cantidad</th>
+                                    <th>Unidad</th>
+                                    <th>Costo unitario</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="historialEntradasSustratos">
+                                <tr>
+                                    <td colspan="6">
+                                        Cargando entradas...
+                                    </td>
+                                </tr>
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- ==================================
+                 4. REGISTRAR VENTA
+            ================================== -->
+
+            <section id="ventasSustratos"
+                     class="pagina-sustratos">
+
+                <div class="encabezado-pagina">
+                    <div>
+                        <h2>Registrar venta</h2>
+                        <p>Registra una venta con uno o varios productos.</p>
+                    </div>
+                </div>
+
+
+                <div class="panel-modulo">
+
+                    <h3>Productos disponibles</h3>
+
+                    <div class="tabla-responsive">
+
+                        <table>
+
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Unidad</th>
+                                    <th>Stock disponible</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio unitario</th>
+                                    <th>Subtotal</th>
+                                </tr>
+                            </thead>
+
+
+                            <tbody id="detalleVentaSustratos">
+                                <tr>
+                                    <td colspan="6">
+                                        Cargando productos...
+                                    </td>
+                                </tr>
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+
+                    <div class="resumen-venta">
+
+                        <h3>
+                            Total de la venta:
+                            <span id="totalVentaSustratos">S/ 0.00</span>
+                        </h3>
+
+                    </div>
+
+
+                    <div class="formulario-grid">
+
+                        <div class="campo-formulario">
+                            <label>Nombre del cliente</label>
+
+                            <input type="text"
+                                   id="clienteVentaSustrato"
+                                   placeholder="Cliente (opcional)">
+                        </div>
+
+
+                        <div class="campo-formulario">
+                            <label>Método de pago</label>
+
+                            <select id="metodoPagoSustrato">
+                                <option value="Efectivo">Efectivo</option>
+                                <option value="Yape">Yape</option>
+                                <option value="Transferencia">Transferencia</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+
+                    </div>
+
+
+                    <button id="btnRegistrarVentaSustrato"
+                            class="btn-principal btn-registrar-venta">
+                        REGISTRAR VENTA COMPLETA
+                    </button>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- ==================================
+                 5. HISTORIAL DE VENTAS
+            ================================== -->
+
+            <section id="historialSustratos"
+                     class="pagina-sustratos">
+
+                <div class="encabezado-pagina">
+                    <div>
+                        <h2>Historial de ventas</h2>
+                        <p>Consulta las ventas realizadas en el vivero.</p>
+                    </div>
+                </div>
+
+
+                <div class="panel-modulo">
+
+                    <div class="encabezado-tabla">
+
+                        <h3>Registro de ventas</h3>
+
+                        <input type="date"
+                               id="filtroFechaSustratos">
+
+                    </div>
+
+
+                    <div class="tabla-responsive">
+
+                        <table>
+
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Productos</th>
+                                    <th>Cliente</th>
+                                    <th>Método de pago</th>
+                                    <th>Total</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+
+
+                            <tbody id="historialVentasSustratos">
+                                <tr>
+                                    <td colspan="7">
+                                        Cargando historial...
+                                    </td>
+                                </tr>
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- ==================================
+                 6. MOVIMIENTOS
+            ================================== -->
+
+            <section id="movimientosSustratos"
+                     class="pagina-sustratos">
+
+                <div class="encabezado-pagina">
+                    <div>
+                        <h2>Movimientos de inventario</h2>
+                        <p>Consulta las entradas, ventas y devoluciones.</p>
+                    </div>
+                </div>
+
+
+                <div class="panel-modulo">
+
+                    <div class="encabezado-tabla">
+
+                        <h3>Registro de movimientos</h3>
+
+                        <select id="filtroMovimientoSustratos">
+
+                            <option value="todos">
+                                Todos los movimientos
+                            </option>
+
+                            <option value="entrada">
+                                Entradas
+                            </option>
+
+                            <option value="venta">
+                                Ventas
+                            </option>
+
+                            <option value="devolucion">
+                                Devoluciones
+                            </option>
+
+                        </select>
+
+                    </div>
+
+    <div class="estadisticas-grid">
+
+                    <div class="tabla-responsive">
+        <div class="tarjeta-estadistica">
+            <span>Productos registrados</span>
+            <h3 id="totalProductosSustratos">0</h3>
+        </div>
+
+                        <table>
+        <div class="tarjeta-estadistica">
+            <span>Stock en kilogramos</span>
+            <h3 id="stockKgSustratos">0 kg</h3>
+        </div>
+
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Producto</th>
+                                    <th>Tipo de movimiento</th>
+                                    <th>Cantidad</th>
+                                    <th>Unidad</th>
+                                    <th>Detalle</th>
+                                </tr>
+                            </thead>
+        <div class="tarjeta-estadistica">
+            <span>Stock en litros</span>
+            <h3 id="stockLitrosSustratos">0 L</h3>
+        </div>
+
+        <div class="tarjeta-estadistica">
+            <span>Stock en bolsas</span>
+            <h3 id="stockUnidadesSustratos">0</h3>
+        </div>
+
+                            <tbody id="movimientosInventarioSustratos">
+                                <tr>
+                                    <td colspan="6">
+                                        Cargando movimientos...
+                                    </td>
+                                </tr>
+                            </tbody>
     </div>
-  </div>
-</div>
 
-  <!-- Lógica externa -->
-  <script src="app.js"></script>
+                        </table>
+    <div class="panel-modulo panel-alertas-sustratos">
+
+                    </div>
+        <h3>⚠️ Productos con stock bajo</h3>
+
+                </div>
+        <div class="tabla-responsive">
+
+            </section>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Stock disponible</th>
+                        <th>Unidad</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+
+                <tbody id="alertasInventarioSustratos">
+                    <tr>
+                        <td colspan="4">No hay alertas de stock.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+        </div>
+
+        </main>
+    </div>
+
+    <div class="tarjeta-ventas-mes-sustratos">
+        <span>Ventas del mes</span>
+        <h3 id="ventasMesSustratos">S/ 0.00</h3>
+    </div>
+
+</div>
+</section>
+
+<!-- FIN DEL MÓDULO DE SUSTRATOS -->
 </body>
 </html>
