@@ -1176,6 +1176,162 @@ input, select, textarea {
         width: 100%;
     }
 }
+/* ==========================================
+   DISTRIBUCIÓN PRINCIPAL - IGUAL A MACETAS
+========================================== */
+
+#tab-sustratos .modulo-layout {
+    display: flex;
+    flex-direction: row;
+    min-height: 656px;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* Menú lateral */
+
+#tab-sustratos .sidebar-modulo {
+    width: 242px;
+    min-width: 242px;
+    padding: 22px 13px;
+    background: #174d36;
+}
+
+#tab-sustratos .sidebar-titulo {
+    text-align: center;
+    border: none;
+    margin-bottom: 30px;
+    padding-bottom: 10px;
+}
+
+#tab-sustratos .sidebar-titulo h2 {
+    font-size: 20px;
+    color: #328b42;
+}
+
+#tab-sustratos .sidebar-titulo p {
+    color: #ffffff;
+    font-size: 12px;
+}
+
+/* Contenido */
+
+#tab-sustratos .contenido-modulo {
+    flex: 1;
+    padding: 28px 26px;
+    min-width: 0;
+    background: #f5f7f6;
+}
+
+/* Encabezado */
+
+#tab-sustratos .encabezado-pagina {
+    margin-bottom: 23px;
+}
+
+#tab-sustratos .encabezado-pagina h2 {
+    font-size: 23px;
+    color: #174d36;
+    margin-bottom: 20px;
+}
+
+#tab-sustratos .encabezado-pagina p {
+    font-size: 14px;
+}
+
+/* Cuatro tarjetas en una fila */
+
+#tab-sustratos .estadisticas-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 22px;
+}
+
+#tab-sustratos .tarjeta-estadistica {
+    min-height: 116px;
+    padding: 20px 14px;
+    border-radius: 11px;
+    background: #ffffff;
+    border: none;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.05);
+}
+
+#tab-sustratos .tarjeta-estadistica span {
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+#tab-sustratos .tarjeta-estadistica h3 {
+    font-size: 23px;
+    color: #174d36;
+}
+
+/* Panel de alertas */
+
+#tab-sustratos .panel-alertas-sustratos {
+    padding: 22px;
+    border-radius: 11px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.04);
+}
+
+#tab-sustratos .panel-alertas-sustratos h3 {
+    font-size: 17px;
+    margin-bottom: 15px;
+}
+
+/* Ventas del mes */
+
+#tab-sustratos .tarjeta-ventas-mes-sustratos {
+    margin-top: 20px;
+    padding: 18px 22px;
+    background: #ffffff;
+    border-radius: 11px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.04);
+}
+
+#tab-sustratos .tarjeta-ventas-mes-sustratos span {
+    font-size: 13px;
+    color: #78857c;
+}
+
+#tab-sustratos .tarjeta-ventas-mes-sustratos h3 {
+    font-size: 23px;
+    color: #174d36;
+    margin: 10px 0 0;
+}
+
+/* Responsive */
+
+@media (max-width: 850px) {
+
+    #tab-sustratos .modulo-layout {
+        flex-direction: column;
+    }
+
+    #tab-sustratos .sidebar-modulo {
+        width: 100%;
+        min-width: 100%;
+    }
+
+    #tab-sustratos .estadisticas-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+}
+
+@media (max-width: 500px) {
+
+    #tab-sustratos .contenido-modulo {
+        padding: 18px 14px;
+    }
+
+    #tab-sustratos .estadisticas-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+}
 
 /* ==========================================
    FIN CSS MÓDULO DE SUSTRATOS
