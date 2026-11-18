@@ -577,57 +577,53 @@
 
 <div id="tab-sustratos" class="tab-content">
 
-  <div class="modulo-layout">
+  <div class="panel-sustratos">
 
     <!-- MENÚ LATERAL -->
-    <aside class="sidebar-modulo">
+    <aside class="menu-sustratos">
 
-      <div class="sidebar-titulo">
+      <div class="logo-sustratos">
         <h2>🌿 Vivero Eliel</h2>
         <p>Control de sustratos</p>
       </div>
 
-      <nav aria-label="Navegación de sustratos">
-        <button type="button" class="nav-sustratos activo" data-pagina="inicioSustratos">🏠 Inicio</button>
-        <button type="button" class="nav-sustratos" data-pagina="inventarioSustratos">📦 Inventario</button>
-        <button type="button" class="nav-sustratos" data-pagina="entradasSustratos">📥 Entradas</button>
-        <button type="button" class="nav-sustratos" data-pagina="ventasSustratos">🛒 Registrar venta</button>
-        <button type="button" class="nav-sustratos" data-pagina="historialSustratos">📋 Historial de ventas</button>
-        <button type="button" class="nav-sustratos" data-pagina="movimientosSustratos">🔄 Movimientos</button>
-      </nav>
+      <button type="button" class="nav-sustratos activo" data-pagina="inicioSustratos">🏠 Inicio</button>
+      <button type="button" class="nav-sustratos" data-pagina="inventarioSustratos">📦 Inventario</button>
+      <button type="button" class="nav-sustratos" data-pagina="entradasSustratos">📥 Entradas</button>
+      <button type="button" class="nav-sustratos" data-pagina="ventasSustratos">🛒 Registrar venta</button>
+      <button type="button" class="nav-sustratos" data-pagina="historialSustratos">📋 Historial de ventas</button>
+      <button type="button" class="nav-sustratos" data-pagina="movimientosSustratos">🔄 Movimientos</button>
 
     </aside>
 
     <!-- CONTENIDO PRINCIPAL -->
-    <main class="contenido-modulo">
+    <main class="contenido-sustratos">
 
       <!-- 1. INICIO -->
       <section id="inicioSustratos" class="pagina-sustratos activa">
-        <div class="encabezado-pagina">
-          <h2>Panel de control</h2>
-          <p>Resumen general del inventario de sustratos.</p>
-        </div>
+        <h2>Panel de control</h2>
+        <p class="subtitulo-sustratos">Resumen general del inventario de sustratos.</p>
 
-        <div class="estadisticas-grid">
-          <div class="tarjeta-estadistica">
+        <div class="resumen-sustratos">
+          <div class="tarjeta-resumen-sustratos">
             <span>Productos registrados</span>
-            <h3 id="totalProductosSustratos">0</h3>
+            <strong id="totalProductosSustratos">0</strong>
           </div>
-          <div class="tarjeta-estadistica">
+          <div class="tarjeta-resumen-sustratos">
             <span>Stock en kilogramos</span>
-            <h3 id="stockKgSustratos">0 kg</h3>
+            <strong id="stockKgSustratos">0 kg</strong>
           </div>
-          <div class="tarjeta-estadistica">
+          <div class="tarjeta-resumen-sustratos">
             <span>Stock en litros</span>
-            <h3 id="stockLitrosSustratos">0 L</h3>
+            <strong id="stockLitrosSustratos">0 L</strong>
           </div>
-          <div class="tarjeta-estadistica">
+          <div class="tarjeta-resumen-sustratos">
             <span>Stock en bolsas / unidades</span>
-            <h3 id="stockUnidadesSustratos">0</h3>
+            <strong id="stockUnidadesSustratos">0</strong>
           </div>
         </div>
 
-        <div class="panel-modulo panel-alertas-sustratos">
+        <div class="tarjeta-sustratos">
           <h3>⚠️ Productos con stock bajo</h3>
           <div class="tabla-responsive">
             <table>
@@ -641,27 +637,25 @@
           </div>
         </div>
 
-        <div class="tarjeta-ventas-mes-sustratos">
+        <div class="tarjeta-sustratos">
           <span>Ventas del mes</span>
-          <h3 id="ventasMesSustratos">S/ 0.00</h3>
+          <h3 id="ventasMesSustratos" style="font-size: 25px; color: #174d36; margin-top: 5px;">S/ 0.00</h3>
         </div>
       </section>
 
       <!-- 2. INVENTARIO -->
       <section id="inventarioSustratos" class="pagina-sustratos">
-        <div class="encabezado-pagina">
-          <h2>Inventario de sustratos</h2>
-          <p>Administra tus productos, precios y existencias.</p>
-        </div>
+        <h2>Inventario de sustratos</h2>
+        <p class="subtitulo-sustratos">Administra tus productos, precios y existencias.</p>
 
-        <div class="panel-modulo">
+        <div class="tarjeta-sustratos">
           <h3>Registrar nuevo producto</h3>
-          <div class="formulario-grid">
-            <div class="campo-formulario">
+          <div class="formulario-sustratos">
+            <div>
               <label for="nombreSustrato">Nombre del producto</label>
               <input type="text" id="nombreSustrato" placeholder="Ej. Perlita">
             </div>
-            <div class="campo-formulario">
+            <div>
               <label for="unidadSustrato">Unidad de venta</label>
               <select id="unidadSustrato">
                 <option value="kg">Kilogramos (kg)</option>
@@ -669,26 +663,26 @@
                 <option value="und">Unidades / bolsas</option>
               </select>
             </div>
-            <div class="campo-formulario">
+            <div>
               <label for="costoSustrato">Costo unitario (S/)</label>
               <input type="number" id="costoSustrato" min="0" step="0.01" placeholder="0.00">
             </div>
-            <div class="campo-formulario">
+            <div>
               <label for="precioVentaSustrato">Precio de venta (S/)</label>
               <input type="number" id="precioVentaSustrato" min="0" step="0.01" placeholder="0.00">
             </div>
-            <div class="campo-formulario">
+            <div style="grid-column: 1 / -1;">
               <label for="stockSustrato">Stock inicial</label>
               <input type="number" id="stockSustrato" min="0" step="0.01" placeholder="Cantidad disponible">
             </div>
           </div>
-          <button type="button" id="btnAgregarSustrato" class="btn-principal">+ Registrar producto</button>
+          <button type="button" id="btnAgregarSustrato" class="btn-principal-sustratos" style="margin-top: 15px;">+ Registrar producto</button>
         </div>
 
-        <div class="panel-modulo">
-          <div class="encabezado-tabla">
-            <h3>Productos registrados</h3>
-            <input type="search" id="buscarSustrato" placeholder="Buscar producto...">
+        <div class="tarjeta-sustratos">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+            <h3 style="margin: 0;">Productos registrados</h3>
+            <input type="search" id="buscarSustrato" placeholder="Buscar producto..." style="width: 220px;">
           </div>
           <div class="tabla-responsive">
             <table>
@@ -705,34 +699,33 @@
 
       <!-- 3. ENTRADAS -->
       <section id="entradasSustratos" class="pagina-sustratos">
-        <div class="encabezado-pagina">
-          <h2>Entradas de sustratos</h2>
-          <p>Registra las compras y reposiciones de productos.</p>
-        </div>
-        <div class="panel-modulo">
+        <h2>Entradas de sustratos</h2>
+        <p class="subtitulo-sustratos">Registra las compras y reposiciones de productos.</p>
+
+        <div class="tarjeta-sustratos">
           <h3>Registrar entrada de productos</h3>
-          <div class="formulario-grid">
-            <div class="campo-formulario">
+          <div class="formulario-sustratos">
+            <div>
               <label for="selectEntradaSustrato">Seleccionar producto</label>
               <select id="selectEntradaSustrato"><option value="">Selecciona un producto</option></select>
             </div>
-            <div class="campo-formulario">
+            <div>
               <label for="cantidadEntradaSustrato">Cantidad ingresada</label>
               <input type="number" id="cantidadEntradaSustrato" min="0.01" step="0.01" placeholder="Cantidad">
             </div>
-            <div class="campo-formulario">
+            <div>
               <label for="costoEntradaSustrato">Costo unitario (S/)</label>
               <input type="number" id="costoEntradaSustrato" min="0" step="0.01" placeholder="0.00">
             </div>
-            <div class="campo-formulario">
+            <div>
               <label for="observacionEntradaSustrato">Observación</label>
               <input type="text" id="observacionEntradaSustrato" placeholder="Detalle de la entrada (opcional)">
             </div>
           </div>
-          <button type="button" id="btnRegistrarEntradaSustrato" class="btn-principal">Registrar entrada</button>
+          <button type="button" id="btnRegistrarEntradaSustrato" class="btn-principal-sustratos" style="margin-top: 15px;">Registrar entrada</button>
         </div>
 
-        <div class="panel-modulo">
+        <div class="tarjeta-sustratos">
           <h3>Historial de entradas</h3>
           <div class="tabla-responsive">
             <table>
@@ -745,11 +738,10 @@
 
       <!-- 4. REGISTRAR VENTA -->
       <section id="ventasSustratos" class="pagina-sustratos">
-        <div class="encabezado-pagina">
-          <h2>Registrar venta</h2>
-          <p>Selecciona uno o varios productos e indica las cantidades.</p>
-        </div>
-        <div class="panel-modulo">
+        <h2>Registrar venta</h2>
+        <p class="subtitulo-sustratos">Selecciona uno o varios productos e indica las cantidades.</p>
+
+        <div class="tarjeta-sustratos">
           <h3>Productos disponibles</h3>
           <div class="tabla-responsive">
             <table>
@@ -757,15 +749,13 @@
               <tbody id="detalleVentaSustratos"><tr><td colspan="6">Cargando productos...</td></tr></tbody>
             </table>
           </div>
-          <div class="resumen-venta">
-            <h3>Total de la venta: <span id="totalVentaSustratos">S/ 0.00</span></h3>
-          </div>
-          <div class="formulario-grid">
-            <div class="campo-formulario">
+
+          <div class="formulario-sustratos" style="margin-top: 20px;">
+            <div>
               <label for="clienteVentaSustrato">Nombre del cliente</label>
               <input type="text" id="clienteVentaSustrato" placeholder="Cliente (opcional)">
             </div>
-            <div class="campo-formulario">
+            <div>
               <label for="metodoPagoSustrato">Método de pago</label>
               <select id="metodoPagoSustrato">
                 <option value="Efectivo">Efectivo</option>
@@ -776,21 +766,27 @@
               </select>
             </div>
           </div>
-          <button type="button" id="btnRegistrarVentaSustrato" class="btn-principal btn-registrar-venta">REGISTRAR VENTA COMPLETA</button>
+
+          <div class="resumen-venta-sustratos">
+            <div class="total-venta-sustratos">
+              <span>Total de la venta</span>
+              <strong id="totalVentaSustratos">S/ 0.00</strong>
+            </div>
+          </div>
+
+          <button type="button" id="btnRegistrarVentaSustrato" class="btn-principal-sustratos btn-registrar-venta">REGISTRAR VENTA COMPLETA</button>
         </div>
       </section>
 
       <!-- 5. HISTORIAL DE VENTAS -->
       <section id="historialSustratos" class="pagina-sustratos">
-        <div class="encabezado-pagina">
-          <h2>Historial de ventas</h2>
-          <p>Consulta las ventas realizadas en el vivero.</p>
-        </div>
-        <div class="panel-modulo">
-          <div class="encabezado-tabla">
-            <h3>Registro de ventas</h3>
+        <h2>Historial de ventas</h2>
+        <p class="subtitulo-sustratos">Consulta las ventas realizadas en el vivero.</p>
+
+        <div class="tarjeta-sustratos">
+          <div style="margin-bottom: 15px;">
             <label for="filtroFechaSustratos">Filtrar por fecha</label>
-            <input type="date" id="filtroFechaSustratos">
+            <input type="date" id="filtroFechaSustratos" style="width: 220px;">
           </div>
           <div class="tabla-responsive">
             <table>
@@ -803,15 +799,13 @@
 
       <!-- 6. MOVIMIENTOS -->
       <section id="movimientosSustratos" class="pagina-sustratos">
-        <div class="encabezado-pagina">
-          <h2>Movimientos de inventario</h2>
-          <p>Consulta las entradas, ventas y devoluciones de sustratos.</p>
-        </div>
-        <div class="panel-modulo">
-          <div class="encabezado-tabla">
-            <h3>Registro de movimientos</h3>
+        <h2>Movimientos de inventario</h2>
+        <p class="subtitulo-sustratos">Consulta las entradas, ventas y devoluciones de sustratos.</p>
+
+        <div class="tarjeta-sustratos">
+          <div style="margin-bottom: 15px;">
             <label for="filtroMovimientoSustratos">Filtrar movimientos</label>
-            <select id="filtroMovimientoSustratos">
+            <select id="filtroMovimientoSustratos" style="width: 220px;">
               <option value="todos">Todos los movimientos</option>
               <option value="entrada">Entradas</option>
               <option value="venta">Ventas</option>
@@ -828,7 +822,9 @@
       </section>
 
     </main>
+
   </div>
+
 </div>
 
   <!-- Lógica externa -->
