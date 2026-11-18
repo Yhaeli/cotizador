@@ -1,1356 +1,4 @@
-// ==========================================
-// 1. FUNCIONES GENERALES Y NAVEGACIÓN
-// ==========================================
-
-function switchTab(tabId, event) {
-  const tabs = document.querySelectorAll('.tab-content');
-  tabs.forEach(tab => tab.classList.remove('active'));
-
-  const navBtns = document.querySelectorAll('.nav-btn');
-  navBtns.forEach(btn => btn.classList.remove('active'));
-
-  document.getElementById('tab-' + tabId).classList.add('active');
-  if (event) event.currentTarget.classList.add('active');
-}
-
-// ==========================================
-// 2. MÓDULO COTIZADOR (CÁLCULO AUTOMÁTICO)
-// ==========================================
-
-function procesarCotizacion() {
-  const cliente = document.getElementById('cliente').value;
-  const numCotizacion = document.getElementById('num-cotizacion').value;
-  const pedidoTexto = document.getElementById('pedido-texto').value;
-  const valEmbalajeInput = document.getElementById('valEmbalaje');
-  const valEmbalaje = parseFloat(valEmbalajeInput.value) || 0;
-
-  // Actualizar encabezados visuales de la vista previa
-  document.getElementById('img-cliente').textContent = cliente.trim() !== '' ? cliente : '---';
-  document.getElementById('img-num-cotizacion').textContent = numCotizacion.trim() !== '' ? numCotizacion : '---';
-
-  const fechaActual = new Date();
-  const dia = String(fechaActual.getDate()).padStart(2, '0');
-  const mes = String(fechaActual.getMonth() + 1).padStart(2, '0');
-  const anio = fechaActual.getFullYear();
-  document.getElementById('img-fecha').textContent = `${dia}/${mes}/${anio}`;
-
-  const tablaFilas = document.getElementById('img-tabla-filas');
-  tablaFilas.innerHTML = '';
-
-  let totalPlantas = 0;
-
-  // Separar líneas del texto ingresado
-  const lineas = pedidoTexto.split('\n');
-
-  lineas.forEach(linea => {
-    linea = linea.trim();
-    if (!linea) return;
-
-    // Detecta patrones como: "2 rosas 23", "2 rosas - 23.00", "2 x rosas 23"
-    const match = linea.match(/^(?:(\d+)\s*x?\s+)?(.+?)\s*[-:\s]+\s*(\d+(?:\.\d+)?)$/i);
-
-    if (match) {
-      const cantidad = parseInt(match[1]) || 1;
-      const descripcion = match[2].trim();
-      const precioTotalItem = parseFloat(match[3]);
-      const precioUnitario = precioTotalItem / cantidad;
-
-      totalPlantas += precioTotalItem;
-
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td class="text-center">${cantidad}</td>
-        <td>${descripcion}</td>
-        <td class="text-right">S/. ${precioUnitario.toFixed(2)}</td>
-        <td class="text-right">S/. ${precioTotalItem.toFixed(2)}</td>
-      `;
-      tablaFilas.appendChild(tr);
-    } else {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td class="text-center">1</td>
-        <td>${linea}</td>
-        <td class="text-right">S/. 0.00</td>
-        <td class="text-right">S/. 0.00</td>
-      `;
-      tablaFilas.appendChild(tr);
-    }
-  });
-
-  const totalPagar = totalPlantas + valEmbalaje;
-
-  // Actualizar los campos numéricos de la interfaz
-  document.getElementById('valPlantas').value = totalPlantas.toFixed(2);
-  document.getElementById('valTotal').value = totalPagar.toFixed(2);
-
-  // Actualizar la vista previa de la tarjeta/recibo
-  document.getElementById('img-subtotal').textContent = totalPlantas.toFixed(2);
-  document.getElementById('img-embalaje').textContent = valEmbalaje.toFixed(2);
-  document.getElementById('img-total').textContent = totalPagar.toFixed(2);
-}
-
-// Guardar Cotización en Firestore
-function guardarCotizacion() {
-  const cliente = document.getElementById('cliente').value.trim();
-  const numCotizacion = document.getElementById('num-cotizacion').value.trim();
-  const pedidoTexto = document.getElementById('pedido-texto').value;
-  const valEmbalaje = parseFloat(document.getElementById('valEmbalaje').value) || 0;
-
-  if (!cliente) {
-    alert("Ingresa al menos el nombre del cliente para guardar.");
-    return;
-  }
-
-  db.collection('cotizaciones').add({
-    cliente: cliente,
-    numCotizacion: numCotizacion,
-    pedidoTexto: pedidoTexto,
-    valEmbalaje: valEmbalaje,
-    fecha: firebase.firestore.FieldValue.serverTimestamp()
-  })
-  .then(() => console.log("Cotización guardada en Firestore."))
-  .catch(err => console.error("Error al guardar cotización:", err));
-}
-
-// Escuchar Cotizaciones Guardadas en Tiempo Real para el <select>
-db.collection('cotizaciones').orderBy('fecha', 'desc').onSnapshot(snapshot => {
-  const selectHistorial = document.getElementById('lista-guardados');
-  if (!selectHistorial) return;
-
-  selectHistorial.innerHTML = '<option value="">-- Seleccionar cotización guardada --</option>';
-
-  snapshot.forEach(doc => {
-    const cot = doc.data();
-    const option = document.createElement('option');
-    option.value = doc.id;
-    option.dataset.cliente = cot.cliente || '';
-    option.dataset.num = cot.numCotizacion || '';
-    option.dataset.pedido = cot.pedidoTexto || '';
-    option.dataset.embalaje = cot.valEmbalaje || 0;
-    option.textContent = `${cot.cliente} (${cot.numCotizacion || 'S/N'})`;
-    selectHistorial.appendChild(option);
-  });
-});
-
-function cargarCotizacion() {
-  const selectHistorial = document.getElementById('lista-guardados');
-  const selectedOption = selectHistorial.options[selectHistorial.selectedIndex];
-
-  if (selectedOption && selectedOption.value) {
-    document.getElementById('cliente').value = selectedOption.dataset.cliente;
-    document.getElementById('num-cotizacion').value = selectedOption.dataset.num;
-    document.getElementById('pedido-texto').value = selectedOption.dataset.pedido;
-    document.getElementById('valEmbalaje').value = selectedOption.dataset.embalaje;
-    procesarCotizacion();
-  }
-}
-
-function eliminarCotizacion() {
-  const selectHistorial = document.getElementById('lista-guardados');
-  const id = selectHistorial.value;
-
-  if (!id) {
-    alert("Selecciona una cotización de la lista para eliminar.");
-    return;
-  }
-
-  if (confirm("¿Seguro de que deseas eliminar esta cotización guardada?")) {
-    db.collection('cotizaciones').doc(id).delete()
-    .then(() => {
-      alert("Cotización eliminada.");
-      document.getElementById('cliente').value = '';
-      document.getElementById('num-cotizacion').value = '';
-      document.getElementById('pedido-texto').value = '';
-      document.getElementById('valEmbalaje').value = '0.00';
-      procesarCotizacion();
-    });
-  }
-}
-
-// Botones de Acción de Cotizador
-function copiarWhatsAppYGuardar() {
-  procesarCotizacion();
-  guardarCotizacion();
-
-  const cliente = document.getElementById('cliente').value.trim() || '---';
-  const numCotizacion = document.getElementById('num-cotizacion').value.trim();
-  const pedido = document.getElementById('pedido-texto').value.trim();
-  const valPlantas = (parseFloat(document.getElementById('valPlantas').value) || 0).toFixed(2);
-  const valEmbalaje = (parseFloat(document.getElementById('valEmbalaje').value) || 0).toFixed(2);
-  const total = (parseFloat(document.getElementById('valTotal').value) || 0).toFixed(2);
-
-  const lineaCotizacion = numCotizacion ? `📄 Cotización: ${numCotizacion}\n` : '';
-
-  const mensaje = `🌱 *COTIZACIÓN VIVERO ELIEL*\n` +
-                  `👤 Cliente: ${cliente}\n` +
-                  lineaCotizacion +
-                  `📋 *Detalle del pedido:*\n${pedido}\n\n` +
-                  `🪴 Total de plantas: S/. ${valPlantas}\n` +
-                  `📦 Embalaje y traslado: S/. ${valEmbalaje}\n` +
-                  `💰 *TOTAL A CANCELAR: S/. ${total}*\n\n` +
-                  `💳 *Métodos de pago:*\n` +
-                  `📱 Yape: 981 046 861\n` +
-                  `🏦 BCP Cta. Cte.: 19178952536034\n` +
-                  `💥 Titular: Arlene Cruzado Llanos`;
-
-  navigator.clipboard.writeText(mensaje)
-    .then(() => alert("¡Texto copiado al portapapeles (con embalaje incluido) y cotización guardada!"))
-    .catch(() => alert("Cotización guardada. (No se pudo copiar el texto automáticamente)"));
-}
-
-function guardarYDescargarImagen() {
-  procesarCotizacion();
-  guardarCotizacion();
-  const bloque = document.getElementById('bloque-imagen');
-
-  if (typeof html2canvas !== 'undefined') {
-    html2canvas(bloque, {
-      scale: 2,
-      useCORS: true,
-      scrollX: 0,
-      scrollY: 0
-    }).then(canvas => {
-      const enlace = document.createElement('a');
-      enlace.download = `Cotizacion_${document.getElementById('cliente').value.trim() || 'Vivero'}.png`;
-      enlace.href = canvas.toDataURL('image/png');
-      enlace.click();
-    });
-  } else {
-    alert("Librería de imagen no disponible.");
-  }
-}
-
-
-// ==========================================
-// MÓDULO DE MACETAS - VIVERO ELIEL
-// ==========================================
-
-(() => {
-
-  const $ = id => document.getElementById(id);
-
-  // ==========================================
-  // 1. VARIABLES
-  // ==========================================
-
-  let inventarioMacetas = [];
-  let ventasMacetas = [];
-  let movimientosMacetas = [];
-
-  const dinero = valor =>
-    Number(valor || 0).toLocaleString('es-PE', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-
-  const fechaServidor = () =>
-    firebase.firestore.FieldValue.serverTimestamp();
-
-  function escapar(texto) {
-    return String(texto ?? '').replace(/[&<>"']/g, c => ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;'
-    })[c]);
-  }
-
-  function convertirFecha(valor) {
-
-    if (!valor) return null;
-
-    if (valor.toDate) return valor.toDate();
-
-    if (valor instanceof Date) return valor;
-
-    const fecha = new Date(valor);
-
-    return isNaN(fecha.getTime()) ? null : fecha;
-
-  }
-
-  function mostrarFecha(valor) {
-
-    const fecha = convertirFecha(valor);
-
-    return fecha
-      ? fecha.toLocaleDateString('es-PE')
-      : 'Pendiente';
-
-  }
-
-  function mostrarError(error) {
-
-    console.error(error);
-
-    alert(
-      error.message ||
-      'No se pudo completar la operación. Verifica tu conexión.'
-    );
-
-  }
-
-
-  // ==========================================
-  // 2. NAVEGACIÓN ENTRE PÁGINAS
-  // ==========================================
-
-  document.querySelectorAll(
-    '#tab-macetas .nav-macetas'
-  ).forEach(boton => {
-
-    boton.addEventListener('click', () => {
-
-      const pagina = boton.dataset.pagina;
-
-      document.querySelectorAll(
-        '#tab-macetas .nav-macetas'
-      ).forEach(b => b.classList.remove('activo'));
-
-      document.querySelectorAll(
-        '#tab-macetas .pagina-macetas'
-      ).forEach(p => p.classList.remove('activa'));
-
-      boton.classList.add('activo');
-
-      const destino = $(pagina);
-
-      if (destino) {
-        destino.classList.add('activa');
-      }
-
-    });
-
-  });
-
-
-  // ==========================================
-  // 3. REGISTRAR PRODUCTO
-  // ==========================================
-
-  $('btnAgregarMaceta')?.addEventListener('click', async () => {
-
-    const nombre = $('nombreMaceta').value.trim();
-    const costo = Number($('costoMaceta').value);
-    const precio = Number($('precioVentaMaceta').value);
-    const stock = Number($('stockMaceta').value);
-
-    if (
-      !nombre ||
-      !Number.isFinite(costo) ||
-      !Number.isFinite(precio) ||
-      costo < 0 ||
-      precio < 0 ||
-      $('costoMaceta').value === '' ||
-      $('precioVentaMaceta').value === '' ||
-      !Number.isInteger(stock) ||
-      stock < 0 ||
-      $('stockMaceta').value === ''
-    ) {
-
-      alert('Completa correctamente todos los campos.');
-      return;
-
-    }
-
-    try {
-
-      const productoRef = db.collection('macetas').doc();
-
-      const movimientoRef =
-        db.collection('movimientosMacetas').doc();
-
-      await db.runTransaction(async transaction => {
-
-        transaction.set(productoRef, {
-
-          nombre,
-          costo,
-          precioVenta: precio,
-          stock,
-          fecha: fechaServidor()
-
-        });
-
-        if (stock > 0) {
-
-          transaction.set(movimientoRef, {
-
-            macetaId: productoRef.id,
-            producto: nombre,
-            tipo: 'Stock inicial',
-            cantidad: stock,
-            detalle: 'Registro inicial',
-            fecha: fechaServidor()
-
-          });
-
-        }
-
-      });
-
-      $('nombreMaceta').value = '';
-      $('costoMaceta').value = '';
-      $('precioVentaMaceta').value = '';
-      $('stockMaceta').value = '';
-
-      alert('Producto registrado correctamente.');
-
-    } catch (error) {
-
-      mostrarError(error);
-
-    }
-
-  });
-
-
-  // ==========================================
-  // 4. ESCUCHAR INVENTARIO
-  // ==========================================
-
-  db.collection('macetas').onSnapshot(snapshot => {
-
-    inventarioMacetas = [];
-
-    snapshot.forEach(doc => {
-
-      inventarioMacetas.push({
-        id: doc.id,
-        ...doc.data()
-      });
-
-    });
-
-    mostrarInventario();
-    mostrarSelectores();
-    mostrarProductosVenta();
-    actualizarResumen();
-
-  }, mostrarError);
-
-
-  // ==========================================
-  // 5. MOSTRAR INVENTARIO
-  // ==========================================
-
-  function mostrarInventario() {
-
-    const tabla = $('tablaInventarioMacetas');
-
-    if (!tabla) return;
-
-    tabla.innerHTML = '';
-
-    inventarioMacetas.forEach(item => {
-
-      const stock = Number(item.stock || 0);
-
-      const precio = Number(
-        item.precioVenta ?? item.costo ?? 0
-      );
-
-      let estado = 'Disponible';
-
-      if (stock <= 0) {
-        estado = 'Agotado';
-      } else if (stock <= 5) {
-        estado = 'Stock bajo';
-      }
-
-      const fila = document.createElement('tr');
-
-      fila.innerHTML = `
-
-        <td>${escapar(item.nombre)}</td>
-
-        <td>S/. ${dinero(item.costo)}</td>
-
-        <td>S/. ${dinero(precio)}</td>
-
-        <td>${stock}</td>
-
-        <td>${estado}</td>
-
-        <td>
-          <button class="editar-maceta" data-id="${item.id}">
-            Editar
-          </button>
-
-          <button class="eliminar-maceta" data-id="${item.id}">
-            Eliminar
-          </button>
-        </td>
-
-      `;
-
-      tabla.appendChild(fila);
-
-    });
-
-  }
-
-
-  // ==========================================
-  // 6. EDITAR Y ELIMINAR PRODUCTOS
-  // ==========================================
-
-  $('tablaInventarioMacetas')?.addEventListener('click', async event => {
-
-    const editar = event.target.closest('.editar-maceta');
-    const eliminar = event.target.closest('.eliminar-maceta');
-
-    if (editar) {
-
-      const producto = inventarioMacetas.find(
-        p => p.id === editar.dataset.id
-      );
-
-      if (!producto) return;
-
-      const nombre = prompt('Nombre:', producto.nombre);
-
-      if (nombre === null) return;
-
-      const costo = prompt('Costo de compra:', producto.costo ?? 0);
-
-      if (costo === null) return;
-
-      const precio = prompt(
-        'Precio de venta:',
-        producto.precioVenta ?? producto.costo ?? 0
-      );
-
-      if (precio === null) return;
-
-      if (
-        !nombre.trim() ||
-        !Number.isFinite(Number(costo)) ||
-        !Number.isFinite(Number(precio)) ||
-        Number(costo) < 0 ||
-        Number(precio) < 0
-      ) {
-
-        alert('Los datos ingresados no son válidos.');
-        return;
-
-      }
-
-      try {
-
-        await db.collection('macetas')
-          .doc(producto.id)
-          .update({
-
-            nombre: nombre.trim(),
-            costo: Number(costo),
-            precioVenta: Number(precio)
-
-          });
-
-        alert('Producto actualizado.');
-
-      } catch (error) {
-
-        mostrarError(error);
-
-      }
-
-    }
-
-
-    if (eliminar) {
-
-      const producto = inventarioMacetas.find(
-        p => p.id === eliminar.dataset.id
-      );
-
-      if (!producto) return;
-
-      if (Number(producto.stock || 0) !== 0) {
-
-        alert('Solo puedes eliminar productos con stock en cero.');
-        return;
-
-      }
-
-      if (!confirm('¿Deseas eliminar este producto?')) return;
-
-      try {
-
-        await db.collection('macetas')
-          .doc(producto.id)
-          .delete();
-
-        alert('Producto eliminado.');
-
-      } catch (error) {
-
-        mostrarError(error);
-
-      }
-
-    }
-
-  });
-
-
-  // ==========================================
-  // 7. SELECTORES DE PRODUCTOS
-  // ==========================================
-
-  function mostrarSelectores() {
-
-    [
-      'productoEntradaMaceta'
-    ].forEach(id => {
-
-      const select = $(id);
-
-      if (!select) return;
-
-      const anterior = select.value;
-
-      select.innerHTML =
-        '<option value="">Seleccionar maceta</option>';
-
-      inventarioMacetas.forEach(item => {
-
-        const option = document.createElement('option');
-
-        option.value = item.id;
-        option.textContent = item.nombre;
-
-        select.appendChild(option);
-
-      });
-
-      select.value = anterior;
-
-    });
-
-  }
-
-
-  // ==========================================
-  // 8. REGISTRAR ENTRADAS
-  // ==========================================
-
-  $('btnRegistrarEntradaMaceta')?.addEventListener(
-    'click',
-    async () => {
-
-      const id = $('productoEntradaMaceta').value;
-      const cantidad = Number($('cantidadEntradaMaceta').value);
-      const costo = Number($('costoEntradaMaceta').value);
-
-      const observacion =
-        $('observacionEntradaMaceta').value.trim();
-
-      if (
-        !id ||
-        !Number.isInteger(cantidad) ||
-        cantidad <= 0 ||
-        !Number.isFinite(costo) ||
-        costo < 0 ||
-        $('costoEntradaMaceta').value === ''
-      ) {
-
-        alert('Completa correctamente los datos de la entrada.');
-        return;
-
-      }
-
-      try {
-
-        const productoRef = db.collection('macetas').doc(id);
-        const entradaRef = db.collection('entradasMacetas').doc();
-        const movimientoRef =
-          db.collection('movimientosMacetas').doc();
-
-        await db.runTransaction(async transaction => {
-
-          const productoDoc = await transaction.get(productoRef);
-
-          if (!productoDoc.exists) {
-            throw new Error('El producto no existe.');
-          }
-
-          const producto = productoDoc.data();
-
-          transaction.update(productoRef, {
-
-            stock: Number(producto.stock || 0) + cantidad
-
-          });
-
-          transaction.set(entradaRef, {
-
-            macetaId: id,
-            producto: producto.nombre,
-            cantidad,
-            costoUnitario: costo,
-            observacion,
-            fecha: fechaServidor()
-
-          });
-
-          transaction.set(movimientoRef, {
-
-            macetaId: id,
-            producto: producto.nombre,
-            tipo: 'Entrada',
-            cantidad,
-            detalle: observacion || 'Ingreso de mercadería',
-            fecha: fechaServidor()
-
-          });
-
-        });
-
-        $('cantidadEntradaMaceta').value = '';
-        $('costoEntradaMaceta').value = '';
-        $('observacionEntradaMaceta').value = '';
-        $('productoEntradaMaceta').value = '';
-
-        alert('Entrada registrada correctamente.');
-
-      } catch (error) {
-
-        mostrarError(error);
-
-      }
-
-    }
-  );
-
-
-  // ==========================================
-  // 9. MOSTRAR PRODUCTOS EN LA PÁGINA DE VENTAS
-  // ==========================================
-
-  function mostrarProductosVenta() {
-
-    const tabla = $('productosVentaMacetas');
-
-    if (!tabla) return;
-
-    const cantidadesActuales = {};
-
-    tabla.querySelectorAll('.cantidad-producto-venta').forEach(input => {
-
-      cantidadesActuales[input.dataset.id] = input.value;
-
-    });
-
-    tabla.innerHTML = '';
-
-    inventarioMacetas.forEach(item => {
-
-      const stock = Number(item.stock || 0);
-
-      const precio = Number(
-        item.precioVenta ?? item.costo ?? 0
-      );
-
-      const fila = document.createElement('tr');
-
-      fila.innerHTML = `
-
-        <td>${escapar(item.nombre)}</td>
-
-        <td>${stock}</td>
-
-        <td>
-          <input
-            type="number"
-            class="cantidad-producto-venta"
-            data-id="${item.id}"
-            value="${escapar(cantidadesActuales[item.id] || 0)}"
-            min="0"
-            max="${stock}"
-            step="1"
-          >
-        </td>
-
-        <td>
-          <input
-            type="number"
-            class="precio-producto-venta"
-            data-id="${item.id}"
-            value="${precio}"
-            min="0"
-            step="0.01"
-          >
-        </td>
-
-        <td>
-          <strong class="subtotal-producto-venta" data-id="${item.id}">
-            S/. 0.00
-          </strong>
-        </td>
-
-      `;
-
-      tabla.appendChild(fila);
-
-    });
-
-    actualizarTotalesVenta();
-
-  }
-
-
-  // ==========================================
-  // 10. CALCULAR TOTALES AUTOMÁTICAMENTE
-  // ==========================================
-
-  $('productosVentaMacetas')?.addEventListener('input', event => {
-
-    if (
-      event.target.classList.contains('cantidad-producto-venta') ||
-      event.target.classList.contains('precio-producto-venta')
-    ) {
-
-      actualizarTotalesVenta();
-
-    }
-
-  });
-
-
-  function obtenerProductosSeleccionados() {
-
-    const cantidades = document.querySelectorAll(
-      '#productosVentaMacetas .cantidad-producto-venta'
-    );
-
-    const seleccionados = [];
-
-    cantidades.forEach(input => {
-
-      const cantidad = Number(input.value);
-
-      if (cantidad <= 0) return;
-
-      const id = input.dataset.id;
-
-      const precioInput = document.querySelector(
-        `#productosVentaMacetas .precio-producto-venta[data-id="${id}"]`
-      );
-
-      const producto = inventarioMacetas.find(p => p.id === id);
-
-      if (!producto) return;
-
-      seleccionados.push({
-
-        macetaId: id,
-        producto: producto.nombre,
-        cantidad,
-        precioUnit: Number(precioInput.value),
-        subtotal: cantidad * Number(precioInput.value)
-
-      });
-
-    });
-
-    return seleccionados;
-
-  }
-
-
-  function actualizarTotalesVenta() {
-
-    let total = 0;
-
-    const seleccionados = obtenerProductosSeleccionados();
-
-    document.querySelectorAll(
-      '#productosVentaMacetas .subtotal-producto-venta'
-    ).forEach(celda => {
-
-      const item = seleccionados.find(
-        p => p.macetaId === celda.dataset.id
-      );
-
-      const subtotal = item ? item.subtotal : 0;
-
-      celda.textContent = `S/. ${dinero(subtotal)}`;
-
-      total += subtotal;
-
-    });
-
-    $('totalVentaMacetas').textContent =
-      `S/. ${dinero(total)}`;
-
-  }
-
-
-  // ==========================================
-  // 11. REGISTRAR VENTA COMPLETA
-  // ==========================================
-
-  $('btnRegistrarVentaMaceta')?.addEventListener(
-    'click',
-    async () => {
-
-      const items = obtenerProductosSeleccionados();
-
-      if (items.length === 0) {
-
-        alert('Indica al menos una cantidad para registrar la venta.');
-        return;
-
-      }
-
-      for (const item of items) {
-
-        const producto = inventarioMacetas.find(
-          p => p.id === item.macetaId
-        );
-
-        if (
-          !Number.isInteger(item.cantidad) ||
-          item.cantidad <= 0 ||
-          !Number.isFinite(item.precioUnit) ||
-          item.precioUnit < 0 ||
-          !producto ||
-          item.cantidad > Number(producto.stock || 0)
-        ) {
-
-          alert(
-            `Revisa la cantidad y el precio de ${item.producto}.`
-          );
-
-          return;
-
-        }
-
-      }
-
-      const cliente =
-        $('clienteVentaMaceta').value.trim() || 'Cliente Anónimo';
-
-      const metodoPago = $('medioPagoMacetas').value;
-
-      const total = items.reduce(
-        (suma, item) => suma + item.subtotal,
-        0
-      );
-
-      if (!confirm(`¿Registrar la venta por S/. ${dinero(total)}?`)) {
-        return;
-      }
-
-      try {
-
-        const ventaRef = db.collection('ventasMacetas').doc();
-
-        const referencias = items.map(item => ({
-
-          item,
-
-          productoRef: db.collection('macetas').doc(item.macetaId),
-
-          movimientoRef:
-            db.collection('movimientosMacetas').doc()
-
-        }));
-
-        await db.runTransaction(async transaction => {
-
-          // Leer todos los productos antes de escribir.
-          const documentos = await Promise.all(
-            referencias.map(ref =>
-              transaction.get(ref.productoRef)
-            )
-          );
-
-          documentos.forEach((doc, index) => {
-
-            if (!doc.exists) {
-              throw new Error('Uno de los productos ya no existe.');
-            }
-
-            const stock = Number(doc.data().stock || 0);
-
-            if (stock < referencias[index].item.cantidad) {
-
-              throw new Error(
-                `Stock insuficiente para ${referencias[index].item.producto}.`
-              );
-
-            }
-
-          });
-
-          referencias.forEach((ref, index) => {
-
-            const producto = documentos[index].data();
-
-            transaction.update(ref.productoRef, {
-
-              stock:
-                Number(producto.stock || 0) - ref.item.cantidad
-
-            });
-
-            transaction.set(ref.movimientoRef, {
-
-              macetaId: ref.item.macetaId,
-              producto: producto.nombre,
-              tipo: 'Venta',
-              cantidad: ref.item.cantidad,
-              detalle: 'Salida por venta',
-              ventaId: ventaRef.id,
-              fecha: fechaServidor()
-
-            });
-
-          });
-
-          transaction.set(ventaRef, {
-
-            items,
-
-            producto: items.length === 1
-              ? items[0].producto
-              : `${items.length} productos`,
-
-            cantidad: items.reduce(
-              (suma, item) => suma + item.cantidad,
-              0
-            ),
-
-            precioUnit: items.length === 1
-              ? items[0].precioUnit
-              : null,
-
-            total,
-            cliente,
-            metodoPago,
-            estado: 'Registrada',
-            fecha: fechaServidor()
-
-          });
-
-        });
-
-        $('clienteVentaMaceta').value = '';
-
-        $('medioPagoMacetas').value = 'Efectivo';
-
-        alert('Venta registrada correctamente.');
-
-      } catch (error) {
-
-        mostrarError(error);
-
-      }
-
-    }
-  );
-
-
-  // ==========================================
-  // 12. HISTORIAL DE VENTAS
-  // ==========================================
-
-  db.collection('ventasMacetas')
-    .orderBy('fecha', 'desc')
-    .onSnapshot(snapshot => {
-
-      ventasMacetas = [];
-
-      snapshot.forEach(doc => {
-
-        ventasMacetas.push({
-
-          id: doc.id,
-          ...doc.data()
-
-        });
-
-      });
-
-      mostrarHistorial();
-      actualizarResumen();
-
-    }, mostrarError);
-
-
-  function mostrarHistorial() {
-
-    const tabla = $('historialVentasMacetas');
-
-    if (!tabla) return;
-
-    tabla.innerHTML = '';
-
-    const desde = $('fechaDesdeMacetas').value
-      ? new Date($('fechaDesdeMacetas').value + 'T00:00:00')
-      : null;
-
-    const hasta = $('fechaHastaMacetas').value
-      ? new Date($('fechaHastaMacetas').value + 'T23:59:59.999')
-      : null;
-
-    const filtradas = ventasMacetas.filter(venta => {
-
-      const fecha = convertirFecha(venta.fecha);
-
-      if (!fecha) return !desde && !hasta;
-
-      if (desde && fecha < desde) return false;
-
-      if (hasta && fecha > hasta) return false;
-
-      return true;
-
-    });
-
-    filtradas.forEach(venta => {
-
-      const items = Array.isArray(venta.items)
-        ? venta.items
-        : [{
-            producto: venta.producto || 'Venta antigua',
-            cantidad: venta.cantidad || 0
-          }];
-
-      const productos = items.map(item =>
-        `${escapar(item.producto)} x${item.cantidad}`
-      ).join('<br>');
-
-      const anulada = venta.estado === 'Anulada';
-
-      const fila = document.createElement('tr');
-
-      fila.innerHTML = `
-
-        <td>${mostrarFecha(venta.fecha)}</td>
-
-        <td>${productos}</td>
-
-        <td>${escapar(venta.cliente || 'Cliente Anónimo')}</td>
-
-        <td>S/. ${dinero(venta.total)}</td>
-
-        <td>${escapar(venta.metodoPago || '-')}</td>
-
-        <td>${anulada ? 'Anulada' : 'Registrada'}</td>
-
-        <td>
-          ${
-            anulada
-              ? '-'
-              : Array.isArray(venta.items)
-                ? `<button
-                    class="anular-venta-maceta"
-                    data-id="${venta.id}"
-                  >Anular</button>`
-                : 'Venta antigua'
-          }
-        </td>
-
-      `;
-
-      tabla.appendChild(fila);
-
-    });
-
-  }
-
-
-  $('btnFiltrarVentasMacetas')?.addEventListener(
-    'click',
-    () => {
-
-      const desde = $('fechaDesdeMacetas').value;
-      const hasta = $('fechaHastaMacetas').value;
-
-      if (desde && hasta && desde > hasta) {
-
-        alert('La fecha inicial no puede ser posterior a la fecha final.');
-        return;
-
-      }
-
-      mostrarHistorial();
-
-    }
-  );
-
-
-  $('btnLimpiarFiltrosMacetas')?.addEventListener(
-    'click',
-    () => {
-
-      $('fechaDesdeMacetas').value = '';
-      $('fechaHastaMacetas').value = '';
-
-      mostrarHistorial();
-
-    }
-  );
-
-
-  // ==========================================
-  // 13. ANULAR VENTA Y DEVOLVER STOCK
-  // ==========================================
-
-  $('historialVentasMacetas')?.addEventListener(
-    'click',
-    async event => {
-
-      const boton = event.target.closest('.anular-venta-maceta');
-
-      if (!boton) return;
-
-      if (!confirm(
-        '¿Anular esta venta y devolver las unidades al inventario?'
-      )) return;
-
-      const id = boton.dataset.id;
-
-      try {
-
-        const ventaRef = db.collection('ventasMacetas').doc(id);
-
-        await db.runTransaction(async transaction => {
-
-          const ventaDoc = await transaction.get(ventaRef);
-
-          if (!ventaDoc.exists) {
-            throw new Error('La venta no existe.');
-          }
-
-          const venta = ventaDoc.data();
-
-          if (venta.estado === 'Anulada') {
-            throw new Error('La venta ya está anulada.');
-          }
-
-          if (!Array.isArray(venta.items)) {
-
-            throw new Error(
-              'Esta venta antigua no permite devolver el stock automáticamente.'
-            );
-
-          }
-
-          const referencias = venta.items.map(item => ({
-
-            item,
-
-            productoRef:
-              db.collection('macetas').doc(item.macetaId),
-
-            movimientoRef:
-              db.collection('movimientosMacetas').doc()
-
-          }));
-
-          const documentos = await Promise.all(
-            referencias.map(ref =>
-              transaction.get(ref.productoRef)
-            )
-          );
-
-          documentos.forEach(doc => {
-
-            if (!doc.exists) {
-              throw new Error('No se encontró uno de los productos.');
-            }
-
-          });
-
-          referencias.forEach((ref, index) => {
-
-            const producto = documentos[index].data();
-
-            transaction.update(ref.productoRef, {
-
-              stock:
-                Number(producto.stock || 0) + ref.item.cantidad
-
-            });
-
-            transaction.set(ref.movimientoRef, {
-
-              macetaId: ref.item.macetaId,
-              producto: producto.nombre,
-              tipo: 'Anulación de venta',
-              cantidad: ref.item.cantidad,
-              detalle: 'Devolución de unidades',
-              ventaId: id,
-              fecha: fechaServidor()
-
-            });
-
-          });
-
-          transaction.update(ventaRef, {
-
-            estado: 'Anulada',
-            fechaAnulacion: fechaServidor()
-
-          });
-
-        });
-
-        alert('Venta anulada y stock devuelto.');
-
-      } catch (error) {
-
-        mostrarError(error);
-
-      }
-
-    }
-  );
-
-
-  // ==========================================
-  // 14. MOVIMIENTOS
-  // ==========================================
-
-  db.collection('movimientosMacetas')
-    .orderBy('fecha', 'desc')
-    .onSnapshot(snapshot => {
-
-      movimientosMacetas = [];
-
-      snapshot.forEach(doc => {
-
-        movimientosMacetas.push({
-          id: doc.id,
-          ...doc.data()
-        });
-
-      });
-
-      mostrarMovimientos();
-
-    }, mostrarError);
-
-
-  function mostrarMovimientos() {
-
-    const tabla = $('movimientosInventarioMacetas');
-
-    if (!tabla) return;
-
-    tabla.innerHTML = '';
-
-    movimientosMacetas.forEach(movimiento => {
-
-      const fila = document.createElement('tr');
-
-      fila.innerHTML = `
+fila.innerHTML = `
 
         <td>${mostrarFecha(movimiento.fecha)}</td>
 
@@ -1372,7 +20,7 @@ function guardarYDescargarImagen() {
 
 
   // ==========================================
-  // 15. PANEL DE INICIO
+  // 15. ACTUALIZAR RESUMEN GENERAL (INICIO)
   // ==========================================
 
   function actualizarResumen() {
@@ -1384,1737 +32,709 @@ function guardarYDescargarImagen() {
       0
     );
 
-    const ventasValidas = ventasMacetas.filter(
-      venta => venta.estado !== 'Anulada'
-    );
-
-    const totalVendidas = ventasValidas.reduce((suma, venta) => {
-
-      if (Array.isArray(venta.items)) {
-
-        return suma + venta.items.reduce(
-          (total, item) => total + Number(item.cantidad || 0),
-          0
-        );
-
-      }
-
-      return suma + Number(venta.cantidad || 0);
-
-    }, 0);
+    let totalVendidas = 0;
+    let ventasMes = 0;
 
     const ahora = new Date();
+    const mesActual = ahora.getMonth();
+    const anioActual = ahora.getFullYear();
 
-    const totalMes = ventasValidas.reduce((suma, venta) => {
+    ventasMacetas.forEach(venta => {
+
+      if (venta.estado === 'Anulada') return;
+
+      const items = Array.isArray(venta.items)
+        ? venta.items
+        : [{ cantidad: Number(venta.cantidad || 0) }];
+
+      items.forEach(item => {
+        totalVendidas += Number(item.cantidad || 0);
+      });
 
       const fecha = convertirFecha(venta.fecha);
 
       if (
         fecha &&
-        fecha.getMonth() === ahora.getMonth() &&
-        fecha.getFullYear() === ahora.getFullYear()
+        fecha.getMonth() === mesActual &&
+        fecha.getFullYear() === anioActual
       ) {
+        ventasMes += Number(venta.total || 0);
+      }
 
-        return suma + Number(venta.total || 0);
+    });
+
+    if ($('totalProductosMacetas')) {
+      $('totalProductosMacetas').textContent = totalProductos;
+    }
+
+    if ($('totalStockMacetas')) {
+      $('totalStockMacetas').textContent = totalStock;
+    }
+
+    if ($('totalVendidasMacetas')) {
+      $('totalVendidasMacetas').textContent = totalVendidas;
+    }
+
+    if ($('ventasMesMacetas')) {
+      $('ventasMesMacetas').textContent = `S/. ${dinero(ventasMes)}`;
+    }
+
+    // Alertas de stock bajo o agotado
+    const contenedorAlertas = $('alertasStockMacetas');
+
+    if (contenedorAlertas) {
+
+      const criticos = inventarioMacetas.filter(
+        item => Number(item.stock || 0) <= 5
+      );
+
+      if (criticos.length === 0) {
+
+        contenedorAlertas.innerHTML = 'No hay alertas de stock.';
+
+      } else {
+
+        contenedorAlertas.innerHTML = criticos.map(item => `
+          <div class="alerta-stock">
+            ⚠️ <strong>${escapar(item.nombre)}</strong> — Stock disponible: <strong>${item.stock}</strong> unidades
+          </div>
+        `).join('');
 
       }
 
-      return suma;
-
-    }, 0);
-
-    $('totalProductosMacetas').textContent = totalProductos;
-    $('totalStockMacetas').textContent = totalStock;
-    $('totalVendidasMacetas').textContent = totalVendidas;
-
-    $('ventasMesMacetas').textContent =
-      `S/. ${dinero(totalMes)}`;
-
-    mostrarAlertasStock();
-
-  }
-
-
-  function mostrarAlertasStock() {
-
-    const contenedor = $('alertasStockMacetas');
-
-    if (!contenedor) return;
-
-    contenedor.innerHTML = '';
-
-    const productosBajos = inventarioMacetas.filter(
-      item => Number(item.stock || 0) <= 5
-    );
-
-    if (productosBajos.length === 0) {
-
-      contenedor.textContent = 'No hay alertas de stock.';
-
-      return;
-
     }
-
-    productosBajos.forEach(item => {
-
-      const alerta = document.createElement('div');
-
-      alerta.className = 'alerta-stock';
-
-      alerta.textContent =
-        `${item.nombre}: ${item.stock || 0} unidades disponibles`;
-
-      contenedor.appendChild(alerta);
-
-    });
 
   }
 
 })();
 
-// ======================================================
-// 4. MÓDULO DE SUSTRATOS - VIVERO ELIEL
-// ======================================================
-// Colecciones:
-// sustratos
-// ventasSustratos
-// entradasSustratos
-// movimientosSustratos
-//
-// Unidades:
-// kg = kilogramos
-// L  = litros
-// und = bolsas o unidades
-// ======================================================
 
+// ==========================================
+// MÓDULO DE SUSTRATOS - VIVERO ELIEL
+// ==========================================
 
-// ======================================================
-// 1. ELEMENTOS HTML
-// ======================================================
+(() => {
 
-const nombreSustrato = document.getElementById('nombreSustrato');
-const unidadSustrato = document.getElementById('unidadSustrato');
-const costoSustrato = document.getElementById('costoSustrato');
-const precioVentaSustrato = document.getElementById('precioVentaSustrato');
-const stockSustrato = document.getElementById('stockSustrato');
+  const $ = id => document.getElementById(id);
 
-const btnAgregarSustrato = document.getElementById('btnAgregarSustrato');
-const tablaInventarioSustratos = document.getElementById('tablaInventarioSustratos');
+  let inventarioSustratos = [];
+  let ventasSustratos = [];
+  let entradasSustratos = [];
+  let movimientosSustratos = [];
 
-const selectEntradaSustrato = document.getElementById('selectEntradaSustrato');
-const cantidadEntradaSustrato = document.getElementById('cantidadEntradaSustrato');
-const costoEntradaSustrato = document.getElementById('costoEntradaSustrato');
-const observacionEntradaSustrato = document.getElementById('observacionEntradaSustrato');
-const btnRegistrarEntradaSustrato = document.getElementById('btnRegistrarEntradaSustrato');
-
-const historialEntradasSustratos = document.getElementById('historialEntradasSustratos');
-
-const detalleVentaSustratos = document.getElementById('detalleVentaSustratos');
-const totalVentaSustratos = document.getElementById('totalVentaSustratos');
-const clienteVentaSustrato = document.getElementById('clienteVentaSustrato');
-const metodoPagoSustrato = document.getElementById('metodoPagoSustrato');
-const btnRegistrarVentaSustrato = document.getElementById('btnRegistrarVentaSustrato');
-
-const historialVentasSustratos = document.getElementById('historialVentasSustratos');
-const filtroFechaSustratos = document.getElementById('filtroFechaSustratos');
-
-const movimientosInventarioSustratos = document.getElementById('movimientosInventarioSustratos');
-const filtroMovimientoSustratos = document.getElementById('filtroMovimientoSustratos');
-
-const buscarSustrato = document.getElementById('buscarSustrato');
-
-
-// ======================================================
-// 2. REFERENCIAS A FIRESTORE
-// ======================================================
-
-const coleccionSustratos = db.collection('sustratos');
-const coleccionVentasSustratos = db.collection('ventasSustratos');
-const coleccionEntradasSustratos = db.collection('entradasSustratos');
-const coleccionMovimientosSustratos = db.collection('movimientosSustratos');
-
-
-// ======================================================
-// 3. VARIABLES DEL MÓDULO
-// ======================================================
-
-let productosSustratos = [];
-let ventasSustratos = [];
-let entradasSustratos = [];
-let movimientosSustratos = [];
-
-let paginaActualSustratos = 'inicioSustratos';
-
-let ventaEnProcesoSustratos = false;
-
-
-// ======================================================
-// 4. FUNCIONES GENERALES
-// ======================================================
-
-function formatoMonedaSustratos(valor) {
-    return 'S/ ' + Number(valor || 0).toFixed(2);
-}
-
-
-function formatoCantidadSustratos(valor) {
-    return Number(valor || 0).toLocaleString('es-PE', {
-        maximumFractionDigits: 2
+  const dinero = valor =>
+    Number(valor || 0).toLocaleString('es-PE', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
     });
-}
 
+  const fechaServidor = () =>
+    firebase.firestore.FieldValue.serverTimestamp();
 
-function unidadTextoSustratos(unidad) {
+  function escapar(texto) {
+    return String(texto ?? '').replace(/[&<>"']/g, c => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    })[c]);
+  }
 
-    if (unidad === 'kg') return 'kg';
-    if (unidad === 'L') return 'L';
+  function convertirFecha(valor) {
+    if (!valor) return null;
+    if (valor.toDate) return valor.toDate();
+    if (valor instanceof Date) return valor;
+    const fecha = new Date(valor);
+    return isNaN(fecha.getTime()) ? null : fecha;
+  }
 
-    return 'und.';
-}
+  function mostrarFecha(valor) {
+    const fecha = convertirFecha(valor);
+    return fecha ? fecha.toLocaleDateString('es-PE') : 'Pendiente';
+  }
 
+  function mostrarError(error) {
+    console.error(error);
+    alert(error.message || 'Error en la operación de sustratos.');
+  }
 
-function escaparHTMLSustratos(texto) {
-    return String(texto ?? '').replace(/[&<>"']/g, caracter => {
-        const entidades = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#039;'
-        };
-
-        return entidades[caracter];
-    });
-}
-
-
-function obtenerFechaSustratos(fecha) {
-
-    if (!fecha) return null;
-
-    if (fecha.toDate) {
-        return fecha.toDate();
-    }
-
-    if (fecha instanceof Date) {
-        return fecha;
-    }
-
-    const resultado = new Date(fecha);
-
-    return isNaN(resultado.getTime()) ? null : resultado;
-}
-
-
-function mostrarFechaSustratos(fecha) {
-
-    const fechaConvertida = obtenerFechaSustratos(fecha);
-
-    if (!fechaConvertida) return '-';
-
-    return fechaConvertida.toLocaleString('es-PE', {
-        dateStyle: 'short',
-        timeStyle: 'short'
-    });
-}
-
-
-function validarCantidadSustratos(cantidad, unidad) {
-
-    const numero = Number(cantidad);
-
-    if (!Number.isFinite(numero) || numero <= 0) {
-        return false;
-    }
-
-    if (unidad === 'und') {
-        return Number.isInteger(numero);
-    }
-
-    return true;
-}
-
-
-function obtenerPasoUnidadSustratos(unidad) {
-    return unidad === 'und' ? '1' : '0.01';
-}
-
-
-function mostrarMensajeSustratos(mensaje) {
-    alert(mensaje);
-}
-
-
-// ======================================================
-// 5. NAVEGACIÓN DEL MENÚ
-// ======================================================
-
-document.querySelectorAll('#tab-sustratos button.nav-sustratos').forEach(boton => {
-
+  // Navegación interna del módulo de sustratos
+  document.querySelectorAll('#tab-sustratos .nav-sustratos').forEach(boton => {
     boton.addEventListener('click', () => {
+      const pagina = boton.dataset.pagina;
 
-        const pagina = boton.dataset.pagina;
+      document.querySelectorAll('#tab-sustratos .nav-sustratos').forEach(b => b.classList.remove('activo'));
+      document.querySelectorAll('#tab-sustratos .pagina-sustratos').forEach(p => p.classList.remove('activa'));
 
-        if (!pagina) return;
-
-        document.querySelectorAll('#tab-sustratos .pagina-sustratos')
-            .forEach(seccion => seccion.classList.remove('activa'));
-
-        document.querySelectorAll('#tab-sustratos button.nav-sustratos')
-            .forEach(item => item.classList.remove('activo'));
-
-        const destino = document.getElementById(pagina);
-
-        if (destino) {
-            destino.classList.add('activa');
-        }
-
-        boton.classList.add('activo');
-
-        paginaActualSustratos = pagina;
-
+      boton.classList.add('activo');
+      const destino = $(pagina);
+      if (destino) destino.classList.add('activa');
     });
+  });
 
-});
+  // Registrar nuevo sustrato
+  $('btnAgregarSustrato')?.addEventListener('click', async () => {
+    const nombre = $('nombreSustrato').value.trim();
+    const unidad = $('unidadSustrato').value;
+    const costo = Number($('costoSustrato').value);
+    const precio = Number($('precioVentaSustrato').value);
+    const stock = Number($('stockSustrato').value);
 
+    if (!nombre || isNaN(costo) || isNaN(precio) || isNaN(stock) || costo < 0 || precio < 0 || stock < 0) {
+      alert('Por favor completa todos los campos correctamente.');
+      return;
+    }
 
-// ======================================================
-// 6. REGISTRAR NUEVO PRODUCTO
-// ======================================================
+    try {
+      const sustratoRef = db.collection('sustratos').doc();
+      const movimientoRef = db.collection('movimientosSustratos').doc();
 
-if (btnAgregarSustrato) {
+      await db.runTransaction(async transaction => {
+        transaction.set(sustratoRef, {
+          nombre,
+          unidad,
+          costo,
+          precioVenta: precio,
+          stock,
+          fecha: fechaServidor()
+        });
 
-    btnAgregarSustrato.addEventListener('click', async () => {
-
-        const nombre = nombreSustrato.value.trim();
-        const unidad = unidadSustrato.value;
-
-        const costo = Number(costoSustrato.value);
-        const precioVenta = Number(precioVentaSustrato.value);
-        const stock = Number(stockSustrato.value);
-
-        if (!nombre) {
-            return mostrarMensajeSustratos('Ingresa el nombre del producto.');
+        if (stock > 0) {
+          transaction.set(movimientoRef, {
+            sustratoId: sustratoRef.id,
+            producto: nombre,
+            tipo: 'Entrada',
+            cantidad: stock,
+            unidad,
+            detalle: 'Stock inicial registrado',
+            fecha: fechaServidor()
+          });
         }
+      });
 
-        if (!['kg', 'L', 'und'].includes(unidad)) {
-            return mostrarMensajeSustratos('Selecciona una unidad válida.');
-        }
+      $('nombreSustrato').value = '';
+      $('costoSustrato').value = '';
+      $('precioVentaSustrato').value = '';
+      $('stockSustrato').value = '';
 
-        if (!Number.isFinite(costo) || costo < 0) {
-            return mostrarMensajeSustratos('Ingresa un costo válido.');
-        }
+      alert('Sustrato registrado con éxito.');
+    } catch (error) {
+      mostrarError(error);
+    }
+  });
 
-        if (!Number.isFinite(precioVenta) || precioVenta < 0) {
-            return mostrarMensajeSustratos('Ingresa un precio de venta válido.');
-        }
-
-        if (!Number.isFinite(stock) || stock < 0) {
-            return mostrarMensajeSustratos('Ingresa un stock válido.');
-        }
-
-        if (unidad === 'und' && !Number.isInteger(stock)) {
-            return mostrarMensajeSustratos('Las unidades deben registrarse con números enteros.');
-        }
-
-        try {
-
-            btnAgregarSustrato.disabled = true;
-
-            const referencia = await coleccionSustratos.add({
-
-                nombre: nombre,
-                unidad: unidad,
-
-                costo: costo,
-                precioVenta: precioVenta,
-
-                stock: stock,
-
-                stockMinimo: 2,
-
-                fecha: firebase.firestore.FieldValue.serverTimestamp(),
-
-                actualizado: firebase.firestore.FieldValue.serverTimestamp()
-
-            });
-
-            if (stock > 0) {
-
-                await coleccionMovimientosSustratos.add({
-
-                    sustratoId: referencia.id,
-                    producto: nombre,
-
-                    tipo: 'entrada',
-                    cantidad: stock,
-                    unidad: unidad,
-
-                    detalle: 'Stock inicial del producto',
-
-                    fecha: firebase.firestore.FieldValue.serverTimestamp()
-
-                });
-
-            }
-
-            nombreSustrato.value = '';
-            costoSustrato.value = '';
-            precioVentaSustrato.value = '';
-            stockSustrato.value = '';
-
-            mostrarMensajeSustratos('Producto registrado correctamente.');
-
-        } catch (error) {
-
-            console.error('Error registrando sustrato:', error);
-
-            mostrarMensajeSustratos('No se pudo registrar el producto.');
-
-        } finally {
-
-            btnAgregarSustrato.disabled = false;
-
-        }
-
-    });
-
-}
-
-
-// ======================================================
-// 7. CARGAR INVENTARIO
-// ======================================================
-
-coleccionSustratos.onSnapshot(snapshot => {
-
-    productosSustratos = [];
-
+  // Escuchar inventario de sustratos en tiempo real
+  db.collection('sustratos').onSnapshot(snapshot => {
+    inventarioSustratos = [];
     snapshot.forEach(doc => {
-
-        const producto = doc.data();
-
-        productosSustratos.push({
-            id: doc.id,
-            ...producto
-        });
-
+      inventarioSustratos.push({ id: doc.id, ...doc.data() });
     });
-
     mostrarInventarioSustratos();
-    cargarSelectEntradasSustratos();
+    mostrarSelectoresSustratos();
     mostrarProductosVentaSustratos();
-    actualizarPanelSustratos();
-
-}, error => {
-
-    console.error('Error cargando inventario:', error);
-
-});
-
-
-// ======================================================
-// 8. MOSTRAR INVENTARIO
-// ======================================================
-
-function mostrarInventarioSustratos() {
-
-    if (!tablaInventarioSustratos) return;
-
-    const busqueda = (buscarSustrato?.value || '').toLowerCase();
-
-    const filtrados = productosSustratos.filter(producto => {
-
-        return String(producto.nombre || '')
-            .toLowerCase()
-            .includes(busqueda);
-
-    });
-
-    tablaInventarioSustratos.innerHTML = '';
-
-    if (filtrados.length === 0) {
-
-        tablaInventarioSustratos.innerHTML = `
-            <tr>
-                <td colspan="6">No hay productos registrados.</td>
-            </tr>
-        `;
-
-        return;
-    }
-
-    filtrados.forEach(producto => {
-
-        const unidad = producto.unidad || 'und';
-
-        const fila = document.createElement('tr');
-
-        fila.innerHTML = `
-
-            <td>${escaparHTMLSustratos(producto.nombre)}</td>
-
-            <td>${unidadTextoSustratos(unidad)}</td>
-
-            <td>${formatoMonedaSustratos(producto.costo)}</td>
-
-            <td>${formatoMonedaSustratos(producto.precioVenta ?? producto.costo)}</td>
-
-            <td>${formatoCantidadSustratos(producto.stock)} ${unidadTextoSustratos(unidad)}</td>
-
-            <td>
-
-                <button onclick="editarSustrato('${producto.id}')"
-                    class="btn-editar-sustrato">
-                    Editar
-                </button>
-
-                <button onclick="eliminarSustrato('${producto.id}')"
-                    class="btn-eliminar-sustrato">
-                    Eliminar
-                </button>
-
-            </td>
-
-        `;
-
-        tablaInventarioSustratos.appendChild(fila);
-
-    });
-
-}
-
-
-if (buscarSustrato) {
-
-    buscarSustrato.addEventListener('input', mostrarInventarioSustratos);
-
-}
-
-
-// ======================================================
-// 9. EDITAR PRODUCTO
-// ======================================================
-
-async function editarSustrato(id) {
-
-    const producto = productosSustratos.find(item => item.id === id);
-
-    if (!producto) return;
-
-    const nuevoNombre = prompt('Nombre del producto:', producto.nombre);
-
-    if (nuevoNombre === null) return;
-
-    if (!nuevoNombre.trim()) {
-        return mostrarMensajeSustratos('El nombre no puede estar vacío.');
-    }
-
-    const nuevoCosto = prompt('Costo unitario:', producto.costo || 0);
-
-    if (nuevoCosto === null) return;
-
-    const nuevoPrecio = prompt(
-        'Precio de venta:',
-        producto.precioVenta ?? producto.costo ?? 0
-    );
-
-    if (nuevoPrecio === null) return;
-
-    const nuevoStock = prompt('Stock actual:', producto.stock || 0);
-
-    if (nuevoStock === null) return;
-
-    const costo = Number(nuevoCosto);
-    const precio = Number(nuevoPrecio);
-    const stock = Number(nuevoStock);
-
-    if (
-        !Number.isFinite(costo) || costo < 0 ||
-        !Number.isFinite(precio) || precio < 0 ||
-        !Number.isFinite(stock) || stock < 0
-    ) {
-        return mostrarMensajeSustratos('Los datos ingresados no son válidos.');
-    }
-
-    if (producto.unidad === 'und' && !Number.isInteger(stock)) {
-        return mostrarMensajeSustratos('Las unidades deben ser números enteros.');
-    }
-
-    try {
-
-        await coleccionSustratos.doc(id).update({
-
-            nombre: nuevoNombre.trim(),
-            costo: costo,
-            precioVenta: precio,
-            stock: stock,
-
-            actualizado: firebase.firestore.FieldValue.serverTimestamp()
-
-        });
-
-        mostrarMensajeSustratos('Producto actualizado correctamente.');
-
-    } catch (error) {
-
-        console.error(error);
-
-        mostrarMensajeSustratos('No se pudo actualizar el producto.');
-
-    }
-
-}
-
-
-// ======================================================
-// 10. ELIMINAR PRODUCTO
-// ======================================================
-
-async function eliminarSustrato(id) {
-
-    const producto = productosSustratos.find(item => item.id === id);
-
-    if (!producto) return;
-
-    if (Number(producto.stock || 0) > 0) {
-
-        return mostrarMensajeSustratos(
-            'No puedes eliminar un producto que todavía tiene stock. Primero registra su salida o ajusta su inventario.'
-        );
-
-    }
-
-    if (!confirm(`¿Deseas eliminar ${producto.nombre} del inventario?`)) {
-        return;
-    }
-
-    try {
-
-        await coleccionSustratos.doc(id).delete();
-
-        mostrarMensajeSustratos('Producto eliminado.');
-
-    } catch (error) {
-
-        console.error(error);
-
-        mostrarMensajeSustratos('No se pudo eliminar el producto.');
-
-    }
-
-}
-
-
-// ======================================================
-// 11. CARGAR SELECT DE ENTRADAS
-// ======================================================
-
-function cargarSelectEntradasSustratos() {
-
-    if (!selectEntradaSustrato) return;
-
-    const valorAnterior = selectEntradaSustrato.value;
-
-    selectEntradaSustrato.innerHTML = `
-        <option value="">Selecciona un producto</option>
-    `;
-
-    productosSustratos.forEach(producto => {
-
-        const option = document.createElement('option');
-
-        option.value = producto.id;
-
-        option.textContent =
-            `${producto.nombre} (${unidadTextoSustratos(producto.unidad || 'und')})`;
-
-        selectEntradaSustrato.appendChild(option);
-
-    });
-
-    if (productosSustratos.some(p => p.id === valorAnterior)) {
-        selectEntradaSustrato.value = valorAnterior;
-    }
-
-}
-
-
-// ======================================================
-// 12. REGISTRAR ENTRADA DE PRODUCTOS
-// ======================================================
-
-if (btnRegistrarEntradaSustrato) {
-
-    btnRegistrarEntradaSustrato.addEventListener('click', async () => {
-
-        const id = selectEntradaSustrato.value;
-        const cantidad = Number(cantidadEntradaSustrato.value);
-        const costo = Number(costoEntradaSustrato.value);
-
-        const observacion = observacionEntradaSustrato.value.trim();
-
-        const producto = productosSustratos.find(item => item.id === id);
-
-        if (!producto) {
-            return mostrarMensajeSustratos('Selecciona un producto.');
-        }
-
-        if (!validarCantidadSustratos(cantidad, producto.unidad || 'und')) {
-            return mostrarMensajeSustratos('La cantidad ingresada no es válida para esta unidad.');
-        }
-
-        if (!Number.isFinite(costo) || costo < 0) {
-            return mostrarMensajeSustratos('Ingresa un costo unitario válido.');
-        }
-
-        try {
-
-            btnRegistrarEntradaSustrato.disabled = true;
-
-            await db.runTransaction(async transaction => {
-
-                const referenciaProducto = coleccionSustratos.doc(id);
-
-                const documento = await transaction.get(referenciaProducto);
-
-                if (!documento.exists) {
-                    throw new Error('El producto ya no existe.');
-                }
-
-                const datos = documento.data();
-
-                const stockAnterior = Number(datos.stock || 0);
-
-                transaction.update(referenciaProducto, {
-
-                    stock: stockAnterior + cantidad,
-
-                    costo: costo,
-
-                    actualizado: firebase.firestore.FieldValue.serverTimestamp()
-
-                });
-
-                const entradaRef = coleccionEntradasSustratos.doc();
-
-                transaction.set(entradaRef, {
-
-                    sustratoId: id,
-                    producto: datos.nombre,
-
-                    cantidad: cantidad,
-                    unidad: datos.unidad || 'und',
-
-                    costoUnit: costo,
-                    total: cantidad * costo,
-
-                    observacion: observacion,
-
-                    fecha: firebase.firestore.FieldValue.serverTimestamp()
-
-                });
-
-                const movimientoRef = coleccionMovimientosSustratos.doc();
-
-                transaction.set(movimientoRef, {
-
-                    sustratoId: id,
-                    producto: datos.nombre,
-
-                    tipo: 'entrada',
-
-                    cantidad: cantidad,
-                    unidad: datos.unidad || 'und',
-
-                    detalle: observacion || 'Ingreso de productos',
-
-                    fecha: firebase.firestore.FieldValue.serverTimestamp()
-
-                });
-
-            });
-
-            cantidadEntradaSustrato.value = '';
-            costoEntradaSustrato.value = '';
-            observacionEntradaSustrato.value = '';
-
-            mostrarMensajeSustratos('Entrada registrada correctamente.');
-
-        } catch (error) {
-
-            console.error(error);
-
-            mostrarMensajeSustratos('No se pudo registrar la entrada.');
-
-        } finally {
-
-            btnRegistrarEntradaSustrato.disabled = false;
-
-        }
-
-    });
-
-}
-
-
-// ======================================================
-// 13. HISTORIAL DE ENTRADAS
-// ======================================================
-
-coleccionEntradasSustratos
-    .orderBy('fecha', 'desc')
-    .onSnapshot(snapshot => {
-
-        entradasSustratos = [];
-
-        snapshot.forEach(doc => {
-
-            entradasSustratos.push({
-                id: doc.id,
-                ...doc.data()
-            });
-
-        });
-
-        mostrarHistorialEntradasSustratos();
-
-    }, error => {
-
-        console.error('Error cargando entradas:', error);
-
-    });
-
-
-function mostrarHistorialEntradasSustratos() {
-
-    if (!historialEntradasSustratos) return;
-
-    historialEntradasSustratos.innerHTML = '';
-
-    if (entradasSustratos.length === 0) {
-
-        historialEntradasSustratos.innerHTML = `
-            <tr>
-                <td colspan="6">Todavía no hay entradas registradas.</td>
-            </tr>
-        `;
-
-        return;
-    }
-
-    entradasSustratos.forEach(entrada => {
-
-        const fila = document.createElement('tr');
-
-        fila.innerHTML = `
-
-            <td>${mostrarFechaSustratos(entrada.fecha)}</td>
-
-            <td>${escaparHTMLSustratos(entrada.producto)}</td>
-
-            <td>${formatoCantidadSustratos(entrada.cantidad)}</td>
-
-            <td>${unidadTextoSustratos(entrada.unidad)}</td>
-
-            <td>${formatoMonedaSustratos(entrada.costoUnit)}</td>
-
-            <td>${formatoMonedaSustratos(entrada.total)}</td>
-
-        `;
-
-        historialEntradasSustratos.appendChild(fila);
-
-    });
-
-}
-
-
-// ======================================================
-// 14. MOSTRAR PRODUCTOS PARA VENTA
-// ======================================================
-
-function mostrarProductosVentaSustratos() {
-
-    if (!detalleVentaSustratos) return;
-
-    const cantidadesAnteriores = {};
-
-    detalleVentaSustratos.querySelectorAll('tr[data-id]').forEach(fila => {
-
-        const id = fila.dataset.id;
-
-        cantidadesAnteriores[id] = {
-            cantidad: fila.querySelector('.cantidad-venta-sustrato')?.value || '',
-            precio: fila.querySelector('.precio-venta-sustrato')?.value || ''
-        };
-
-    });
-
-    detalleVentaSustratos.innerHTML = '';
-
-    if (productosSustratos.length === 0) {
-
-        detalleVentaSustratos.innerHTML = `
-            <tr>
-                <td colspan="6">No hay productos disponibles.</td>
-            </tr>
-        `;
-
-        actualizarTotalVentaSustratos();
-
-        return;
-    }
-
-    productosSustratos.forEach(producto => {
-
-        const unidad = producto.unidad || 'und';
-
-        const stock = Number(producto.stock || 0);
-
-        const precio = Number(producto.precioVenta ?? producto.costo ?? 0);
-
-        const anterior = cantidadesAnteriores[producto.id] || {};
-
-        const fila = document.createElement('tr');
-
-        fila.dataset.id = producto.id;
-
-        fila.innerHTML = `
-
-            <td>${escaparHTMLSustratos(producto.nombre)}</td>
-
-            <td>${unidadTextoSustratos(unidad)}</td>
-
-            <td>${formatoCantidadSustratos(stock)}</td>
-
-            <td>
-                <input
-                    type="number"
-                    class="cantidad-venta-sustrato"
-                    min="0"
-                    step="${obtenerPasoUnidadSustratos(unidad)}"
-                    max="${stock}"
-                    value="${escaparHTMLSustratos(anterior.cantidad || '')}"
-                    placeholder="0"
-                    ${stock <= 0 ? 'disabled' : ''}
-                >
-            </td>
-
-            <td>
-                <input
-                    type="number"
-                    class="precio-venta-sustrato"
-                    min="0"
-                    step="0.01"
-                    value="${escaparHTMLSustratos(anterior.precio || precio)}"
-                >
-            </td>
-
-            <td class="subtotal-venta-sustrato">
-                S/ 0.00
-            </td>
-
-        `;
-
-        detalleVentaSustratos.appendChild(fila);
-
-    });
-
-    detalleVentaSustratos.querySelectorAll('input').forEach(input => {
-
-        input.addEventListener('input', actualizarTotalVentaSustratos);
-
-    });
-
-    actualizarTotalVentaSustratos();
-
-}
-
-
-// ======================================================
-// 15. CALCULAR TOTAL DE VENTA
-// ======================================================
-
-function actualizarTotalVentaSustratos() {
-
-    if (!detalleVentaSustratos || !totalVentaSustratos) return;
-
-    let total = 0;
-
-    detalleVentaSustratos.querySelectorAll('tr[data-id]').forEach(fila => {
-
-        const cantidad = Number(
-            fila.querySelector('.cantidad-venta-sustrato')?.value || 0
-        );
-
-        const precio = Number(
-            fila.querySelector('.precio-venta-sustrato')?.value || 0
-        );
-
-        const subtotal = cantidad * precio;
-
-        total += subtotal;
-
-        const celda = fila.querySelector('.subtotal-venta-sustrato');
-
-        if (celda) {
-            celda.textContent = formatoMonedaSustratos(subtotal);
-        }
-
-    });
-
-    totalVentaSustratos.textContent = formatoMonedaSustratos(total);
-
-}
-
-
-// ======================================================
-// 16. REGISTRAR VENTA COMPLETA
-// ======================================================
-
-if (btnRegistrarVentaSustrato) {
-
-    btnRegistrarVentaSustrato.addEventListener('click', async () => {
-
-        if (ventaEnProcesoSustratos) return;
-
-        const productosVenta = [];
-
-        detalleVentaSustratos.querySelectorAll('tr[data-id]').forEach(fila => {
-
-            const cantidad = Number(
-                fila.querySelector('.cantidad-venta-sustrato')?.value || 0
-            );
-
-            const precio = Number(
-                fila.querySelector('.precio-venta-sustrato')?.value || 0
-            );
-
-            if (cantidad > 0) {
-
-                productosVenta.push({
-
-                    id: fila.dataset.id,
-                    cantidad: cantidad,
-                    precio: precio
-
-                });
-
-            }
-
-        });
-
-        if (productosVenta.length === 0) {
-            return mostrarMensajeSustratos('Ingresa la cantidad de al menos un producto.');
-        }
-
-        for (const item of productosVenta) {
-
-            const producto = productosSustratos.find(p => p.id === item.id);
-
-            if (!producto) {
-                return mostrarMensajeSustratos('Uno de los productos ya no está disponible.');
-            }
-
-            if (!validarCantidadSustratos(item.cantidad, producto.unidad || 'und')) {
-                return mostrarMensajeSustratos(
-                    `La cantidad de ${producto.nombre} no es válida.`
-                );
-            }
-
-            if (!Number.isFinite(item.precio) || item.precio < 0) {
-                return mostrarMensajeSustratos(
-                    `El precio de ${producto.nombre} no es válido.`
-                );
-            }
-
-        }
-
-        const cliente = clienteVentaSustrato.value.trim() || 'Cliente Anónimo';
-        const metodoPago = metodoPagoSustrato.value;
-
-        const total = productosVenta.reduce((suma, item) => {
-            return suma + item.cantidad * item.precio;
-        }, 0);
-
-        if (!confirm(`¿Confirmas esta venta por ${formatoMonedaSustratos(total)}?`)) {
-            return;
-        }
-
-        try {
-
-            ventaEnProcesoSustratos = true;
-
-            btnRegistrarVentaSustrato.disabled = true;
-
-            await db.runTransaction(async transaction => {
-
-                const referencias = productosVenta.map(item => ({
-                    item: item,
-                    referencia: coleccionSustratos.doc(item.id)
-                }));
-
-                const documentos = [];
-
-                // Primero leer todos los productos.
-                for (const dato of referencias) {
-
-                    const documento = await transaction.get(dato.referencia);
-
-                    if (!documento.exists) {
-                        throw new Error('Uno de los productos ya no existe.');
-                    }
-
-                    documentos.push({
-                        ...dato,
-                        documento: documento
-                    });
-
-                }
-
-                const itemsVenta = [];
-
-                // Validar stock antes de modificar.
-                for (const dato of documentos) {
-
-                    const producto = dato.documento.data();
-
-                    const stockActual = Number(producto.stock || 0);
-
-                    if (dato.item.cantidad > stockActual) {
-
-                        throw new Error(
-                            `Stock insuficiente de ${producto.nombre}. Disponible: ${stockActual}.`
-                        );
-
-                    }
-
-                    itemsVenta.push({
-
-                        sustratoId: dato.item.id,
-
-                        producto: producto.nombre,
-
-                        unidad: producto.unidad || 'und',
-
-                        cantidad: dato.item.cantidad,
-
-                        precioUnit: dato.item.precio,
-
-                        subtotal: dato.item.cantidad * dato.item.precio
-
-                    });
-
-                }
-
-                // Descontar existencias.
-                documentos.forEach(dato => {
-
-                    const producto = dato.documento.data();
-
-                    transaction.update(dato.referencia, {
-
-                        stock: Number(producto.stock || 0) - dato.item.cantidad,
-
-                        actualizado: firebase.firestore.FieldValue.serverTimestamp()
-
-                    });
-
-                });
-
-                // Registrar venta.
-                const ventaRef = coleccionVentasSustratos.doc();
-
-                transaction.set(ventaRef, {
-
-                    items: itemsVenta,
-
-                    producto: itemsVenta.length === 1
-                        ? itemsVenta[0].producto
-                        : `${itemsVenta.length} productos`,
-
-                    cantidad: itemsVenta.length === 1
-                        ? itemsVenta[0].cantidad
-                        : null,
-
-                    precioUnit: itemsVenta.length === 1
-                        ? itemsVenta[0].precioUnit
-                        : null,
-
-                    total: total,
-
-                    cliente: cliente,
-
-                    metodoPago: metodoPago,
-
-                    estado: 'completada',
-
-                    fecha: firebase.firestore.FieldValue.serverTimestamp()
-
-                });
-
-                // Registrar movimientos de venta.
-                itemsVenta.forEach(item => {
-
-                    const movimientoRef = coleccionMovimientosSustratos.doc();
-
-                    transaction.set(movimientoRef, {
-
-                        sustratoId: item.sustratoId,
-
-                        producto: item.producto,
-
-                        tipo: 'venta',
-
-                        cantidad: item.cantidad,
-
-                        unidad: item.unidad,
-
-                        detalle: 'Venta registrada',
-
-                        ventaId: ventaRef.id,
-
-                        fecha: firebase.firestore.FieldValue.serverTimestamp()
-
-                    });
-
-                });
-
-            });
-
-            clienteVentaSustrato.value = '';
-
-            mostrarMensajeSustratos('¡Venta registrada correctamente!');
-
-        } catch (error) {
-
-            console.error('Error registrando venta:', error);
-
-            mostrarMensajeSustratos(error.message || 'No se pudo registrar la venta.');
-
-        } finally {
-
-            ventaEnProcesoSustratos = false;
-
-            btnRegistrarVentaSustrato.disabled = false;
-
-        }
-
-    });
-
-}
-
-
-// ======================================================
-// 17. HISTORIAL DE VENTAS
-// ======================================================
-
-coleccionVentasSustratos
-    .orderBy('fecha', 'desc')
-    .onSnapshot(snapshot => {
-
-        ventasSustratos = [];
-
-        snapshot.forEach(doc => {
-
-            ventasSustratos.push({
-                id: doc.id,
-                ...doc.data()
-            });
-
-        });
-
-        mostrarHistorialVentasSustratos();
-        actualizarPanelSustratos();
-
-    }, error => {
-
-        console.error('Error cargando ventas:', error);
-
-    });
-
-
-function obtenerResumenVentaSustratos(venta) {
-
-    if (Array.isArray(venta.items) && venta.items.length > 0) {
-
-        return venta.items.map(item => {
-
-            return `${item.producto} (${formatoCantidadSustratos(item.cantidad)} ${unidadTextoSustratos(item.unidad)})`;
-
-        }).join(', ');
-
-    }
-
-    return `${venta.producto || 'Venta antigua'} (${formatoCantidadSustratos(venta.cantidad || 0)})`;
-
-}
-
-
-function mostrarHistorialVentasSustratos() {
-
-    if (!historialVentasSustratos) return;
-
-    historialVentasSustratos.innerHTML = '';
-
-    let filtradas = ventasSustratos;
-
-    if (filtroFechaSustratos?.value) {
-
-        filtradas = ventasSustratos.filter(venta => {
-
-            const fecha = obtenerFechaSustratos(venta.fecha);
-
-            if (!fecha) return false;
-
-            const fechaTexto = [
-                fecha.getFullYear(),
-                String(fecha.getMonth() + 1).padStart(2, '0'),
-                String(fecha.getDate()).padStart(2, '0')
-            ].join('-');
-
-            return fechaTexto === filtroFechaSustratos.value;
-
-        });
-
-    }
-
-    if (filtradas.length === 0) {
-
-        historialVentasSustratos.innerHTML = `
-            <tr>
-                <td colspan="7">No hay ventas registradas.</td>
-            </tr>
-        `;
-
-        return;
-    }
-
-    filtradas.forEach(venta => {
-
-        const estado = venta.estado || 'completada';
-
-        const fila = document.createElement('tr');
-
-        fila.innerHTML = `
-
-            <td>${mostrarFechaSustratos(venta.fecha)}</td>
-
-            <td>${escaparHTMLSustratos(obtenerResumenVentaSustratos(venta))}</td>
-
-            <td>${escaparHTMLSustratos(venta.cliente || 'Cliente Anónimo')}</td>
-
-            <td>${escaparHTMLSustratos(venta.metodoPago || '-')}</td>
-
-            <td>${formatoMonedaSustratos(venta.total)}</td>
-
-            <td>${estado === 'anulada' ? 'Anulada' : 'Completada'}</td>
-
-            <td>
-                ${
-                    estado === 'anulada'
-                    ? '<span>Sin acciones</span>'
-                    : `<button onclick="anularVentaSustrato('${venta.id}')"
-                        class="btn-eliminar-sustrato">Anular</button>`
-                }
-            </td>
-
-        `;
-
-        historialVentasSustratos.appendChild(fila);
-
-    });
-
-}
-
-
-if (filtroFechaSustratos) {
-
-    filtroFechaSustratos.addEventListener('change', mostrarHistorialVentasSustratos);
-
-}
-
-
-// ======================================================
-// 18. ANULAR VENTA Y DEVOLVER STOCK
-// ======================================================
-
-async function anularVentaSustrato(id) {
-
-    const venta = ventasSustratos.find(item => item.id === id);
-
-    if (!venta) return;
-
-    if (venta.estado === 'anulada') {
-        return mostrarMensajeSustratos('Esta venta ya fue anulada.');
-    }
-
-    if (!Array.isArray(venta.items) || venta.items.length === 0) {
-
-        return mostrarMensajeSustratos(
-            'Esta es una venta antigua que no contiene los identificadores de los productos. No se puede devolver el stock automáticamente.'
-        );
-
-    }
-
-    if (!confirm('¿Deseas anular esta venta y devolver las cantidades al inventario?')) {
-        return;
-    }
-
-    try {
-
-        await db.runTransaction(async transaction => {
-
-            const ventaRef = coleccionVentasSustratos.doc(id);
-
-            const ventaDoc = await transaction.get(ventaRef);
-
-            if (!ventaDoc.exists) {
-                throw new Error('La venta no existe.');
-            }
-
-            const datosVenta = ventaDoc.data();
-
-            if (datosVenta.estado === 'anulada') {
-                throw new Error('Esta venta ya fue anulada.');
-            }
-
-            const referencias = [];
-
-            for (const item of datosVenta.items) {
-
-                const referencia = coleccionSustratos.doc(item.sustratoId);
-
-                const documento = await transaction.get(referencia);
-
-                if (!documento.exists) {
-
-                    throw new Error(
-                        `No se encontró el producto ${item.producto}. No se puede completar la devolución.`
-                    );
-
-                }
-
-                referencias.push({
-                    item,
-                    referencia,
-                    documento
-                });
-
-            }
-
-            // Devolver existencias.
-            referencias.forEach(dato => {
-
-                const stockActual = Number(dato.documento.data().stock || 0);
-
-                transaction.update(dato.referencia, {
-
-                    stock: stockActual + Number(dato.item.cantidad),
-
-                    actualizado: firebase.firestore.FieldValue.serverTimestamp()
-
-                });
-
-            });
-
-            // Cambiar estado de la venta.
-            transaction.update(ventaRef, {
-
-                estado: 'anulada',
-
-                fechaAnulacion: firebase.firestore.FieldValue.serverTimestamp()
-
-            });
-
-            // Registrar devoluciones.
-            referencias.forEach(dato => {
-
-                const movimientoRef = coleccionMovimientosSustratos.doc();
-
-                transaction.set(movimientoRef, {
-
-                    sustratoId: dato.item.sustratoId,
-
-                    producto: dato.item.producto,
-
-                    tipo: 'devolucion',
-
-                    cantidad: dato.item.cantidad,
-
-                    unidad: dato.item.unidad,
-
-                    detalle: 'Devolución por anulación de venta',
-
-                    ventaId: id,
-
-                    fecha: firebase.firestore.FieldValue.serverTimestamp()
-
-                });
-
-            });
-
-        });
-
-        mostrarMensajeSustratos('Venta anulada y stock devuelto correctamente.');
-
-    } catch (error) {
-
-        console.error(error);
-
-        mostrarMensajeSustratos(error.message || 'No se pudo anular la venta.');
-
-    }
-
-}
-
-
-// ======================================================
-// 19. HISTORIAL DE MOVIMIENTOS
-// ======================================================
-
-coleccionMovimientosSustratos
-    .orderBy('fecha', 'desc')
-    .onSnapshot(snapshot => {
-
-        movimientosSustratos = [];
-
-        snapshot.forEach(doc => {
-
-            movimientosSustratos.push({
-                id: doc.id,
-                ...doc.data()
-            });
-
-        });
-
-        mostrarMovimientosSustratos();
-
-    }, error => {
-
-        console.error('Error cargando movimientos:', error);
-
-    });
-
-
-function mostrarMovimientosSustratos() {
-
-    if (!movimientosInventarioSustratos) return;
-
-    movimientosInventarioSustratos.innerHTML = '';
-
-    let filtrados = movimientosSustratos;
-
-    const filtro = filtroMovimientoSustratos?.value || 'todos';
-
-    if (filtro !== 'todos') {
-
-        filtrados = movimientosSustratos.filter(movimiento => {
-            return movimiento.tipo === filtro;
-        });
-
-    }
-
-    if (filtrados.length === 0) {
-
-        movimientosInventarioSustratos.innerHTML = `
-            <tr>
-                <td colspan="6">No hay movimientos registrados.</td>
-            </tr>
-        `;
-
-        return;
-
-    }
-
-    filtrados.forEach(movimiento => {
-
-        const fila = document.createElement('tr');
-
-        let tipoTexto = movimiento.tipo;
-
-        if (movimiento.tipo === 'entrada') tipoTexto = 'Entrada';
-        if (movimiento.tipo === 'venta') tipoTexto = 'Venta';
-        if (movimiento.tipo === 'devolucion') tipoTexto = 'Devolución';
-
-        fila.innerHTML = `
-
-            <td>${mostrarFechaSustratos(movimiento.fecha)}</td>
-
-            <td>${escaparHTMLSustratos(movimiento.producto)}</td>
-
-            <td>${tipoTexto}</td>
-
-            <td>${formatoCantidadSustratos(movimiento.cantidad)}</td>
-
-            <td>${unidadTextoSustratos(movimiento.unidad)}</td>
-
-            <td>${escaparHTMLSustratos(movimiento.detalle || '-')}</td>
-
-        `;
-
-        movimientosInventarioSustratos.appendChild(fila);
-
-    });
-
-}
-
-
-if (filtroMovimientoSustratos) {
-
-    filtroMovimientoSustratos.addEventListener('change', mostrarMovimientosSustratos);
-
-}
-
-
-// ======================================================
-// 20. PANEL PRINCIPAL
-// ======================================================
-
-function actualizarPanelSustratos() {
-
-    const totalProductos = productosSustratos.length;
-
-    let stockKg = 0;
-    let stockLitros = 0;
-    let stockUnidades = 0;
-    let alertas = 0;
-
-    productosSustratos.forEach(producto => {
-
-        const stock = Number(producto.stock || 0);
-
-        if (producto.unidad === 'kg') stockKg += stock;
-        else if (producto.unidad === 'L') stockLitros += stock;
-        else stockUnidades += stock;
-
-        const minimo = Number(producto.stockMinimo ?? 2);
-
-        if (stock <= minimo) {
-            alertas++;
-        }
-
-    });
-
-    const ahora = new Date();
-
-    const ventasMes = ventasSustratos.reduce((suma, venta) => {
-
-        if (venta.estado === 'anulada') return suma;
-
-        const fecha = obtenerFechaSustratos(venta.fecha);
-
-        if (!fecha) return suma;
-
-        if (
-            fecha.getMonth() === ahora.getMonth() &&
-            fecha.getFullYear() === ahora.getFullYear()
-        ) {
-
-            return suma + Number(venta.total || 0);
-
-        }
-
-        return suma;
-
-    }, 0);
-
-
-    const totalElementos = {
-
-        totalProductosSustratos: totalProductos,
-
-        stockKgSustratos: formatoCantidadSustratos(stockKg) + ' kg',
-
-        stockLitrosSustratos: formatoCantidadSustratos(stockLitros) + ' L',
-
-        stockUnidadesSustratos: formatoCantidadSustratos(stockUnidades),
-
-        ventasMesSustratos: formatoMonedaSustratos(ventasMes),
-
-        alertasSustratos: alertas
-
-    };
-
-
-    Object.entries(totalElementos).forEach(([id, valor]) => {
-
-        const elemento = document.getElementById(id);
-
-        if (elemento) {
-            elemento.textContent = valor;
-        }
-
-    });
-
-
-    mostrarAlertasSustratos();
-
-}
-
-
-// ======================================================
-// 21. ALERTAS DE STOCK BAJO
-// ======================================================
-
-function mostrarAlertasSustratos() {
-
-    const tabla = document.getElementById('alertasInventarioSustratos');
-
+    actualizarResumenSustratos();
+  }, mostrarError);
+
+  function mostrarInventarioSustratos() {
+    const tabla = $('tablaInventarioSustratos');
+    const buscador = $('buscarSustrato')?.value.toLowerCase() || '';
     if (!tabla) return;
 
-    const alertas = productosSustratos.filter(producto => {
+    tabla.innerHTML = '';
 
-        const stock = Number(producto.stock || 0);
+    const filtrados = inventarioSustratos.filter(item =>
+      item.nombre.toLowerCase().includes(buscador)
+    );
 
-        const minimo = Number(producto.stockMinimo ?? 2);
+    if (filtrados.length === 0) {
+      tabla.innerHTML = '<tr><td colspan="6">No se encontraron productos.</td></tr>';
+      return;
+    }
 
-        return stock <= minimo;
+    filtrados.forEach(item => {
+      const fila = document.createElement('tr');
+      fila.innerHTML = `
+        <td>${escapar(item.nombre)}</td>
+        <td>${escapar(item.unidad)}</td>
+        <td>S/. ${dinero(item.costo)}</td>
+        <td>S/. ${dinero(item.precioVenta)}</td>
+        <td>${item.stock}</td>
+        <td>
+          <button type="button" class="btn-green editar-sustrato" data-id="${item.id}" style="padding:4px 8px; font-size:12px;">Editar</button>
+          <button type="button" class="btn-red eliminar-sustrato" data-id="${item.id}">Eliminar</button>
+        </td>
+      `;
+      tabla.appendChild(fila);
+    });
+  }
 
+  $('buscarSustrato')?.addEventListener('input', mostrarInventarioSustratos);
+
+  // Editar o eliminar sustrato
+  $('tablaInventarioSustratos')?.addEventListener('click', async e => {
+    const editar = e.target.closest('.editar-sustrato');
+    const eliminar = e.target.closest('.eliminar-sustrato');
+
+    if (editar) {
+      const item = inventarioSustratos.find(s => s.id === editar.dataset.id);
+      if (!item) return;
+
+      const nuevoNombre = prompt('Editar nombre:', item.nombre);
+      if (nuevoNombre === null) return;
+      const nuevoPrecio = prompt('Editar precio de venta:', item.precioVenta);
+      if (nuevoPrecio === null) return;
+
+      try {
+        await db.collection('sustratos').doc(item.id).update({
+          nombre: nuevoNombre.trim(),
+          precioVenta: Number(nuevoPrecio)
+        });
+        alert('Producto actualizado.');
+      } catch (err) {
+        mostrarError(err);
+      }
+    }
+
+    if (eliminar) {
+      const item = inventarioSustratos.find(s => s.id === eliminar.dataset.id);
+      if (!item) return;
+      if (item.stock > 0) {
+        alert('Solo se pueden eliminar productos con stock en 0.');
+        return;
+      }
+      if (!confirm('¿Eliminar este sustrato permanentemente?')) return;
+
+      try {
+        await db.collection('sustratos').doc(item.id).delete();
+        alert('Sustrato eliminado.');
+      } catch (err) {
+        mostrarError(err);
+      }
+    }
+  });
+
+  function mostrarSelectoresSustratos() {
+    const select = $('selectEntradaSustrato');
+    if (!select) return;
+
+    const actual = select.value;
+    select.innerHTML = '<option value="">Selecciona un producto</option>';
+
+    inventarioSustratos.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = item.id;
+      opt.textContent = `${item.nombre} (${item.unidad})`;
+      select.appendChild(opt);
+    });
+    select.value = actual;
+  }
+
+  // Registrar entradas de sustrato
+  $('btnRegistrarEntradaSustrato')?.addEventListener('click', async () => {
+    const id = $('selectEntradaSustrato').value;
+    const cantidad = Number($('cantidadEntradaSustrato').value);
+    const costo = Number($('costoEntradaSustrato').value);
+    const observacion = $('observacionEntradaSustrato').value.trim();
+
+    if (!id || isNaN(cantidad) || cantidad <= 0 || isNaN(costo) || costo < 0) {
+      alert('Completa los datos de la entrada correctamente.');
+      return;
+    }
+
+    try {
+      const prodRef = db.collection('sustratos').doc(id);
+      const entradaRef = db.collection('entradasSustratos').doc();
+      const movRef = db.collection('movimientosSustratos').doc();
+
+      await db.runTransaction(async transaction => {
+        const doc = await transaction.get(prodRef);
+        if (!doc.exists) throw new Error('El producto ya no existe.');
+
+        const data = doc.data();
+        const nuevoStock = Number(data.stock || 0) + cantidad;
+
+        transaction.update(prodRef, { stock: nuevoStock, costo });
+        transaction.set(entradaRef, {
+          sustratoId: id,
+          producto: data.nombre,
+          cantidad,
+          unidad: data.unidad,
+          costoUnitario: costo,
+          total: cantidad * costo,
+          observacion,
+          fecha: fechaServidor()
+        });
+        transaction.set(movRef, {
+          sustratoId: id,
+          producto: data.nombre,
+          tipo: 'Entrada',
+          cantidad,
+          unidad: data.unidad,
+          detalle: observacion || 'Compra / Reposición',
+          fecha: fechaServidor()
+        });
+      });
+
+      $('selectEntradaSustrato').value = '';
+      $('cantidadEntradaSustrato').value = '';
+      $('costoEntradaSustrato').value = '';
+      $('observacionEntradaSustrato').value = '';
+
+      alert('Entrada registrada exitosamente.');
+    } catch (err) {
+      mostrarError(err);
+    }
+  });
+
+  // Historial de entradas
+  db.collection('entradasSustratos').orderBy('fecha', 'desc').onSnapshot(snapshot => {
+    entradasSustratos = [];
+    snapshot.forEach(doc => entradasSustratos.push({ id: doc.id, ...doc.data() }));
+
+    const tabla = $('historialEntradasSustratos');
+    if (!tabla) return;
+    tabla.innerHTML = '';
+
+    if (entradasSustratos.length === 0) {
+      tabla.innerHTML = '<tr><td colspan="6">No hay entradas registradas.</td></tr>';
+      return;
+    }
+
+    entradasSustratos.forEach(e => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${mostrarFecha(e.fecha)}</td>
+        <td>${escapar(e.producto)}</td>
+        <td>${e.cantidad}</td>
+        <td>${escapar(e.unidad)}</td>
+        <td>S/. ${dinero(e.costoUnitario)}</td>
+        <td>S/. ${dinero(e.total)}</td>
+      `;
+      tabla.appendChild(tr);
+    });
+  }, mostrarError);
+
+  // Renderizar productos en la página de ventas de sustratos
+  function mostrarProductosVentaSustratos() {
+    const tabla = $('detalleVentaSustratos');
+    if (!tabla) return;
+
+    const cantidades = {};
+    tabla.querySelectorAll('.cantidad-sustrato-venta').forEach(inp => {
+      cantidades[inp.dataset.id] = inp.value;
     });
 
     tabla.innerHTML = '';
 
-    if (alertas.length === 0) {
-
-        tabla.innerHTML = `
-            <tr>
-                <td colspan="4">No hay productos con stock bajo.</td>
-            </tr>
-        `;
-
-        return;
-
+    if (inventarioSustratos.length === 0) {
+      tabla.innerHTML = '<tr><td colspan="6">No hay sustratos disponibles.</td></tr>';
+      return;
     }
 
-    alertas.forEach(producto => {
+    inventarioSustratos.forEach(item => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${escapar(item.nombre)}</td>
+        <td>${escapar(item.unidad)}</td>
+        <td>${item.stock}</td>
+        <td>
+          <input type="number" class="cantidad-sustrato-venta" data-id="${item.id}" value="${cantidades[item.id] || 0}" min="0" max="${item.stock}" step="0.01" style="width:90px;">
+        </td>
+        <td>S/. ${dinero(item.precioVenta)}</td>
+        <td><strong class="subtotal-sustrato-venta" data-id="${item.id}">S/. 0.00</strong></td>
+      `;
+      tabla.appendChild(tr);
+    });
+    actualizarTotalVentaSustratos();
+  }
 
-        const fila = document.createElement('tr');
+  $('detalleVentaSustratos')?.addEventListener('input', e => {
+    if (e.target.classList.contains('cantidad-sustrato-venta')) {
+      actualizarTotalVentaSustratos();
+    }
+  });
 
-        fila.innerHTML = `
+  function obtenerSeleccionSustratos() {
+    const inputs = document.querySelectorAll('#detalleVentaSustratos .cantidad-sustrato-venta');
+    const seleccionados = [];
 
-            <td>${escaparHTMLSustratos(producto.nombre)}</td>
+    inputs.forEach(inp => {
+      const cant = Number(inp.value);
+      if (cant <= 0) return;
 
-            <td>${formatoCantidadSustratos(producto.stock)}</td>
+      const id = inp.dataset.id;
+      const prod = inventarioSustratos.find(s => s.id === id);
+      if (!prod) return;
 
-            <td>${unidadTextoSustratos(producto.unidad)}</td>
-
-            <td>
-                <span style="color:#d97706;font-weight:600;">
-                    Stock bajo
-                </span>
-            </td>
-
-        `;
-
-        tabla.appendChild(fila);
-
+      seleccionados.push({
+        sustratoId: id,
+        producto: prod.nombre,
+        unidad: prod.unidad,
+        cantidad: cant,
+        precioUnit: prod.precioVenta,
+        subtotal: cant * prod.precioVenta
+      });
     });
 
-}
+    return seleccionados;
+  }
 
+  function actualizarTotalVentaSustratos() {
+    let total = 0;
+    const seleccionados = obtenerSeleccionSustratos();
 
-// ======================================================
-// FIN DEL MÓDULO DE SUSTRATOS
-// ======================================================
+    document.querySelectorAll('#detalleVentaSustratos .subtotal-sustrato-venta').forEach(celda => {
+      const item = seleccionados.find(s => s.sustratoId === celda.dataset.id);
+      const sub = item ? item.subtotal : 0;
+      celda.textContent = `S/. ${dinero(sub)}`;
+      total += sub;
+    });
+
+    if ($('totalVentaSustratos')) {
+      $('totalVentaSustratos').textContent = `S/ ${dinero(total)}`;
+    }
+  }
+
+  // Registrar venta completa de sustratos
+  $('btnRegistrarVentaSustrato')?.addEventListener('click', async () => {
+    const items = obtenerSeleccionSustratos();
+    if (items.length === 0) {
+      alert('Selecciona al menos un producto e indica su cantidad.');
+      return;
+    }
+
+    const cliente = $('clienteVentaSustrato').value.trim() || 'Cliente Anónimo';
+    const metodoPago = $('metodoPagoSustrato').value;
+    const total = items.reduce((acc, curr) => acc + curr.subtotal, 0);
+
+    if (!confirm(`¿Confirmar venta de sustratos por S/. ${dinero(total)}?`)) return;
+
+    try {
+      const ventaRef = db.collection('ventasSustratos').doc();
+      const refs = items.map(item => ({
+        item,
+        prodRef: db.collection('sustratos').doc(item.sustratoId),
+        movRef: db.collection('movimientosSustratos').doc()
+      }));
+
+      await db.runTransaction(async t => {
+        const docs = await Promise.all(refs.map(r => t.get(r.prodRef)));
+
+        docs.forEach((doc, idx) => {
+          if (!doc.exists) throw new Error('Un producto ya no existe.');
+          const stockActual = Number(doc.data().stock || 0);
+          if (stockActual < refs[idx].item.cantidad) {
+            throw new Error(`Stock insuficiente para ${refs[idx].item.producto}.`);
+          }
+        });
+
+        refs.forEach((r, idx) => {
+          const prodData = docs[idx].data();
+          t.update(r.prodRef, { stock: Number(prodData.stock || 0) - r.item.cantidad });
+          t.set(r.movRef, {
+            sustratoId: r.item.sustratoId,
+            producto: prodData.nombre,
+            tipo: 'Venta',
+            cantidad: r.item.cantidad,
+            unidad: prodData.unidad,
+            detalle: `Venta a ${cliente}`,
+            ventaId: ventaRef.id,
+            fecha: fechaServidor()
+          });
+        });
+
+        t.set(ventaRef, {
+          items,
+          total,
+          cliente,
+          metodoPago,
+          estado: 'Registrada',
+          fecha: fechaServidor()
+        });
+      });
+
+      $('clienteVentaSustrato').value = '';
+      mostrarProductosVentaSustratos();
+      alert('¡Venta de sustratos registrada con éxito!');
+    } catch (err) {
+      mostrarError(err);
+    }
+  });
+
+  // Historial de ventas de sustratos
+  db.collection('ventasSustratos').orderBy('fecha', 'desc').onSnapshot(snapshot => {
+    ventasSustratos = [];
+    snapshot.forEach(doc => ventasSustratos.push({ id: doc.id, ...doc.data() }));
+
+    const tabla = $('historialVentasSustratos');
+    if (!tabla) return;
+    tabla.innerHTML = '';
+
+    if (ventasSustratos.length === 0) {
+      tabla.innerHTML = '<tr><td colspan="7">No hay ventas registradas.</td></tr>';
+      actualizarResumenSustratos();
+      return;
+    }
+
+    ventasSustratos.forEach(v => {
+      const listaProds = (v.items || []).map(i => `${escapar(i.producto)} (${i.cantidad} ${i.unidad})`).join('<br>');
+      const anulada = v.estado === 'Anulada';
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${mostrarFecha(v.fecha)}</td>
+        <td>${listaProds}</td>
+        <td>${escapar(v.cliente)}</td>
+        <td>${escapar(v.metodoPago)}</td>
+        <td>S/. ${dinero(v.total)}</td>
+        <td>${anulada ? 'Anulada' : 'Registrada'}</td>
+        <td>
+          ${anulada ? '-' : `<button type="button" class="btn-red anular-venta-sustrato" data-id="${v.id}">Anular</button>`}
+        </td>
+      `;
+      tabla.appendChild(tr);
+    });
+
+    actualizarResumenSustratos();
+  }, mostrarError);
+
+  // Anular venta de sustratos y devolver stock
+  $('historialVentasSustratos')?.addEventListener('click', async e => {
+    const btn = e.target.closest('.anular-venta-sustrato');
+    if (!btn) return;
+    if (!confirm('¿Anular esta venta y devolver el stock al inventario?')) return;
+
+    const id = btn.dataset.id;
+    try {
+      const vRef = db.collection('ventasSustratos').doc(id);
+
+      await db.runTransaction(async t => {
+        const vDoc = await t.get(vRef);
+        if (!vDoc.exists) throw new Error('La venta no existe.');
+        const venta = vDoc.data();
+        if (venta.estado === 'Anulada') throw new Error('La venta ya fue anulada.');
+
+        const refs = venta.items.map(item => ({
+          item,
+          prodRef: db.collection('sustratos').doc(item.sustratoId),
+          movRef: db.collection('movimientosSustratos').doc()
+        }));
+
+        const docs = await Promise.all(refs.map(r => t.get(r.prodRef)));
+
+        refs.forEach((r, idx) => {
+          const prodData = docs[idx].data();
+          t.update(r.prodRef, { stock: Number(prodData.stock || 0) + r.item.cantidad });
+          t.set(r.movRef, {
+            sustratoId: r.item.sustratoId,
+            producto: prodData.nombre,
+            tipo: 'Devolución',
+            cantidad: r.item.cantidad,
+            unidad: prodData.unidad,
+            detalle: 'Anulación de venta',
+            ventaId: id,
+            fecha: fechaServidor()
+          });
+        });
+
+        t.update(vRef, { estado: 'Anulada' });
+      });
+
+      alert('Venta anulada correctamente.');
+    } catch (err) {
+      mostrarError(err);
+    }
+  });
+
+  // Movimientos de sustratos
+  db.collection('movimientosSustratos').orderBy('fecha', 'desc').onSnapshot(snapshot => {
+    movimientosSustratos = [];
+    snapshot.forEach(doc => movimientosSustratos.push({ id: doc.id, ...doc.data() }));
+    mostrarMovimientosSustratos();
+  }, mostrarError);
+
+  function mostrarMovimientosSustratos() {
+    const tabla = $('movimientosInventarioSustratos');
+    const filtro = $('filtroMovimientoSustratos')?.value || 'todos';
+    if (!tabla) return;
+
+    tabla.innerHTML = '';
+
+    const filtrados = movimientosSustratos.filter(m => {
+      if (filtro === 'todos') return true;
+      return m.tipo.toLowerCase().includes(filtro);
+    });
+
+    if (filtrados.length === 0) {
+      tabla.innerHTML = '<tr><td colspan="6">No hay movimientos registrados.</td></tr>';
+      return;
+    }
+
+    filtrados.forEach(m => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${mostrarFecha(m.fecha)}</td>
+        <td>${escapar(m.producto)}</td>
+        <td>${escapar(m.tipo)}</td>
+        <td>${m.cantidad}</td>
+        <td>${escapar(m.unidad || '')}</td>
+        <td>${escapar(m.detalle || '-')}</td>
+      `;
+      tabla.appendChild(tr);
+    });
+  }
+
+  $('filtroMovimientoSustratos')?.addEventListener('change', mostrarMovimientosSustratos);
+
+  // Actualizar resumen del panel de inicio de sustratos
+  function actualizarResumenSustratos() {
+    let totalProd = inventarioSustratos.length;
+    let kg = 0, litros = 0, unds = 0;
+    let ventasMes = 0;
+
+    const ahora = new Date();
+    const mes = ahora.getMonth();
+    const anio = ahora.getFullYear();
+
+    inventarioSustratos.forEach(item => {
+      const s = Number(item.stock || 0);
+      if (item.unidad === 'kg') kg += s;
+      else if (item.unidad === 'L') litros += s;
+      else unds += s;
+    });
+
+    ventasSustratos.forEach(v => {
+      if (v.estado === 'Anulada') return;
+      const f = convertirFecha(v.fecha);
+      if (f && f.getMonth() === mes && f.getFullYear() === anio) {
+        ventasMes += Number(v.total || 0);
+      }
+    });
+
+    if ($('totalProductosSustratos')) $('totalProductosSustratos').textContent = totalProd;
+    if ($('stockKgSustratos')) $('stockKgSustratos').textContent = `${dinero(kg)} kg`;
+    if ($('stockLitrosSustratos')) $('stockLitrosSustratos').textContent = `${dinero(litros)} L`;
+    if ($('stockUnidadesSustratos')) $('stockUnidsSustratos') ? $('stockUnidsSustratos').textContent = unds : ($('stockUnidadesSustratos').textContent = unds);
+    if ($('ventasMesSustratos')) $('ventasMesSustratos').textContent = `S/ ${dinero(ventasMes)}`;
+
+    // Alertas de stock bajo en sustratos (stock <= 5)
+    const alertBody = $('alertasInventarioSustratos');
+    if (alertBody) {
+      const criticos = inventarioSustratos.filter(i => Number(i.stock || 0) <= 5);
+      if (criticos.length === 0) {
+        alertBody.innerHTML = '<tr><td colspan="4">No hay alertas de stock.</td></tr>';
+      } else {
+        alertBody.innerHTML = criticos.map(i => `
+          <tr>
+            <td>${escapar(i.nombre)}</td>
+            <td><strong>${i.stock}</strong></td>
+            <td>${escapar(i.unidad)}</td>
+            <td><span class="stock-low">Stock bajo</span></td>
+          </tr>
+        `).join('');
+      }
+    }
+  }
+
+})();
