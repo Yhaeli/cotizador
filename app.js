@@ -227,62 +227,15 @@ function guardarYDescargarImagen() {
 
 (() => {
 
-  // ==========================================
-  // 1. REFERENCIAS HTML
-  // ==========================================
-
   const $ = id => document.getElementById(id);
 
-  const nombreMaceta = $('nombreMaceta');
-  const costoMaceta = $('costoMaceta');
-  const precioVentaMaceta = $('precioVentaMaceta');
-  const stockMaceta = $('stockMaceta');
-  const btnAgregarMaceta = $('btnAgregarMaceta');
-
-  const tablaInventarioMacetas = $('tablaInventarioMacetas');
-
-  const productoEntradaMaceta = $('productoEntradaMaceta');
-  const cantidadEntradaMaceta = $('cantidadEntradaMaceta');
-  const costoEntradaMaceta = $('costoEntradaMaceta');
-  const observacionEntradaMaceta = $('observacionEntradaMaceta');
-  const btnRegistrarEntradaMaceta = $('btnRegistrarEntradaMaceta');
-
-  const productoVentaMaceta = $('productoVentaMaceta');
-  const cantidadVentaMaceta = $('cantidadVentaMaceta');
-  const precioUnitarioVentaMaceta = $('precioUnitarioVentaMaceta');
-  const btnAgregarProductoVentaMaceta = $('btnAgregarProductoVentaMaceta');
-
-  const clienteVentaMaceta = $('clienteVentaMaceta');
-  const medioPagoMacetas = $('medioPagoMacetas');
-  const btnRegistrarVentaMaceta = $('btnRegistrarVentaMaceta');
-
-  const detalleVentaMacetas = $('detalleVentaMacetas');
-  const totalVentaMacetas = $('totalVentaMacetas');
-
-  const historialVentasMacetas = $('historialVentasMacetas');
-  const movimientosInventarioMacetas = $('movimientosInventarioMacetas');
-
-  const fechaDesdeMacetas = $('fechaDesdeMacetas');
-  const fechaHastaMacetas = $('fechaHastaMacetas');
-
-  const btnFiltrarVentasMacetas = $('btnFiltrarVentasMacetas');
-  const btnLimpiarFiltrosMacetas = $('btnLimpiarFiltrosMacetas');
-
-  const totalProductosMacetas = $('totalProductosMacetas');
-  const totalStockMacetas = $('totalStockMacetas');
-  const totalVendidasMacetas = $('totalVendidasMacetas');
-  const ventasMesMacetas = $('ventasMesMacetas');
-
-
   // ==========================================
-  // 2. VARIABLES
+  // 1. VARIABLES
   // ==========================================
 
   let inventarioMacetas = [];
   let ventasMacetas = [];
   let movimientosMacetas = [];
-
-  let carritoMacetas = [];
 
   const dinero = valor =>
     Number(valor || 0).toLocaleString('es-PE', {
@@ -290,10 +243,20 @@ function guardarYDescargarImagen() {
       maximumFractionDigits: 2
     });
 
-  const timestamp = () =>
+  const fechaServidor = () =>
     firebase.firestore.FieldValue.serverTimestamp();
 
-  function fechaReal(valor) {
+  function escapar(texto) {
+    return String(texto ?? '').replace(/[&<>"']/g, c => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    })[c]);
+  }
+
+  function convertirFecha(valor) {
 
     if (!valor) return null;
 
@@ -304,126 +267,147 @@ function guardarYDescargarImagen() {
     const fecha = new Date(valor);
 
     return isNaN(fecha.getTime()) ? null : fecha;
-  }
-
-  function fechaTexto(valor) {
-
-    const fecha = fechaReal(valor);
-
-    if (!fecha) return 'Pendiente';
-
-    return fecha.toLocaleDateString('es-PE');
 
   }
 
-  function escaparHTML(texto) {
+  function mostrarFecha(valor) {
 
-    return String(texto ?? '').replace(/[&<>"']/g, caracter => ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;'
-    })[caracter]);
+    const fecha = convertirFecha(valor);
+
+    return fecha
+      ? fecha.toLocaleDateString('es-PE')
+      : 'Pendiente';
 
   }
 
   function mostrarError(error) {
 
-    console.error('Error en módulo de macetas:', error);
+    console.error(error);
 
     alert(
-      'Ocurrió un problema al realizar la operación. ' +
-      'Revisa tu conexión e inténtalo nuevamente.'
+      error.message ||
+      'No se pudo completar la operación. Verifica tu conexión.'
     );
 
   }
 
 
   // ==========================================
-  // 3. REGISTRAR NUEVA MACETA
+  // 2. NAVEGACIÓN ENTRE PÁGINAS
   // ==========================================
 
-  if (btnAgregarMaceta) {
+  document.querySelectorAll(
+    '#tab-macetas .nav-macetas'
+  ).forEach(boton => {
 
-    btnAgregarMaceta.addEventListener('click', async () => {
+    boton.addEventListener('click', () => {
 
-      const nombre = nombreMaceta.value.trim();
-      const costo = Number(costoMaceta.value);
-      const precio = Number(precioVentaMaceta.value);
-      const stock = Number(stockMaceta.value);
+      const pagina = boton.dataset.pagina;
 
-      if (
-        !nombre ||
-        costo < 0 ||
-        precio < 0 ||
-        !Number.isFinite(costo) ||
-        !Number.isFinite(precio) ||
-        !Number.isInteger(stock) ||
-        stock < 0 ||
-        stockMaceta.value === ''
-      ) {
+      document.querySelectorAll(
+        '#tab-macetas .nav-macetas'
+      ).forEach(b => b.classList.remove('activo'));
 
-        alert('Completa correctamente todos los campos.');
-        return;
+      document.querySelectorAll(
+        '#tab-macetas .pagina-macetas'
+      ).forEach(p => p.classList.remove('activa'));
 
-      }
+      boton.classList.add('activo');
 
-      try {
+      const destino = $(pagina);
 
-        const referencia = db.collection('macetas').doc();
-
-        const movimiento = db.collection('movimientosMacetas').doc();
-
-        await db.runTransaction(async transaction => {
-
-          transaction.set(referencia, {
-
-            nombre,
-            costo,
-            precioVenta: precio,
-            stock,
-            fecha: timestamp()
-
-          });
-
-          if (stock > 0) {
-
-            transaction.set(movimiento, {
-
-              producto: nombre,
-              macetaId: referencia.id,
-              tipo: 'Stock inicial',
-              cantidad: stock,
-              detalle: 'Registro inicial del inventario',
-              fecha: timestamp()
-
-            });
-
-          }
-
-        });
-
-        nombreMaceta.value = '';
-        costoMaceta.value = '';
-        precioVentaMaceta.value = '';
-        stockMaceta.value = '';
-
-        alert('Maceta registrada correctamente.');
-
-      } catch (error) {
-
-        mostrarError(error);
-
+      if (destino) {
+        destino.classList.add('activa');
       }
 
     });
 
-  }
+  });
 
 
   // ==========================================
-  // 4. MOSTRAR INVENTARIO
+  // 3. REGISTRAR PRODUCTO
+  // ==========================================
+
+  $('btnAgregarMaceta')?.addEventListener('click', async () => {
+
+    const nombre = $('nombreMaceta').value.trim();
+    const costo = Number($('costoMaceta').value);
+    const precio = Number($('precioVentaMaceta').value);
+    const stock = Number($('stockMaceta').value);
+
+    if (
+      !nombre ||
+      !Number.isFinite(costo) ||
+      !Number.isFinite(precio) ||
+      costo < 0 ||
+      precio < 0 ||
+      $('costoMaceta').value === '' ||
+      $('precioVentaMaceta').value === '' ||
+      !Number.isInteger(stock) ||
+      stock < 0 ||
+      $('stockMaceta').value === ''
+    ) {
+
+      alert('Completa correctamente todos los campos.');
+      return;
+
+    }
+
+    try {
+
+      const productoRef = db.collection('macetas').doc();
+
+      const movimientoRef =
+        db.collection('movimientosMacetas').doc();
+
+      await db.runTransaction(async transaction => {
+
+        transaction.set(productoRef, {
+
+          nombre,
+          costo,
+          precioVenta: precio,
+          stock,
+          fecha: fechaServidor()
+
+        });
+
+        if (stock > 0) {
+
+          transaction.set(movimientoRef, {
+
+            macetaId: productoRef.id,
+            producto: nombre,
+            tipo: 'Stock inicial',
+            cantidad: stock,
+            detalle: 'Registro inicial',
+            fecha: fechaServidor()
+
+          });
+
+        }
+
+      });
+
+      $('nombreMaceta').value = '';
+      $('costoMaceta').value = '';
+      $('precioVentaMaceta').value = '';
+      $('stockMaceta').value = '';
+
+      alert('Producto registrado correctamente.');
+
+    } catch (error) {
+
+      mostrarError(error);
+
+    }
+
+  });
+
+
+  // ==========================================
+  // 4. ESCUCHAR INVENTARIO
   // ==========================================
 
   db.collection('macetas').onSnapshot(snapshot => {
@@ -433,34 +417,36 @@ function guardarYDescargarImagen() {
     snapshot.forEach(doc => {
 
       inventarioMacetas.push({
-
         id: doc.id,
         ...doc.data()
-
       });
 
     });
 
-    mostrarInventarioMacetas();
-    cargarSelectoresMacetas();
-    actualizarResumenMacetas();
+    mostrarInventario();
+    mostrarSelectores();
+    mostrarProductosVenta();
+    actualizarResumen();
 
   }, mostrarError);
 
 
-  function mostrarInventarioMacetas() {
+  // ==========================================
+  // 5. MOSTRAR INVENTARIO
+  // ==========================================
 
-    if (!tablaInventarioMacetas) return;
+  function mostrarInventario() {
 
-    tablaInventarioMacetas.innerHTML = '';
+    const tabla = $('tablaInventarioMacetas');
+
+    if (!tabla) return;
+
+    tabla.innerHTML = '';
 
     inventarioMacetas.forEach(item => {
 
       const stock = Number(item.stock || 0);
-      const costo = Number(item.costo || 0);
 
-      // Compatibilidad con productos antiguos.
-      // Si no tienen precioVenta, se utiliza costo como precio temporal.
       const precio = Number(
         item.precioVenta ?? item.costo ?? 0
       );
@@ -468,22 +454,18 @@ function guardarYDescargarImagen() {
       let estado = 'Disponible';
 
       if (stock <= 0) {
-
         estado = 'Agotado';
-
       } else if (stock <= 5) {
-
         estado = 'Stock bajo';
-
       }
 
       const fila = document.createElement('tr');
 
       fila.innerHTML = `
 
-        <td>${escaparHTML(item.nombre)}</td>
+        <td>${escapar(item.nombre)}</td>
 
-        <td>S/. ${dinero(costo)}</td>
+        <td>S/. ${dinero(item.costo)}</td>
 
         <td>S/. ${dinero(precio)}</td>
 
@@ -492,28 +474,18 @@ function guardarYDescargarImagen() {
         <td>${estado}</td>
 
         <td>
-
-          <button
-            type="button"
-            class="btn-editar-maceta"
-            data-id="${item.id}"
-          >
+          <button class="editar-maceta" data-id="${item.id}">
             Editar
           </button>
 
-          <button
-            type="button"
-            class="btn-eliminar-maceta"
-            data-id="${item.id}"
-          >
+          <button class="eliminar-maceta" data-id="${item.id}">
             Eliminar
           </button>
-
         </td>
 
       `;
 
-      tablaInventarioMacetas.appendChild(fila);
+      tabla.appendChild(fila);
 
     });
 
@@ -521,158 +493,140 @@ function guardarYDescargarImagen() {
 
 
   // ==========================================
-  // 5. EDITAR PRODUCTO
+  // 6. EDITAR Y ELIMINAR PRODUCTOS
   // ==========================================
 
-  if (tablaInventarioMacetas) {
+  $('tablaInventarioMacetas')?.addEventListener('click', async event => {
 
-    tablaInventarioMacetas.addEventListener('click', async event => {
+    const editar = event.target.closest('.editar-maceta');
+    const eliminar = event.target.closest('.eliminar-maceta');
 
-      const botonEditar = event.target.closest('.btn-editar-maceta');
-      const botonEliminar = event.target.closest('.btn-eliminar-maceta');
+    if (editar) {
 
-      if (botonEditar) {
+      const producto = inventarioMacetas.find(
+        p => p.id === editar.dataset.id
+      );
 
-        const id = botonEditar.dataset.id;
+      if (!producto) return;
 
-        const producto = inventarioMacetas.find(item => item.id === id);
+      const nombre = prompt('Nombre:', producto.nombre);
 
-        if (!producto) return;
+      if (nombre === null) return;
 
-        const nombre = prompt('Nombre del producto:', producto.nombre);
+      const costo = prompt('Costo de compra:', producto.costo ?? 0);
 
-        if (nombre === null) return;
+      if (costo === null) return;
 
-        const costo = prompt(
-          'Costo de compra:',
-          producto.costo ?? 0
-        );
+      const precio = prompt(
+        'Precio de venta:',
+        producto.precioVenta ?? producto.costo ?? 0
+      );
 
-        if (costo === null) return;
+      if (precio === null) return;
 
-        const precio = prompt(
-          'Precio de venta:',
-          producto.precioVenta ?? producto.costo ?? 0
-        );
+      if (
+        !nombre.trim() ||
+        !Number.isFinite(Number(costo)) ||
+        !Number.isFinite(Number(precio)) ||
+        Number(costo) < 0 ||
+        Number(precio) < 0
+      ) {
 
-        if (precio === null) return;
+        alert('Los datos ingresados no son válidos.');
+        return;
 
-        const costoNumero = Number(costo);
-        const precioNumero = Number(precio);
+      }
 
-        if (
-          !nombre.trim() ||
-          !Number.isFinite(costoNumero) ||
-          !Number.isFinite(precioNumero) ||
-          costoNumero < 0 ||
-          precioNumero < 0
-        ) {
+      try {
 
-          alert('Los datos ingresados no son válidos.');
-          return;
-
-        }
-
-        try {
-
-          await db.collection('macetas').doc(id).update({
+        await db.collection('macetas')
+          .doc(producto.id)
+          .update({
 
             nombre: nombre.trim(),
-            costo: costoNumero,
-            precioVenta: precioNumero
+            costo: Number(costo),
+            precioVenta: Number(precio)
 
           });
 
-          alert('Producto actualizado correctamente.');
+        alert('Producto actualizado.');
 
-        } catch (error) {
+      } catch (error) {
 
-          mostrarError(error);
-
-        }
+        mostrarError(error);
 
       }
 
+    }
 
-      if (botonEliminar) {
 
-        const id = botonEliminar.dataset.id;
+    if (eliminar) {
 
-        const producto = inventarioMacetas.find(item => item.id === id);
+      const producto = inventarioMacetas.find(
+        p => p.id === eliminar.dataset.id
+      );
 
-        if (!producto) return;
+      if (!producto) return;
 
-        if (Number(producto.stock || 0) !== 0) {
+      if (Number(producto.stock || 0) !== 0) {
 
-          alert(
-            'No puedes eliminar una maceta que todavía tiene stock. ' +
-            'Primero registra su salida o ajusta el inventario.'
-          );
-
-          return;
-
-        }
-
-        if (!confirm('¿Deseas eliminar este producto del inventario?')) {
-          return;
-        }
-
-        try {
-
-          await db.collection('macetas').doc(id).delete();
-
-          alert('Producto eliminado.');
-
-        } catch (error) {
-
-          mostrarError(error);
-
-        }
+        alert('Solo puedes eliminar productos con stock en cero.');
+        return;
 
       }
 
-    });
+      if (!confirm('¿Deseas eliminar este producto?')) return;
 
-  }
+      try {
+
+        await db.collection('macetas')
+          .doc(producto.id)
+          .delete();
+
+        alert('Producto eliminado.');
+
+      } catch (error) {
+
+        mostrarError(error);
+
+      }
+
+    }
+
+  });
 
 
   // ==========================================
-  // 6. CARGAR SELECTORES
+  // 7. SELECTORES DE PRODUCTOS
   // ==========================================
 
-  function cargarSelectoresMacetas() {
+  function mostrarSelectores() {
 
-    const selectores = [
-      productoEntradaMaceta,
-      productoVentaMaceta
-    ];
+    [
+      'productoEntradaMaceta'
+    ].forEach(id => {
 
-    selectores.forEach(select => {
+      const select = $(id);
 
       if (!select) return;
 
-      const valorAnterior = select.value;
+      const anterior = select.value;
 
-      select.innerHTML = '<option value="">Seleccionar maceta</option>';
+      select.innerHTML =
+        '<option value="">Seleccionar maceta</option>';
 
       inventarioMacetas.forEach(item => {
 
         const option = document.createElement('option');
 
         option.value = item.id;
-
-        option.textContent =
-          `${item.nombre} (Stock: ${item.stock || 0})`;
+        option.textContent = item.nombre;
 
         select.appendChild(option);
 
       });
 
-      if (inventarioMacetas.some(item => item.id === valorAnterior)) {
-
-        select.value = valorAnterior;
-
-      }
+      select.value = anterior;
 
     });
 
@@ -680,17 +634,19 @@ function guardarYDescargarImagen() {
 
 
   // ==========================================
-  // 7. REGISTRAR ENTRADA DE INVENTARIO
+  // 8. REGISTRAR ENTRADAS
   // ==========================================
 
-  if (btnRegistrarEntradaMaceta) {
+  $('btnRegistrarEntradaMaceta')?.addEventListener(
+    'click',
+    async () => {
 
-    btnRegistrarEntradaMaceta.addEventListener('click', async () => {
+      const id = $('productoEntradaMaceta').value;
+      const cantidad = Number($('cantidadEntradaMaceta').value);
+      const costo = Number($('costoEntradaMaceta').value);
 
-      const id = productoEntradaMaceta.value;
-      const cantidad = Number(cantidadEntradaMaceta.value);
-      const costo = Number(costoEntradaMaceta.value);
-      const observacion = observacionEntradaMaceta.value.trim();
+      const observacion =
+        $('observacionEntradaMaceta').value.trim();
 
       if (
         !id ||
@@ -698,7 +654,7 @@ function guardarYDescargarImagen() {
         cantidad <= 0 ||
         !Number.isFinite(costo) ||
         costo < 0 ||
-        costoEntradaMaceta.value === ''
+        $('costoEntradaMaceta').value === ''
       ) {
 
         alert('Completa correctamente los datos de la entrada.');
@@ -709,28 +665,23 @@ function guardarYDescargarImagen() {
       try {
 
         const productoRef = db.collection('macetas').doc(id);
-
         const entradaRef = db.collection('entradasMacetas').doc();
-
-        const movimientoRef = db.collection('movimientosMacetas').doc();
+        const movimientoRef =
+          db.collection('movimientosMacetas').doc();
 
         await db.runTransaction(async transaction => {
 
           const productoDoc = await transaction.get(productoRef);
 
           if (!productoDoc.exists) {
-
             throw new Error('El producto no existe.');
-
           }
 
           const producto = productoDoc.data();
 
-          const nuevoStock = Number(producto.stock || 0) + cantidad;
-
           transaction.update(productoRef, {
 
-            stock: nuevoStock
+            stock: Number(producto.stock || 0) + cantidad
 
           });
 
@@ -741,7 +692,7 @@ function guardarYDescargarImagen() {
             cantidad,
             costoUnitario: costo,
             observacion,
-            fecha: timestamp()
+            fecha: fechaServidor()
 
           });
 
@@ -752,18 +703,18 @@ function guardarYDescargarImagen() {
             tipo: 'Entrada',
             cantidad,
             detalle: observacion || 'Ingreso de mercadería',
-            fecha: timestamp()
+            fecha: fechaServidor()
 
           });
 
         });
 
-        cantidadEntradaMaceta.value = '';
-        costoEntradaMaceta.value = '';
-        observacionEntradaMaceta.value = '';
-        productoEntradaMaceta.value = '';
+        $('cantidadEntradaMaceta').value = '';
+        $('costoEntradaMaceta').value = '';
+        $('observacionEntradaMaceta').value = '';
+        $('productoEntradaMaceta').value = '';
 
-        alert('Entrada registrada y stock actualizado.');
+        alert('Entrada registrada correctamente.');
 
       } catch (error) {
 
@@ -771,176 +722,169 @@ function guardarYDescargarImagen() {
 
       }
 
+    }
+  );
+
+
+  // ==========================================
+  // 9. MOSTRAR PRODUCTOS EN LA PÁGINA DE VENTAS
+  // ==========================================
+
+  function mostrarProductosVenta() {
+
+    const tabla = $('productosVentaMacetas');
+
+    if (!tabla) return;
+
+    const cantidadesActuales = {};
+
+    tabla.querySelectorAll('.cantidad-producto-venta').forEach(input => {
+
+      cantidadesActuales[input.dataset.id] = input.value;
+
     });
 
-  }
+    tabla.innerHTML = '';
 
+    inventarioMacetas.forEach(item => {
 
-  // ==========================================
-  // 8. CARGAR PRECIO DE VENTA
-  // ==========================================
+      const stock = Number(item.stock || 0);
 
-  if (productoVentaMaceta) {
-
-    productoVentaMaceta.addEventListener('change', () => {
-
-      const producto = inventarioMacetas.find(
-        item => item.id === productoVentaMaceta.value
+      const precio = Number(
+        item.precioVenta ?? item.costo ?? 0
       );
-
-      precioUnitarioVentaMaceta.value = producto
-        ? Number(producto.precioVenta ?? producto.costo ?? 0)
-        : '';
-
-    });
-
-  }
-
-
-  // ==========================================
-  // 9. AGREGAR PRODUCTOS AL CARRITO
-  // ==========================================
-
-  if (btnAgregarProductoVentaMaceta) {
-
-    btnAgregarProductoVentaMaceta.addEventListener('click', () => {
-
-      const id = productoVentaMaceta.value;
-      const cantidad = Number(cantidadVentaMaceta.value);
-      const precio = Number(precioUnitarioVentaMaceta.value);
-
-      const producto = inventarioMacetas.find(item => item.id === id);
-
-      if (!producto) {
-
-        alert('Selecciona una maceta.');
-        return;
-
-      }
-
-      if (
-        !Number.isInteger(cantidad) ||
-        cantidad <= 0 ||
-        !Number.isFinite(precio) ||
-        precio < 0 ||
-        precioUnitarioVentaMaceta.value === ''
-      ) {
-
-        alert('Ingresa una cantidad y un precio válidos.');
-        return;
-
-      }
-
-      const existente = carritoMacetas.find(item => item.macetaId === id);
-
-      const cantidadAcumulada =
-        cantidad + (existente ? existente.cantidad : 0);
-
-      if (cantidadAcumulada > Number(producto.stock || 0)) {
-
-        alert(
-          `Stock insuficiente. Disponible: ${producto.stock || 0}`
-        );
-
-        return;
-
-      }
-
-      if (existente) {
-
-        existente.cantidad += cantidad;
-        existente.precioUnit = precio;
-        existente.subtotal = existente.cantidad * precio;
-
-      } else {
-
-        carritoMacetas.push({
-
-          macetaId: id,
-          producto: producto.nombre,
-          cantidad,
-          precioUnit: precio,
-          subtotal: cantidad * precio
-
-        });
-
-      }
-
-      mostrarCarritoMacetas();
-
-      productoVentaMaceta.value = '';
-      cantidadVentaMaceta.value = '';
-      precioUnitarioVentaMaceta.value = '';
-
-    });
-
-  }
-
-
-  // ==========================================
-  // 10. MOSTRAR CARRITO
-  // ==========================================
-
-  function mostrarCarritoMacetas() {
-
-    if (!detalleVentaMacetas) return;
-
-    detalleVentaMacetas.innerHTML = '';
-
-    let total = 0;
-
-    carritoMacetas.forEach((item, index) => {
-
-      total += item.subtotal;
 
       const fila = document.createElement('tr');
 
       fila.innerHTML = `
 
-        <td>${escaparHTML(item.producto)}</td>
+        <td>${escapar(item.nombre)}</td>
 
-        <td>${item.cantidad}</td>
-
-        <td>S/. ${dinero(item.precioUnit)}</td>
-
-        <td>S/. ${dinero(item.subtotal)}</td>
+        <td>${stock}</td>
 
         <td>
-
-          <button
-            type="button"
-            class="btn-quitar-carrito"
-            data-index="${index}"
+          <input
+            type="number"
+            class="cantidad-producto-venta"
+            data-id="${item.id}"
+            value="${escapar(cantidadesActuales[item.id] || 0)}"
+            min="0"
+            max="${stock}"
+            step="1"
           >
-            Quitar
-          </button>
+        </td>
 
+        <td>
+          <input
+            type="number"
+            class="precio-producto-venta"
+            data-id="${item.id}"
+            value="${precio}"
+            min="0"
+            step="0.01"
+          >
+        </td>
+
+        <td>
+          <strong class="subtotal-producto-venta" data-id="${item.id}">
+            S/. 0.00
+          </strong>
         </td>
 
       `;
 
-      detalleVentaMacetas.appendChild(fila);
+      tabla.appendChild(fila);
 
     });
 
-    totalVentaMacetas.textContent = `S/. ${dinero(total)}`;
+    actualizarTotalesVenta();
 
   }
 
 
-  if (detalleVentaMacetas) {
+  // ==========================================
+  // 10. CALCULAR TOTALES AUTOMÁTICAMENTE
+  // ==========================================
 
-    detalleVentaMacetas.addEventListener('click', event => {
+  $('productosVentaMacetas')?.addEventListener('input', event => {
 
-      const boton = event.target.closest('.btn-quitar-carrito');
+    if (
+      event.target.classList.contains('cantidad-producto-venta') ||
+      event.target.classList.contains('precio-producto-venta')
+    ) {
 
-      if (!boton) return;
+      actualizarTotalesVenta();
 
-      carritoMacetas.splice(Number(boton.dataset.index), 1);
+    }
 
-      mostrarCarritoMacetas();
+  });
+
+
+  function obtenerProductosSeleccionados() {
+
+    const cantidades = document.querySelectorAll(
+      '#productosVentaMacetas .cantidad-producto-venta'
+    );
+
+    const seleccionados = [];
+
+    cantidades.forEach(input => {
+
+      const cantidad = Number(input.value);
+
+      if (cantidad <= 0) return;
+
+      const id = input.dataset.id;
+
+      const precioInput = document.querySelector(
+        `#productosVentaMacetas .precio-producto-venta[data-id="${id}"]`
+      );
+
+      const producto = inventarioMacetas.find(p => p.id === id);
+
+      if (!producto) return;
+
+      seleccionados.push({
+
+        macetaId: id,
+        producto: producto.nombre,
+        cantidad,
+        precioUnit: Number(precioInput.value),
+        subtotal: cantidad * Number(precioInput.value)
+
+      });
 
     });
+
+    return seleccionados;
+
+  }
+
+
+  function actualizarTotalesVenta() {
+
+    let total = 0;
+
+    const seleccionados = obtenerProductosSeleccionados();
+
+    document.querySelectorAll(
+      '#productosVentaMacetas .subtotal-producto-venta'
+    ).forEach(celda => {
+
+      const item = seleccionados.find(
+        p => p.macetaId === celda.dataset.id
+      );
+
+      const subtotal = item ? item.subtotal : 0;
+
+      celda.textContent = `S/. ${dinero(subtotal)}`;
+
+      total += subtotal;
+
+    });
+
+    $('totalVentaMacetas').textContent =
+      `S/. ${dinero(total)}`;
 
   }
 
@@ -949,58 +893,91 @@ function guardarYDescargarImagen() {
   // 11. REGISTRAR VENTA COMPLETA
   // ==========================================
 
-  if (btnRegistrarVentaMaceta) {
+  $('btnRegistrarVentaMaceta')?.addEventListener(
+    'click',
+    async () => {
 
-    btnRegistrarVentaMaceta.addEventListener('click', async () => {
+      const items = obtenerProductosSeleccionados();
 
-      if (carritoMacetas.length === 0) {
+      if (items.length === 0) {
 
-        alert('Agrega al menos un producto a la venta.');
+        alert('Indica al menos una cantidad para registrar la venta.');
         return;
 
       }
 
+      for (const item of items) {
+
+        const producto = inventarioMacetas.find(
+          p => p.id === item.macetaId
+        );
+
+        if (
+          !Number.isInteger(item.cantidad) ||
+          item.cantidad <= 0 ||
+          !Number.isFinite(item.precioUnit) ||
+          item.precioUnit < 0 ||
+          !producto ||
+          item.cantidad > Number(producto.stock || 0)
+        ) {
+
+          alert(
+            `Revisa la cantidad y el precio de ${item.producto}.`
+          );
+
+          return;
+
+        }
+
+      }
+
       const cliente =
-        clienteVentaMaceta.value.trim() || 'Cliente Anónimo';
+        $('clienteVentaMaceta').value.trim() || 'Cliente Anónimo';
 
-      const pago = medioPagoMacetas.value;
-
-      const items = carritoMacetas.map(item => ({ ...item }));
+      const metodoPago = $('medioPagoMacetas').value;
 
       const total = items.reduce(
         (suma, item) => suma + item.subtotal,
         0
       );
 
+      if (!confirm(`¿Registrar la venta por S/. ${dinero(total)}?`)) {
+        return;
+      }
+
       try {
 
         const ventaRef = db.collection('ventasMacetas').doc();
 
         const referencias = items.map(item => ({
+
           item,
+
           productoRef: db.collection('macetas').doc(item.macetaId),
-          movimientoRef: db.collection('movimientosMacetas').doc()
+
+          movimientoRef:
+            db.collection('movimientosMacetas').doc()
+
         }));
 
         await db.runTransaction(async transaction => {
 
-          // Primero se leen todos los productos.
+          // Leer todos los productos antes de escribir.
           const documentos = await Promise.all(
-            referencias.map(ref => transaction.get(ref.productoRef))
+            referencias.map(ref =>
+              transaction.get(ref.productoRef)
+            )
           );
 
-          // Se comprueba el stock de todos los productos.
           documentos.forEach((doc, index) => {
 
             if (!doc.exists) {
-
               throw new Error('Uno de los productos ya no existe.');
-
             }
 
-            const stockActual = Number(doc.data().stock || 0);
+            const stock = Number(doc.data().stock || 0);
 
-            if (stockActual < referencias[index].item.cantidad) {
+            if (stock < referencias[index].item.cantidad) {
 
               throw new Error(
                 `Stock insuficiente para ${referencias[index].item.producto}.`
@@ -1010,17 +987,14 @@ function guardarYDescargarImagen() {
 
           });
 
-          // Después de validar, se realizan las escrituras.
           referencias.forEach((ref, index) => {
 
             const producto = documentos[index].data();
 
-            const nuevoStock =
-              Number(producto.stock || 0) - ref.item.cantidad;
-
             transaction.update(ref.productoRef, {
 
-              stock: nuevoStock
+              stock:
+                Number(producto.stock || 0) - ref.item.cantidad
 
             });
 
@@ -1032,7 +1006,7 @@ function guardarYDescargarImagen() {
               cantidad: ref.item.cantidad,
               detalle: 'Salida por venta',
               ventaId: ventaRef.id,
-              fecha: timestamp()
+              fecha: fechaServidor()
 
             });
 
@@ -1042,7 +1016,6 @@ function guardarYDescargarImagen() {
 
             items,
 
-            // Campos compatibles con el historial antiguo.
             producto: items.length === 1
               ? items[0].producto
               : `${items.length} productos`,
@@ -1058,23 +1031,19 @@ function guardarYDescargarImagen() {
 
             total,
             cliente,
-            metodoPago: pago,
+            metodoPago,
             estado: 'Registrada',
-            fecha: timestamp()
+            fecha: fechaServidor()
 
           });
 
         });
 
-        carritoMacetas = [];
+        $('clienteVentaMaceta').value = '';
 
-        mostrarCarritoMacetas();
+        $('medioPagoMacetas').value = 'Efectivo';
 
-        clienteVentaMaceta.value = '';
-
-        medioPagoMacetas.value = 'Efectivo';
-
-        alert('Venta registrada correctamente. El stock se actualizó.');
+        alert('Venta registrada correctamente.');
 
       } catch (error) {
 
@@ -1082,9 +1051,8 @@ function guardarYDescargarImagen() {
 
       }
 
-    });
-
-  }
+    }
+  );
 
 
   // ==========================================
@@ -1108,29 +1076,31 @@ function guardarYDescargarImagen() {
 
       });
 
-      mostrarHistorialVentasMacetas();
-      actualizarResumenMacetas();
+      mostrarHistorial();
+      actualizarResumen();
 
     }, mostrarError);
 
 
-  function mostrarHistorialVentasMacetas() {
+  function mostrarHistorial() {
 
-    if (!historialVentasMacetas) return;
+    const tabla = $('historialVentasMacetas');
 
-    historialVentasMacetas.innerHTML = '';
+    if (!tabla) return;
 
-    const desde = fechaDesdeMacetas?.value
-      ? new Date(`${fechaDesdeMacetas.value}T00:00:00`)
+    tabla.innerHTML = '';
+
+    const desde = $('fechaDesdeMacetas').value
+      ? new Date($('fechaDesdeMacetas').value + 'T00:00:00')
       : null;
 
-    const hasta = fechaHastaMacetas?.value
-      ? new Date(`${fechaHastaMacetas.value}T23:59:59.999`)
+    const hasta = $('fechaHastaMacetas').value
+      ? new Date($('fechaHastaMacetas').value + 'T23:59:59.999')
       : null;
 
-    const ventasFiltradas = ventasMacetas.filter(venta => {
+    const filtradas = ventasMacetas.filter(venta => {
 
-      const fecha = fechaReal(venta.fecha);
+      const fecha = convertirFecha(venta.fecha);
 
       if (!fecha) return !desde && !hasta;
 
@@ -1142,7 +1112,7 @@ function guardarYDescargarImagen() {
 
     });
 
-    ventasFiltradas.forEach(venta => {
+    filtradas.forEach(venta => {
 
       const items = Array.isArray(venta.items)
         ? venta.items
@@ -1152,7 +1122,7 @@ function guardarYDescargarImagen() {
           }];
 
       const productos = items.map(item =>
-        `${escaparHTML(item.producto)} x${item.cantidad}`
+        `${escapar(item.producto)} x${item.cantidad}`
       ).join('<br>');
 
       const anulada = venta.estado === 'Anulada';
@@ -1161,104 +1131,90 @@ function guardarYDescargarImagen() {
 
       fila.innerHTML = `
 
-        <td>${fechaTexto(venta.fecha)}</td>
+        <td>${mostrarFecha(venta.fecha)}</td>
 
         <td>${productos}</td>
 
-        <td>${escaparHTML(venta.cliente || 'Cliente Anónimo')}</td>
+        <td>${escapar(venta.cliente || 'Cliente Anónimo')}</td>
 
         <td>S/. ${dinero(venta.total)}</td>
 
-        <td>${escaparHTML(venta.metodoPago || '-')}</td>
+        <td>${escapar(venta.metodoPago || '-')}</td>
 
         <td>${anulada ? 'Anulada' : 'Registrada'}</td>
 
         <td>
-
           ${
             anulada
               ? '-'
               : Array.isArray(venta.items)
                 ? `<button
-                     type="button"
-                     class="btn-anular-venta"
-                     data-id="${venta.id}"
-                   >Anular</button>`
+                    class="anular-venta-maceta"
+                    data-id="${venta.id}"
+                  >Anular</button>`
                 : 'Venta antigua'
           }
-
         </td>
 
       `;
 
-      historialVentasMacetas.appendChild(fila);
+      tabla.appendChild(fila);
 
     });
 
   }
 
 
-  // ==========================================
-  // 13. FILTRAR HISTORIAL
-  // ==========================================
+  $('btnFiltrarVentasMacetas')?.addEventListener(
+    'click',
+    () => {
 
-  if (btnFiltrarVentasMacetas) {
+      const desde = $('fechaDesdeMacetas').value;
+      const hasta = $('fechaHastaMacetas').value;
 
-    btnFiltrarVentasMacetas.addEventListener('click', () => {
-
-      if (
-        fechaDesdeMacetas.value &&
-        fechaHastaMacetas.value &&
-        fechaDesdeMacetas.value > fechaHastaMacetas.value
-      ) {
+      if (desde && hasta && desde > hasta) {
 
         alert('La fecha inicial no puede ser posterior a la fecha final.');
         return;
 
       }
 
-      mostrarHistorialVentasMacetas();
+      mostrarHistorial();
 
-    });
+    }
+  );
 
-  }
 
+  $('btnLimpiarFiltrosMacetas')?.addEventListener(
+    'click',
+    () => {
 
-  if (btnLimpiarFiltrosMacetas) {
+      $('fechaDesdeMacetas').value = '';
+      $('fechaHastaMacetas').value = '';
 
-    btnLimpiarFiltrosMacetas.addEventListener('click', () => {
+      mostrarHistorial();
 
-      fechaDesdeMacetas.value = '';
-      fechaHastaMacetas.value = '';
-
-      mostrarHistorialVentasMacetas();
-
-    });
-
-  }
+    }
+  );
 
 
   // ==========================================
-  // 14. ANULAR VENTA Y DEVOLVER STOCK
+  // 13. ANULAR VENTA Y DEVOLVER STOCK
   // ==========================================
 
-  if (historialVentasMacetas) {
+  $('historialVentasMacetas')?.addEventListener(
+    'click',
+    async event => {
 
-    historialVentasMacetas.addEventListener('click', async event => {
-
-      const boton = event.target.closest('.btn-anular-venta');
+      const boton = event.target.closest('.anular-venta-maceta');
 
       if (!boton) return;
 
-      const id = boton.dataset.id;
-
       if (!confirm(
-        '¿Deseas anular esta venta? Las unidades volverán al inventario.'
-      )) {
+        '¿Anular esta venta y devolver las unidades al inventario?'
+      )) return;
 
-        return;
-
-      }
+      const id = boton.dataset.id;
 
       try {
 
@@ -1269,24 +1225,19 @@ function guardarYDescargarImagen() {
           const ventaDoc = await transaction.get(ventaRef);
 
           if (!ventaDoc.exists) {
-
             throw new Error('La venta no existe.');
-
           }
 
           const venta = ventaDoc.data();
 
           if (venta.estado === 'Anulada') {
-
-            throw new Error('Esta venta ya fue anulada.');
-
+            throw new Error('La venta ya está anulada.');
           }
 
           if (!Array.isArray(venta.items)) {
 
             throw new Error(
-              'Esta es una venta antigua y no contiene los identificadores ' +
-              'de sus productos. No se puede devolver el stock automáticamente.'
+              'Esta venta antigua no permite devolver el stock automáticamente.'
             );
 
           }
@@ -1295,27 +1246,24 @@ function guardarYDescargarImagen() {
 
             item,
 
-            productoRef: db.collection('macetas').doc(item.macetaId),
+            productoRef:
+              db.collection('macetas').doc(item.macetaId),
 
-            movimientoRef: db.collection('movimientosMacetas').doc()
+            movimientoRef:
+              db.collection('movimientosMacetas').doc()
 
           }));
 
-          // Leer todos los productos antes de realizar escrituras.
           const documentos = await Promise.all(
-
-            referencias.map(ref => transaction.get(ref.productoRef))
-
+            referencias.map(ref =>
+              transaction.get(ref.productoRef)
+            )
           );
 
-          documentos.forEach((doc, index) => {
+          documentos.forEach(doc => {
 
             if (!doc.exists) {
-
-              throw new Error(
-                `No se encontró el producto ${referencias[index].item.producto}.`
-              );
-
+              throw new Error('No se encontró uno de los productos.');
             }
 
           });
@@ -1337,9 +1285,9 @@ function guardarYDescargarImagen() {
               producto: producto.nombre,
               tipo: 'Anulación de venta',
               cantidad: ref.item.cantidad,
-              detalle: 'Devolución de unidades por anulación',
+              detalle: 'Devolución de unidades',
               ventaId: id,
-              fecha: timestamp()
+              fecha: fechaServidor()
 
             });
 
@@ -1348,13 +1296,13 @@ function guardarYDescargarImagen() {
           transaction.update(ventaRef, {
 
             estado: 'Anulada',
-            fechaAnulacion: timestamp()
+            fechaAnulacion: fechaServidor()
 
           });
 
         });
 
-        alert('Venta anulada y stock devuelto correctamente.');
+        alert('Venta anulada y stock devuelto.');
 
       } catch (error) {
 
@@ -1362,13 +1310,12 @@ function guardarYDescargarImagen() {
 
       }
 
-    });
-
-  }
+    }
+  );
 
 
   // ==========================================
-  // 15. MOVIMIENTOS DE INVENTARIO
+  // 14. MOVIMIENTOS
   // ==========================================
 
   db.collection('movimientosMacetas')
@@ -1380,24 +1327,24 @@ function guardarYDescargarImagen() {
       snapshot.forEach(doc => {
 
         movimientosMacetas.push({
-
           id: doc.id,
           ...doc.data()
-
         });
 
       });
 
-      mostrarMovimientosMacetas();
+      mostrarMovimientos();
 
     }, mostrarError);
 
 
-  function mostrarMovimientosMacetas() {
+  function mostrarMovimientos() {
 
-    if (!movimientosInventarioMacetas) return;
+    const tabla = $('movimientosInventarioMacetas');
 
-    movimientosInventarioMacetas.innerHTML = '';
+    if (!tabla) return;
+
+    tabla.innerHTML = '';
 
     movimientosMacetas.forEach(movimiento => {
 
@@ -1405,19 +1352,19 @@ function guardarYDescargarImagen() {
 
       fila.innerHTML = `
 
-        <td>${fechaTexto(movimiento.fecha)}</td>
+        <td>${mostrarFecha(movimiento.fecha)}</td>
 
-        <td>${escaparHTML(movimiento.producto)}</td>
+        <td>${escapar(movimiento.producto)}</td>
 
-        <td>${escaparHTML(movimiento.tipo)}</td>
+        <td>${escapar(movimiento.tipo)}</td>
 
         <td>${movimiento.cantidad}</td>
 
-        <td>${escaparHTML(movimiento.detalle || '-')}</td>
+        <td>${escapar(movimiento.detalle || '-')}</td>
 
       `;
 
-      movimientosInventarioMacetas.appendChild(fila);
+      tabla.appendChild(fila);
 
     });
 
@@ -1425,14 +1372,14 @@ function guardarYDescargarImagen() {
 
 
   // ==========================================
-  // 16. ACTUALIZAR PANEL DE RESUMEN
+  // 15. PANEL DE INICIO
   // ==========================================
 
-  function actualizarResumenMacetas() {
+  function actualizarResumen() {
 
-    const productos = inventarioMacetas.length;
+    const totalProductos = inventarioMacetas.length;
 
-    const stock = inventarioMacetas.reduce(
+    const totalStock = inventarioMacetas.reduce(
       (suma, item) => suma + Number(item.stock || 0),
       0
     );
@@ -1441,7 +1388,7 @@ function guardarYDescargarImagen() {
       venta => venta.estado !== 'Anulada'
     );
 
-    const vendidas = ventasValidas.reduce((suma, venta) => {
+    const totalVendidas = ventasValidas.reduce((suma, venta) => {
 
       if (Array.isArray(venta.items)) {
 
@@ -1458,17 +1405,14 @@ function guardarYDescargarImagen() {
 
     const ahora = new Date();
 
-    const mes = ahora.getMonth();
-    const anio = ahora.getFullYear();
-
     const totalMes = ventasValidas.reduce((suma, venta) => {
 
-      const fecha = fechaReal(venta.fecha);
+      const fecha = convertirFecha(venta.fecha);
 
       if (
         fecha &&
-        fecha.getMonth() === mes &&
-        fecha.getFullYear() === anio
+        fecha.getMonth() === ahora.getMonth() &&
+        fecha.getFullYear() === ahora.getFullYear()
       ) {
 
         return suma + Number(venta.total || 0);
@@ -1479,21 +1423,50 @@ function guardarYDescargarImagen() {
 
     }, 0);
 
-    if (totalProductosMacetas) {
-      totalProductosMacetas.textContent = productos;
+    $('totalProductosMacetas').textContent = totalProductos;
+    $('totalStockMacetas').textContent = totalStock;
+    $('totalVendidasMacetas').textContent = totalVendidas;
+
+    $('ventasMesMacetas').textContent =
+      `S/. ${dinero(totalMes)}`;
+
+    mostrarAlertasStock();
+
+  }
+
+
+  function mostrarAlertasStock() {
+
+    const contenedor = $('alertasStockMacetas');
+
+    if (!contenedor) return;
+
+    contenedor.innerHTML = '';
+
+    const productosBajos = inventarioMacetas.filter(
+      item => Number(item.stock || 0) <= 5
+    );
+
+    if (productosBajos.length === 0) {
+
+      contenedor.textContent = 'No hay alertas de stock.';
+
+      return;
+
     }
 
-    if (totalStockMacetas) {
-      totalStockMacetas.textContent = stock;
-    }
+    productosBajos.forEach(item => {
 
-    if (totalVendidasMacetas) {
-      totalVendidasMacetas.textContent = vendidas;
-    }
+      const alerta = document.createElement('div');
 
-    if (ventasMesMacetas) {
-      ventasMesMacetas.textContent = `S/. ${dinero(totalMes)}`;
-    }
+      alerta.className = 'alerta-stock';
+
+      alerta.textContent =
+        `${item.nombre}: ${item.stock || 0} unidades disponibles`;
+
+      contenedor.appendChild(alerta);
+
+    });
 
   }
 
