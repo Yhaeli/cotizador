@@ -72,7 +72,7 @@
         <button type="button" class="btn btn-copy" onclick="copiarWhatsAppYGuardar()">Copiar Texto y Guardar</button>
       </div>
 
-      <!-- BLOQUE OCULTO VISUALMENTE PERO ACTIVO PARA CAPTURA DE IMAGEN -->
+     <!-- BLOQUE OCULTO VISUALMENTE PERO ACTIVO PARA CAPTURA DE IMAGEN -->
       <div id="zona-captura-recorte" style="position: fixed; left: -9999px; top: 0; width: 450px; z-index: -1;">
         <div class="recibo-estilizado" id="bloque-imagen">
           <div>
@@ -80,7 +80,7 @@
               <img src="logo.png" alt="Logo" style="height: 45px; width: auto; object-fit: contain;" onerror="this.style.display='none'">
               <span>COTIZACIÓN VIVERO ELIEL</span>
             </div>
-
+            
             <div class="recibo-meta-grid">
               <div>
                 👤 <strong>Cliente:</strong> <span id="img-cliente">---</span><br>
@@ -91,7 +91,7 @@
                 📄 <strong>Cotización:</strong> <span id="img-num-cotizacion">---</span>
               </div>
             </div>
-
+            
             <strong>Detalle del pedido:</strong>
             <table class="tabla-productos">
               <thead>
@@ -104,14 +104,14 @@
               </thead>
               <tbody id="img-tabla-filas"></tbody>
             </table>
-
+            
             <div class="recibo-resumen">
               🪴 <strong>Total de plantas:</strong> S/. <span id="img-subtotal">0.00</span><br>
               📦 <strong>Embalaje y traslado:</strong> S/. <span id="img-embalaje">0.00</span>
               <div class="recibo-total-destacado">💰 TOTAL A CANCELAR: S/. <span id="img-total">0.00</span></div>
             </div>
           </div>
-
+          
           <div>
             <div class="recibo-pagos">
               <strong>📋 Métodos de pago:</strong><br>
@@ -133,8 +133,8 @@
           </div>
         </div>
       </div>
-    </div>
-  </div>
+    </div> <!-- Cierra app-container -->
+  </div> <!-- Cierra tab-cotizacion -->
 
 <!-- ==========================================
      MÓDULO DE MACETAS - VIVERO ELIEL
