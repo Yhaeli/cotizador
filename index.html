@@ -136,42 +136,351 @@
     </div>
   </div>
 
-<!-- PESTAÑA 2: MACETAS -->
-  <!-- Muestra este bloque únicamente dentro de la sección/tab de "CONTROL DE MACETAS" -->
+<!-- ==========================================
+     PESTAÑA 2: CONTROL DE MACETAS
+========================================== -->
+
 <div id="tab-macetas" class="tab-content">
   <div class="contenedor-macetas">
+
     <h2>Control de Inventario y Ventas de Macetas</h2>
-    
-    <!-- SECCIÓN 1: INVENTARIO -->
-    <div class="tarjeta">
-      <h3>Inventario Actual</h3>
-      
-      <div class="form-agregar">
-        <input type="text" id="nombreMaceta" placeholder="Nombre (Ej: Maceta N° 14)">
-        <input type="number" id="costoMaceta" placeholder="Precio Base (S/.)" step="0.10">
-        <input type="number" id="stockMaceta" placeholder="Cantidad Inicial">
-        <button type="button" id="btnAgregarMaceta" class="btn-green">Agregar al Inventario</button>
+
+    <!-- PANEL DE RESUMEN -->
+    <div class="resumen-macetas">
+
+      <div class="tarjeta-resumen">
+        <h4>Productos registrados</h4>
+        <strong id="totalProductosMacetas">0</strong>
       </div>
 
-      <!-- CUADRO/TABLA DE INVENTARIO -->
+      <div class="tarjeta-resumen">
+        <h4>Unidades disponibles</h4>
+        <strong id="totalStockMacetas">0</strong>
+      </div>
+
+      <div class="tarjeta-resumen">
+        <h4>Unidades vendidas</h4>
+        <strong id="totalVendidasMacetas">0</strong>
+      </div>
+
+      <div class="tarjeta-resumen">
+        <h4>Ventas del mes</h4>
+        <strong id="ventasMesMacetas">S/. 0.00</strong>
+      </div>
+
+    </div>
+
+    <!-- ======================================
+         1. INVENTARIO
+    ====================================== -->
+
+    <div class="tarjeta">
+
+      <h3>Inventario de macetas</h3>
+
+      <div class="form-agregar">
+
+        <input
+          type="text"
+          id="nombreMaceta"
+          placeholder="Nombre de la maceta"
+        >
+
+        <input
+          type="number"
+          id="costoMaceta"
+          placeholder="Costo de compra (S/.)"
+          min="0"
+          step="0.01"
+        >
+
+        <input
+          type="number"
+          id="precioVentaMaceta"
+          placeholder="Precio de venta (S/.)"
+          min="0"
+          step="0.01"
+        >
+
+        <input
+          type="number"
+          id="stockMaceta"
+          placeholder="Stock inicial"
+          min="0"
+          step="1"
+        >
+
+        <button
+          type="button"
+          id="btnAgregarMaceta"
+          class="btn-green"
+        >
+          Agregar producto
+        </button>
+
+      </div>
+
       <div class="tabla-responsive">
+
         <table class="tabla-inventario">
+
           <thead>
             <tr>
               <th>Producto</th>
-              <th>Precio Base</th>
+              <th>Costo</th>
+              <th>Precio venta</th>
               <th>Stock</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody id="tablaInventarioMacetas"></tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+
+    <!-- ======================================
+         2. ENTRADAS DE INVENTARIO
+    ====================================== -->
+
+    <div class="tarjeta">
+
+      <h3>Registrar entrada de macetas</h3>
+
+      <div class="form-agregar">
+
+        <select id="productoEntradaMaceta">
+          <option value="">Seleccionar maceta</option>
+        </select>
+
+        <input
+          type="number"
+          id="cantidadEntradaMaceta"
+          placeholder="Cantidad recibida"
+          min="1"
+          step="1"
+        >
+
+        <input
+          type="number"
+          id="costoEntradaMaceta"
+          placeholder="Costo unitario (S/.)"
+          min="0"
+          step="0.01"
+        >
+
+        <input
+          type="text"
+          id="observacionEntradaMaceta"
+          placeholder="Observación (opcional)"
+        >
+
+        <button
+          type="button"
+          id="btnRegistrarEntradaMaceta"
+          class="btn-green"
+        >
+          Registrar entrada
+        </button>
+
+      </div>
+
+    </div>
+
+    <!-- ======================================
+         3. REGISTRO DE VENTAS
+    ====================================== -->
+
+    <div class="tarjeta">
+
+      <h3>Registrar venta</h3>
+
+      <input
+        type="text"
+        id="clienteVentaMaceta"
+        placeholder="Nombre del cliente (opcional)"
+      >
+
+      <div class="form-venta">
+
+        <select id="productoVentaMaceta">
+          <option value="">Seleccionar maceta</option>
+        </select>
+
+        <input
+          type="number"
+          id="cantidadVentaMaceta"
+          placeholder="Cantidad"
+          min="1"
+          step="1"
+        >
+
+        <input
+          type="number"
+          id="precioUnitarioVentaMaceta"
+          placeholder="Precio unitario"
+          min="0"
+          step="0.01"
+        >
+
+        <button
+          type="button"
+          id="btnAgregarProductoVentaMaceta"
+          class="btn-blue"
+        >
+          Agregar a la venta
+        </button>
+
+      </div>
+
+      <div class="tabla-responsive">
+
+        <table>
+
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Cantidad</th>
+              <th>Precio unitario</th>
+              <th>Subtotal</th>
               <th>Acción</th>
             </tr>
           </thead>
-          <tbody id="tablaInventarioMacetas">
-            <!-- Se llena con JS -->
-          </tbody>
+
+          <tbody id="detalleVentaMacetas"></tbody>
+
         </table>
+
       </div>
+
+      <h3>
+        Total de la venta:
+        <span id="totalVentaMacetas">S/. 0.00</span>
+      </h3>
+
+      <label for="medioPagoMacetas">Método de pago:</label>
+
+      <select id="medioPagoMacetas">
+
+        <option value="Efectivo">Efectivo</option>
+        <option value="Yape">Yape</option>
+        <option value="Transferencia">Transferencia</option>
+        <option value="Pago Pendiente">Pago pendiente</option>
+
+      </select>
+
+      <br><br>
+
+      <button
+        type="button"
+        id="btnRegistrarVentaMaceta"
+        class="btn-green"
+      >
+        Registrar venta completa
+      </button>
+
     </div>
 
-    <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ccc;">
+    <!-- ======================================
+         4. HISTORIAL DE VENTAS
+    ====================================== -->
+
+    <div class="tarjeta">
+
+      <h3>Historial de ventas</h3>
+
+      <div class="filtros-macetas">
+
+        <label>Desde:</label>
+
+        <input
+          type="date"
+          id="fechaDesdeMacetas"
+        >
+
+        <label>Hasta:</label>
+
+        <input
+          type="date"
+          id="fechaHastaMacetas"
+        >
+
+        <button
+          type="button"
+          id="btnFiltrarVentasMacetas"
+        >
+          Filtrar
+        </button>
+
+        <button
+          type="button"
+          id="btnLimpiarFiltrosMacetas"
+        >
+          Limpiar
+        </button>
+
+      </div>
+
+      <div class="tabla-responsive">
+
+        <table>
+
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Productos</th>
+              <th>Cliente</th>
+              <th>Total</th>
+              <th>Pago</th>
+              <th>Estado</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+
+          <tbody id="historialVentasMacetas"></tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+
+    <!-- ======================================
+         5. MOVIMIENTOS DE INVENTARIO
+    ====================================== -->
+
+    <div class="tarjeta">
+
+      <h3>Movimientos de inventario</h3>
+
+      <div class="tabla-responsive">
+
+        <table>
+
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Producto</th>
+              <th>Movimiento</th>
+              <th>Cantidad</th>
+              <th>Detalle</th>
+            </tr>
+          </thead>
+
+          <tbody id="movimientosInventarioMacetas"></tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+
+  </div>
+</div>
     
   <!-- PESTAÑA 3: SUSTRATOS -->
   <div id="tab-sustratos" class="tab-content">
