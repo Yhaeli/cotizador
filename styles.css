@@ -634,6 +634,330 @@ input, select, textarea {
 
 }
 
+/* ==========================================
+   DISEÑO DEL MÓDULO DE SUSTRATOS
+========================================== */
+
+#tab-sustratos .modulo-layout {
+  display: flex;
+  min-height: 700px;
+  background: #f5f7f5;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* MENÚ LATERAL */
+
+#tab-sustratos .sidebar-modulo {
+  width: 230px;
+  min-width: 230px;
+  background: #174d36;
+  padding: 22px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+#tab-sustratos .sidebar-titulo {
+  color: white;
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+#tab-sustratos .sidebar-titulo h2 {
+  font-size: 21px;
+  margin-bottom: 5px;
+}
+
+#tab-sustratos .sidebar-titulo p {
+  font-size: 13px;
+  color: #d5e8dc;
+}
+
+#tab-sustratos .sidebar-modulo nav {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+#tab-sustratos .nav-sustratos {
+  background: transparent;
+  border: none;
+  color: white;
+  text-align: left;
+  padding: 13px 12px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: .2s;
+}
+
+#tab-sustratos .nav-sustratos:hover,
+#tab-sustratos .nav-sustratos.activo {
+  background: #2c7652;
+}
+
+/* CONTENIDO */
+
+#tab-sustratos .contenido-modulo {
+  flex: 1;
+  padding: 28px;
+  min-width: 0;
+}
+
+#tab-sustratos .encabezado-pagina h2 {
+  color: #174d36;
+  margin-top: 0;
+}
+
+#tab-sustratos .encabezado-pagina p {
+  color: #777;
+  margin-bottom: 25px;
+}
+
+/* NAVEGACIÓN ENTRE PÁGINAS */
+
+#tab-sustratos .pagina-sustratos {
+  display: none;
+}
+
+#tab-sustratos .pagina-sustratos.activa {
+  display: block;
+}
+
+/* TARJETAS / PANELES */
+
+#tab-sustratos .panel-modulo {
+  background: white;
+  padding: 22px;
+  border-radius: 10px;
+  margin-bottom: 22px;
+  box-shadow: 0 2px 9px rgba(0,0,0,.05);
+}
+
+#tab-sustratos .panel-modulo h3 {
+  color: #245c40;
+  margin-top: 0;
+}
+
+/* RESUMEN / ESTADÍSTICAS */
+
+#tab-sustratos .estadisticas-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+#tab-sustratos .tarjeta-estadistica,
+#tab-sustratos .tarjeta-ventas-mes-sustratos {
+  background: white;
+  border-radius: 10px;
+  padding: 22px 15px;
+  box-shadow: 0 2px 9px rgba(0,0,0,.05);
+}
+
+#tab-sustratos .tarjeta-estadistica span,
+#tab-sustratos .tarjeta-ventas-mes-sustratos span {
+  display: block;
+  color: #777;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+#tab-sustratos .tarjeta-estadistica h3,
+#tab-sustratos .tarjeta-ventas-mes-sustratos h3 {
+  font-size: 25px;
+  color: #174d36;
+  margin: 0;
+}
+
+/* FORMULARIOS */
+
+#tab-sustratos .formulario-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 13px;
+  margin-bottom: 15px;
+}
+
+#tab-sustratos input,
+#tab-sustratos select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px;
+  border: 1px solid #d7ddd8;
+  border-radius: 6px;
+  background: white;
+  font-size: 14px;
+}
+
+#tab-sustratos label {
+  display: block;
+  margin-bottom: 7px;
+  color: #555;
+  font-size: 13px;
+}
+
+/* BOTONES */
+
+#tab-sustratos button {
+  cursor: pointer;
+}
+
+#tab-sustratos .btn-principal {
+  background: #247548;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 18px;
+  font-weight: bold;
+  transition: .2s;
+}
+
+#tab-sustratos .btn-principal:hover {
+  background: #185b35;
+}
+
+#tab-sustratos .btn-registrar-venta {
+  width: 100%;
+  padding: 16px;
+  margin-top: 20px;
+  font-size: 15px;
+}
+
+/* ENCABEZADOS DE TABLA Y FILTROS */
+
+#tab-sustratos .encabezado-tabla {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+#tab-sustratos .encabezado-tabla h3 {
+  margin-bottom: 0;
+}
+
+#tab-sustratos .encabezado-tabla input,
+#tab-sustratos .encabezado-tabla select {
+  width: auto;
+  min-width: 220px;
+}
+
+#tab-sustratos .encabezado-tabla label {
+  margin-bottom: 0;
+  margin-left: auto;
+}
+
+/* TABLAS */
+
+#tab-sustratos .tabla-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+#tab-sustratos table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 650px;
+}
+
+#tab-sustratos th {
+  background: #edf4ee;
+  color: #245c40;
+  padding: 13px;
+  text-align: left;
+  font-size: 13px;
+}
+
+#tab-sustratos td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  font-size: 13px;
+}
+
+/* VENTAS */
+
+#tab-sustratos .resumen-venta {
+  margin: 20px 0;
+  padding: 15px;
+  background: #f5f7f5;
+  border-radius: 8px;
+  text-align: right;
+}
+
+#tab-sustratos .resumen-venta h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #555;
+}
+
+#tab-sustratos .resumen-venta span {
+  font-size: 26px;
+  color: #174d36;
+  margin-left: 8px;
+}
+
+/* ALERTAS */
+
+#tab-sustratos .panel-alertas-sustratos tbody td {
+  background: #fff4df;
+  color: #946200;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 850px) {
+
+  #tab-sustratos .modulo-layout {
+    flex-direction: column;
+  }
+
+  #tab-sustratos .sidebar-modulo {
+    width: auto;
+    min-width: 0;
+  }
+
+  #tab-sustratos .sidebar-modulo nav {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  #tab-sustratos .estadisticas-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  #tab-sustratos .contenido-modulo {
+    padding: 18px;
+  }
+
+}
+
+@media (max-width: 500px) {
+
+  #tab-sustratos .formulario-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #tab-sustratos .encabezado-tabla input,
+  #tab-sustratos .encabezado-tabla select {
+    width: 100%;
+  }
+
+  #tab-sustratos .encabezado-tabla label {
+    margin-left: 0;
+  }
+
+  #tab-sustratos .resumen-venta {
+    text-align: left;
+  }
+
+}
+
+
 
 
 /* FIN DEL MÓDULO DE SUSTRATOS */ 
