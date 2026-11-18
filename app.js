@@ -2138,4 +2138,3 @@ function eliminarVentaSustrato(id) {
     db.collection('ventasSustratos').doc(id).delete();
   }
 }
-// ======================================================
