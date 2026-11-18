@@ -745,14 +745,13 @@ input, select, textarea {
 }
 
 /* CAMBIO ENTRE LAS SEIS PÁGINAS */
-#tab-sustratos .pagina-sustratos {
+/* Forzar que el contenedor principal del módulo dependa de la clase .active */
+#tab-sustratos.tab-content {
     display: none;
-    width: 100%;
 }
 
-#tab-sustratos .pagina-sustratos.activa {
+#tab-sustratos.tab-content.active {
     display: block;
-    animation: aparecerSustratos .22s ease;
 }
 
 @keyframes aparecerSustratos {
