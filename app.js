@@ -3,14 +3,24 @@
 // ==========================================
 
 function switchTab(tabId, event) {
+  // Ocultar todas las pestañas
   const tabs = document.querySelectorAll('.tab-content');
   tabs.forEach(tab => tab.classList.remove('active'));
 
-  const navBtns = document.querySelectorAll('.nav-btn');
+  // Quitar la clase active de todos los botones del menú superior
+  const navBtns = document.querySelectorAll('.main-nav .nav-btn');
   navBtns.forEach(btn => btn.classList.remove('active'));
 
-  document.getElementById('tab-' + tabId).classList.add('active');
-  if (event) event.currentTarget.classList.add('active');
+  // Mostrar la pestaña seleccionada
+  const tabSeleccionada = document.getElementById('tab-' + tabId);
+  if (tabSeleccionada) {
+    tabSeleccionada.classList.add('active');
+  }
+
+  // Activar visualmente el botón presionado
+  if (event && event.currentTarget) {
+    event.currentTarget.classList.add('active');
+  }
 }
 
 // ==========================================
