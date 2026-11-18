@@ -323,6 +323,7 @@ input, select, textarea {
 
 .stock-low { color: var(--danger-color); font-weight: bold; }
 
+
 /* ==========================================
    DISEÑO DEL MÓDULO DE MACETAS
 ========================================== */
@@ -633,6 +634,7 @@ input, select, textarea {
   }
 
 }
+
 
 /* ==========================================
    DISEÑO DEL MÓDULO DE SUSTRATOS
@@ -956,8 +958,3 @@ input, select, textarea {
   }
 
 }
-
-
-
-
-/* FIN DEL MÓDULO DE SUSTRATOS */ 
