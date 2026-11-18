@@ -3,24 +3,14 @@
 // ==========================================
 
 function switchTab(tabId, event) {
-  // Ocultar todas las pestañas
   const tabs = document.querySelectorAll('.tab-content');
   tabs.forEach(tab => tab.classList.remove('active'));
 
-  // Quitar la clase active de todos los botones del menú superior
-  const navBtns = document.querySelectorAll('.main-nav .nav-btn');
+  const navBtns = document.querySelectorAll('.nav-btn');
   navBtns.forEach(btn => btn.classList.remove('active'));
 
-  // Mostrar la pestaña seleccionada
-  const tabSeleccionada = document.getElementById('tab-' + tabId);
-  if (tabSeleccionada) {
-    tabSeleccionada.classList.add('active');
-  }
-
-  // Activar visualmente el botón presionado
-  if (event && event.currentTarget) {
-    event.currentTarget.classList.add('active');
-  }
+  document.getElementById('tab-' + tabId).classList.add('active');
+  if (event) event.currentTarget.classList.add('active');
 }
 
 // ==========================================
@@ -237,9 +227,55 @@ function guardarYDescargarImagen() {
 
 (() => {
 
+  // ==========================================
+  // 1. REFERENCIAS HTML
+  // ==========================================
+
   const $ = id => document.getElementById(id);
 
+  const nombreMaceta = $('nombreMaceta');
+  const costoMaceta = $('costoMaceta');
+  const precioVentaMaceta = $('precioVentaMaceta');
+  const stockMaceta = $('stockMaceta');
+  const btnAgregarMaceta = $('btnAgregarMaceta');
+
+  const tablaInventarioMacetas = $('tablaInventarioMacetas');
+
+  const productoEntradaMaceta = $('productoEntradaMaceta');
+  const cantidadEntradaMaceta = $('cantidadEntradaMaceta');
+  const costoEntradaMaceta = $('costoEntradaMaceta');
+  const observacionEntradaMaceta = $('observacionEntradaMaceta');
+  const btnRegistrarEntradaMaceta = $('btnRegistrarEntradaMaceta');
+
+  const productoVentaMaceta = $('productoVentaMaceta');
+  const cantidadVentaMaceta = $('cantidadVentaMaceta');
+  const precioUnitarioVentaMaceta = $('precioUnitarioVentaMaceta');
+  const btnAgregarProductoVentaMaceta = $('btnAgregarProductoVentaMaceta');
+
+  const clienteVentaMaceta = $('clienteVentaMaceta');
+  const medioPagoMacetas = $('medioPagoMacetas');
+  const btnRegistrarVentaMaceta = $('btnRegistrarVentaMaceta');
+
+  const detalleVentaMacetas = $('detalleVentaMacetas');
+  const totalVentaMacetas = $('totalVentaMacetas');
+
+  const historialVentasMacetas = $('historialVentasMacetas');
+  const movimientosInventarioMacetas = $('movimientosInventarioMacetas');
+
+  const fechaDesdeMacetas = $('fechaDesdeMacetas');
+  const fechaHastaMacetas = $('fechaHastaMacetas');
+
+  const btnFiltrarVentasMacetas = $('btnFiltrarVentasMacetas');
+  const btnLimpiarFiltrosMacetas = $('btnLimpiarFiltrosMacetas');
+
+  const totalProductosMacetas = $('totalProductosMacetas');
+  const totalStockMacetas = $('totalStockMacetas');
+  const totalVendidasMacetas = $('totalVendidasMacetas');
+  const ventasMesMacetas = $('ventasMesMacetas');
+
+
   // ==========================================
+  // 2. VARIABLES
   // 1. VARIABLES
   // ==========================================
 
@@ -247,15 +283,19 @@ function guardarYDescargarImagen() {
   let ventasMacetas = [];
   let movimientosMacetas = [];
 
+  let carritoMacetas = [];
+
   const dinero = valor =>
     Number(valor || 0).toLocaleString('es-PE', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     });
 
+  const timestamp = () =>
   const fechaServidor = () =>
     firebase.firestore.FieldValue.serverTimestamp();
 
+  function fechaReal(valor) {
   function escapar(texto) {
     return String(texto ?? '').replace(/[&<>"']/g, c => ({
       '&': '&amp;',
@@ -277,11 +317,28 @@ function guardarYDescargarImagen() {
     const fecha = new Date(valor);
 
     return isNaN(fecha.getTime()) ? null : fecha;
+  }
+
+  function fechaTexto(valor) {
+
+    const fecha = fechaReal(valor);
+
+    if (!fecha) return 'Pendiente';
+
+    return fecha.toLocaleDateString('es-PE');
 
   }
 
+  function escaparHTML(texto) {
   function mostrarFecha(valor) {
 
+    return String(texto ?? '').replace(/[&<>"']/g, caracter => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    })[caracter]);
     const fecha = convertirFecha(valor);
 
     return fecha
@@ -292,9 +349,12 @@ function guardarYDescargarImagen() {
 
   function mostrarError(error) {
 
+    console.error('Error en módulo de macetas:', error);
     console.error(error);
 
     alert(
+      'Ocurrió un problema al realizar la operación. ' +
+      'Revisa tu conexión e inténtalo nuevamente.'
       error.message ||
       'No se pudo completar la operación. Verifica tu conexión.'
     );
@@ -303,21 +363,40 @@ function guardarYDescargarImagen() {
 
 
   // ==========================================
+  // 3. REGISTRAR NUEVA MACETA
   // 2. NAVEGACIÓN ENTRE PÁGINAS
   // ==========================================
 
+  if (btnAgregarMaceta) {
   document.querySelectorAll(
     '#tab-macetas .nav-macetas'
   ).forEach(boton => {
 
+    btnAgregarMaceta.addEventListener('click', async () => {
     boton.addEventListener('click', () => {
 
+      const nombre = nombreMaceta.value.trim();
+      const costo = Number(costoMaceta.value);
+      const precio = Number(precioVentaMaceta.value);
+      const stock = Number(stockMaceta.value);
       const pagina = boton.dataset.pagina;
 
+      if (
+        !nombre ||
+        costo < 0 ||
+        precio < 0 ||
+        !Number.isFinite(costo) ||
+        !Number.isFinite(precio) ||
+        !Number.isInteger(stock) ||
+        stock < 0 ||
+        stockMaceta.value === ''
+      ) {
       document.querySelectorAll(
         '#tab-macetas .nav-macetas'
       ).forEach(b => b.classList.remove('activo'));
 
+        alert('Completa correctamente todos los campos.');
+        return;
       document.querySelectorAll(
         '#tab-macetas .pagina-macetas'
       ).forEach(p => p.classList.remove('activa'));
@@ -330,15 +409,20 @@ function guardarYDescargarImagen() {
         destino.classList.add('activa');
       }
 
+      try {
     });
 
+        const referencia = db.collection('macetas').doc();
   });
 
+        const movimiento = db.collection('movimientosMacetas').doc();
 
+        await db.runTransaction(async transaction => {
   // ==========================================
   // 3. REGISTRAR PRODUCTO
   // ==========================================
 
+          transaction.set(referencia, {
   $('btnAgregarMaceta')?.addEventListener('click', async () => {
 
     const nombre = $('nombreMaceta').value.trim();
@@ -362,19 +446,35 @@ function guardarYDescargarImagen() {
       alert('Completa correctamente todos los campos.');
       return;
 
+            nombre,
+            costo,
+            precioVenta: precio,
+            stock,
+            fecha: timestamp()
     }
 
+          });
     try {
 
+          if (stock > 0) {
       const productoRef = db.collection('macetas').doc();
 
+            transaction.set(movimiento, {
       const movimientoRef =
         db.collection('movimientosMacetas').doc();
 
+              producto: nombre,
+              macetaId: referencia.id,
+              tipo: 'Stock inicial',
+              cantidad: stock,
+              detalle: 'Registro inicial del inventario',
+              fecha: timestamp()
       await db.runTransaction(async transaction => {
 
+            });
         transaction.set(productoRef, {
 
+          }
           nombre,
           costo,
           precioVenta: precio,
@@ -383,10 +483,16 @@ function guardarYDescargarImagen() {
 
         });
 
+        nombreMaceta.value = '';
+        costoMaceta.value = '';
+        precioVentaMaceta.value = '';
+        stockMaceta.value = '';
         if (stock > 0) {
 
+        alert('Maceta registrada correctamente.');
           transaction.set(movimientoRef, {
 
+      } catch (error) {
             macetaId: productoRef.id,
             producto: nombre,
             tipo: 'Stock inicial',
@@ -394,12 +500,16 @@ function guardarYDescargarImagen() {
             detalle: 'Registro inicial',
             fecha: fechaServidor()
 
+        mostrarError(error);
           });
 
+      }
         }
 
+    });
       });
 
+  }
       $('nombreMaceta').value = '';
       $('costoMaceta').value = '';
       $('precioVentaMaceta').value = '';
@@ -417,6 +527,7 @@ function guardarYDescargarImagen() {
 
 
   // ==========================================
+  // 4. MOSTRAR INVENTARIO
   // 4. ESCUCHAR INVENTARIO
   // ==========================================
 
@@ -427,12 +538,17 @@ function guardarYDescargarImagen() {
     snapshot.forEach(doc => {
 
       inventarioMacetas.push({
+
         id: doc.id,
         ...doc.data()
+
       });
 
     });
 
+    mostrarInventarioMacetas();
+    cargarSelectoresMacetas();
+    actualizarResumenMacetas();
     mostrarInventario();
     mostrarSelectores();
     mostrarProductosVenta();
@@ -441,6 +557,7 @@ function guardarYDescargarImagen() {
   }, mostrarError);
 
 
+  function mostrarInventarioMacetas() {
   // ==========================================
   // 5. MOSTRAR INVENTARIO
   // ==========================================
@@ -449,14 +566,19 @@ function guardarYDescargarImagen() {
 
     const tabla = $('tablaInventarioMacetas');
 
+    if (!tablaInventarioMacetas) return;
     if (!tabla) return;
 
+    tablaInventarioMacetas.innerHTML = '';
     tabla.innerHTML = '';
 
     inventarioMacetas.forEach(item => {
 
       const stock = Number(item.stock || 0);
+      const costo = Number(item.costo || 0);
 
+      // Compatibilidad con productos antiguos.
+      // Si no tienen precioVenta, se utiliza costo como precio temporal.
       const precio = Number(
         item.precioVenta ?? item.costo ?? 0
       );
@@ -464,17 +586,23 @@ function guardarYDescargarImagen() {
       let estado = 'Disponible';
 
       if (stock <= 0) {
+
         estado = 'Agotado';
+
       } else if (stock <= 5) {
+
         estado = 'Stock bajo';
+
       }
 
       const fila = document.createElement('tr');
 
       fila.innerHTML = `
 
+        <td>${escaparHTML(item.nombre)}</td>
         <td>${escapar(item.nombre)}</td>
 
+        <td>S/. ${dinero(costo)}</td>
         <td>S/. ${dinero(item.costo)}</td>
 
         <td>S/. ${dinero(precio)}</td>
@@ -484,17 +612,30 @@ function guardarYDescargarImagen() {
         <td>${estado}</td>
 
         <td>
+
+          <button
+            type="button"
+            class="btn-editar-maceta"
+            data-id="${item.id}"
+          >
           <button class="editar-maceta" data-id="${item.id}">
             Editar
           </button>
 
+          <button
+            type="button"
+            class="btn-eliminar-maceta"
+            data-id="${item.id}"
+          >
           <button class="eliminar-maceta" data-id="${item.id}">
             Eliminar
           </button>
+
         </td>
 
       `;
 
+      tablaInventarioMacetas.appendChild(fila);
       tabla.appendChild(fila);
 
     });
@@ -503,37 +644,70 @@ function guardarYDescargarImagen() {
 
 
   // ==========================================
+  // 5. EDITAR PRODUCTO
   // 6. EDITAR Y ELIMINAR PRODUCTOS
   // ==========================================
 
+  if (tablaInventarioMacetas) {
+
+    tablaInventarioMacetas.addEventListener('click', async event => {
+
+      const botonEditar = event.target.closest('.btn-editar-maceta');
+      const botonEliminar = event.target.closest('.btn-eliminar-maceta');
   $('tablaInventarioMacetas')?.addEventListener('click', async event => {
 
+      if (botonEditar) {
     const editar = event.target.closest('.editar-maceta');
     const eliminar = event.target.closest('.eliminar-maceta');
 
+        const id = botonEditar.dataset.id;
     if (editar) {
 
+        const producto = inventarioMacetas.find(item => item.id === id);
+
+        if (!producto) return;
       const producto = inventarioMacetas.find(
         p => p.id === editar.dataset.id
       );
 
+        const nombre = prompt('Nombre del producto:', producto.nombre);
       if (!producto) return;
 
+        if (nombre === null) return;
       const nombre = prompt('Nombre:', producto.nombre);
 
+        const costo = prompt(
+          'Costo de compra:',
+          producto.costo ?? 0
+        );
       if (nombre === null) return;
 
+        if (costo === null) return;
       const costo = prompt('Costo de compra:', producto.costo ?? 0);
 
+        const precio = prompt(
+          'Precio de venta:',
+          producto.precioVenta ?? producto.costo ?? 0
+        );
       if (costo === null) return;
 
+        if (precio === null) return;
       const precio = prompt(
         'Precio de venta:',
         producto.precioVenta ?? producto.costo ?? 0
       );
 
+        const costoNumero = Number(costo);
+        const precioNumero = Number(precio);
       if (precio === null) return;
 
+        if (
+          !nombre.trim() ||
+          !Number.isFinite(costoNumero) ||
+          !Number.isFinite(precioNumero) ||
+          costoNumero < 0 ||
+          precioNumero < 0
+        ) {
       if (
         !nombre.trim() ||
         !Number.isFinite(Number(costo)) ||
@@ -542,86 +716,131 @@ function guardarYDescargarImagen() {
         Number(precio) < 0
       ) {
 
+          alert('Los datos ingresados no son válidos.');
+          return;
         alert('Los datos ingresados no son válidos.');
         return;
 
+        }
       }
 
+        try {
       try {
 
+          await db.collection('macetas').doc(id).update({
         await db.collection('macetas')
           .doc(producto.id)
           .update({
 
             nombre: nombre.trim(),
+            costo: costoNumero,
+            precioVenta: precioNumero
             costo: Number(costo),
             precioVenta: Number(precio)
 
           });
 
+          alert('Producto actualizado correctamente.');
         alert('Producto actualizado.');
 
+        } catch (error) {
+
+          mostrarError(error);
       } catch (error) {
 
+        }
         mostrarError(error);
 
       }
 
     }
 
+      if (botonEliminar) {
 
+        const id = botonEliminar.dataset.id;
+
+        const producto = inventarioMacetas.find(item => item.id === id);
+
+        if (!producto) return;
     if (eliminar) {
 
+        if (Number(producto.stock || 0) !== 0) {
       const producto = inventarioMacetas.find(
         p => p.id === eliminar.dataset.id
       );
 
+          alert(
+            'No puedes eliminar una maceta que todavía tiene stock. ' +
+            'Primero registra su salida o ajusta el inventario.'
+          );
       if (!producto) return;
 
+          return;
       if (Number(producto.stock || 0) !== 0) {
 
+        }
         alert('Solo puedes eliminar productos con stock en cero.');
         return;
 
+        if (!confirm('¿Deseas eliminar este producto del inventario?')) {
+          return;
+        }
       }
 
+        try {
       if (!confirm('¿Deseas eliminar este producto?')) return;
 
+          await db.collection('macetas').doc(id).delete();
       try {
 
+          alert('Producto eliminado.');
         await db.collection('macetas')
           .doc(producto.id)
           .delete();
 
+        } catch (error) {
         alert('Producto eliminado.');
 
+          mostrarError(error);
       } catch (error) {
 
+        }
         mostrarError(error);
 
       }
 
+    });
     }
 
+  }
   });
 
 
   // ==========================================
+  // 6. CARGAR SELECTORES
   // 7. SELECTORES DE PRODUCTOS
   // ==========================================
 
+  function cargarSelectoresMacetas() {
   function mostrarSelectores() {
 
+    const selectores = [
+      productoEntradaMaceta,
+      productoVentaMaceta
+    ];
     [
       'productoEntradaMaceta'
     ].forEach(id => {
 
+    selectores.forEach(select => {
       const select = $(id);
 
       if (!select) return;
 
+      const valorAnterior = select.value;
       const anterior = select.value;
 
+      select.innerHTML = '<option value="">Seleccionar maceta</option>';
       select.innerHTML =
         '<option value="">Seleccionar maceta</option>';
 
@@ -630,12 +849,20 @@ function guardarYDescargarImagen() {
         const option = document.createElement('option');
 
         option.value = item.id;
+
+        option.textContent =
+          `${item.nombre} (Stock: ${item.stock || 0})`;
         option.textContent = item.nombre;
 
         select.appendChild(option);
 
       });
 
+      if (inventarioMacetas.some(item => item.id === valorAnterior)) {
+
+        select.value = valorAnterior;
+
+      }
       select.value = anterior;
 
     });
@@ -644,17 +871,24 @@ function guardarYDescargarImagen() {
 
 
   // ==========================================
+  // 7. REGISTRAR ENTRADA DE INVENTARIO
   // 8. REGISTRAR ENTRADAS
   // ==========================================
 
+  if (btnRegistrarEntradaMaceta) {
   $('btnRegistrarEntradaMaceta')?.addEventListener(
     'click',
     async () => {
 
+    btnRegistrarEntradaMaceta.addEventListener('click', async () => {
       const id = $('productoEntradaMaceta').value;
       const cantidad = Number($('cantidadEntradaMaceta').value);
       const costo = Number($('costoEntradaMaceta').value);
 
+      const id = productoEntradaMaceta.value;
+      const cantidad = Number(cantidadEntradaMaceta.value);
+      const costo = Number(costoEntradaMaceta.value);
+      const observacion = observacionEntradaMaceta.value.trim();
       const observacion =
         $('observacionEntradaMaceta').value.trim();
 
@@ -664,6 +898,7 @@ function guardarYDescargarImagen() {
         cantidad <= 0 ||
         !Number.isFinite(costo) ||
         costo < 0 ||
+        costoEntradaMaceta.value === ''
         $('costoEntradaMaceta').value === ''
       ) {
 
@@ -675,7 +910,10 @@ function guardarYDescargarImagen() {
       try {
 
         const productoRef = db.collection('macetas').doc(id);
+
         const entradaRef = db.collection('entradasMacetas').doc();
+
+        const movimientoRef = db.collection('movimientosMacetas').doc();
         const movimientoRef =
           db.collection('movimientosMacetas').doc();
 
@@ -684,13 +922,18 @@ function guardarYDescargarImagen() {
           const productoDoc = await transaction.get(productoRef);
 
           if (!productoDoc.exists) {
+
             throw new Error('El producto no existe.');
+
           }
 
           const producto = productoDoc.data();
 
+          const nuevoStock = Number(producto.stock || 0) + cantidad;
+
           transaction.update(productoRef, {
 
+            stock: nuevoStock
             stock: Number(producto.stock || 0) + cantidad
 
           });
@@ -702,6 +945,7 @@ function guardarYDescargarImagen() {
             cantidad,
             costoUnitario: costo,
             observacion,
+            fecha: timestamp()
             fecha: fechaServidor()
 
           });
@@ -713,17 +957,23 @@ function guardarYDescargarImagen() {
             tipo: 'Entrada',
             cantidad,
             detalle: observacion || 'Ingreso de mercadería',
+            fecha: timestamp()
             fecha: fechaServidor()
 
           });
 
         });
 
+        cantidadEntradaMaceta.value = '';
+        costoEntradaMaceta.value = '';
+        observacionEntradaMaceta.value = '';
+        productoEntradaMaceta.value = '';
         $('cantidadEntradaMaceta').value = '';
         $('costoEntradaMaceta').value = '';
         $('observacionEntradaMaceta').value = '';
         $('productoEntradaMaceta').value = '';
 
+        alert('Entrada registrada y stock actualizado.');
         alert('Entrada registrada correctamente.');
 
       } catch (error) {
@@ -732,20 +982,32 @@ function guardarYDescargarImagen() {
 
       }
 
+    });
+
+  }
     }
   );
 
 
   // ==========================================
+  // 8. CARGAR PRECIO DE VENTA
   // 9. MOSTRAR PRODUCTOS EN LA PÁGINA DE VENTAS
   // ==========================================
 
+  if (productoVentaMaceta) {
   function mostrarProductosVenta() {
 
+    productoVentaMaceta.addEventListener('change', () => {
     const tabla = $('productosVentaMacetas');
 
+      const producto = inventarioMacetas.find(
+        item => item.id === productoVentaMaceta.value
+      );
     if (!tabla) return;
 
+      precioUnitarioVentaMaceta.value = producto
+        ? Number(producto.precioVenta ?? producto.costo ?? 0)
+        : '';
     const cantidadesActuales = {};
 
     tabla.querySelectorAll('.cantidad-producto-venta').forEach(input => {
@@ -754,24 +1016,37 @@ function guardarYDescargarImagen() {
 
     });
 
+  }
     tabla.innerHTML = '';
 
     inventarioMacetas.forEach(item => {
 
+  // ==========================================
+  // 9. AGREGAR PRODUCTOS AL CARRITO
+  // ==========================================
       const stock = Number(item.stock || 0);
 
+  if (btnAgregarProductoVentaMaceta) {
       const precio = Number(
         item.precioVenta ?? item.costo ?? 0
       );
 
+    btnAgregarProductoVentaMaceta.addEventListener('click', () => {
       const fila = document.createElement('tr');
 
+      const id = productoVentaMaceta.value;
+      const cantidad = Number(cantidadVentaMaceta.value);
+      const precio = Number(precioUnitarioVentaMaceta.value);
       fila.innerHTML = `
 
+      const producto = inventarioMacetas.find(item => item.id === id);
         <td>${escapar(item.nombre)}</td>
 
+      if (!producto) {
         <td>${stock}</td>
 
+        alert('Selecciona una maceta.');
+        return;
         <td>
           <input
             type="number"
@@ -784,6 +1059,7 @@ function guardarYDescargarImagen() {
           >
         </td>
 
+      }
         <td>
           <input
             type="number"
@@ -795,133 +1071,212 @@ function guardarYDescargarImagen() {
           >
         </td>
 
+      if (
+        !Number.isInteger(cantidad) ||
+        cantidad <= 0 ||
+        !Number.isFinite(precio) ||
+        precio < 0 ||
+        precioUnitarioVentaMaceta.value === ''
+      ) {
         <td>
           <strong class="subtotal-producto-venta" data-id="${item.id}">
             S/. 0.00
           </strong>
         </td>
 
+        alert('Ingresa una cantidad y un precio válidos.');
+        return;
       `;
 
+      }
       tabla.appendChild(fila);
 
+      const existente = carritoMacetas.find(item => item.macetaId === id);
     });
 
+      const cantidadAcumulada =
+        cantidad + (existente ? existente.cantidad : 0);
     actualizarTotalesVenta();
 
+      if (cantidadAcumulada > Number(producto.stock || 0)) {
   }
 
+        alert(
+          `Stock insuficiente. Disponible: ${producto.stock || 0}`
+        );
 
+        return;
   // ==========================================
   // 10. CALCULAR TOTALES AUTOMÁTICAMENTE
   // ==========================================
 
+      }
   $('productosVentaMacetas')?.addEventListener('input', event => {
 
+      if (existente) {
     if (
       event.target.classList.contains('cantidad-producto-venta') ||
       event.target.classList.contains('precio-producto-venta')
     ) {
 
+        existente.cantidad += cantidad;
+        existente.precioUnit = precio;
+        existente.subtotal = existente.cantidad * precio;
       actualizarTotalesVenta();
 
+      } else {
     }
 
+        carritoMacetas.push({
   });
 
+          macetaId: id,
+          producto: producto.nombre,
+          cantidad,
+          precioUnit: precio,
+          subtotal: cantidad * precio
 
+        });
   function obtenerProductosSeleccionados() {
 
+      }
     const cantidades = document.querySelectorAll(
       '#productosVentaMacetas .cantidad-producto-venta'
     );
 
+      mostrarCarritoMacetas();
     const seleccionados = [];
 
+      productoVentaMaceta.value = '';
+      cantidadVentaMaceta.value = '';
+      precioUnitarioVentaMaceta.value = '';
     cantidades.forEach(input => {
 
+    });
       const cantidad = Number(input.value);
 
+  }
       if (cantidad <= 0) return;
 
       const id = input.dataset.id;
 
+  // ==========================================
+  // 10. MOSTRAR CARRITO
+  // ==========================================
       const precioInput = document.querySelector(
         `#productosVentaMacetas .precio-producto-venta[data-id="${id}"]`
       );
 
+  function mostrarCarritoMacetas() {
       const producto = inventarioMacetas.find(p => p.id === id);
 
+    if (!detalleVentaMacetas) return;
       if (!producto) return;
 
+    detalleVentaMacetas.innerHTML = '';
       seleccionados.push({
 
+    let total = 0;
         macetaId: id,
         producto: producto.nombre,
         cantidad,
         precioUnit: Number(precioInput.value),
         subtotal: cantidad * Number(precioInput.value)
 
+    carritoMacetas.forEach((item, index) => {
       });
 
+      total += item.subtotal;
     });
 
+      const fila = document.createElement('tr');
     return seleccionados;
 
+      fila.innerHTML = `
   }
 
+        <td>${escaparHTML(item.producto)}</td>
 
+        <td>${item.cantidad}</td>
   function actualizarTotalesVenta() {
 
+        <td>S/. ${dinero(item.precioUnit)}</td>
     let total = 0;
 
+        <td>S/. ${dinero(item.subtotal)}</td>
     const seleccionados = obtenerProductosSeleccionados();
 
+        <td>
     document.querySelectorAll(
       '#productosVentaMacetas .subtotal-producto-venta'
     ).forEach(celda => {
 
+          <button
+            type="button"
+            class="btn-quitar-carrito"
+            data-index="${index}"
+          >
+            Quitar
+          </button>
       const item = seleccionados.find(
         p => p.macetaId === celda.dataset.id
       );
 
+        </td>
       const subtotal = item ? item.subtotal : 0;
 
+      `;
       celda.textContent = `S/. ${dinero(subtotal)}`;
 
+      detalleVentaMacetas.appendChild(fila);
       total += subtotal;
 
     });
 
+    totalVentaMacetas.textContent = `S/. ${dinero(total)}`;
     $('totalVentaMacetas').textContent =
       `S/. ${dinero(total)}`;
 
   }
 
 
+  if (detalleVentaMacetas) {
+
+    detalleVentaMacetas.addEventListener('click', event => {
+
+      const boton = event.target.closest('.btn-quitar-carrito');
   // ==========================================
   // 11. REGISTRAR VENTA COMPLETA
   // ==========================================
 
+      if (!boton) return;
   $('btnRegistrarVentaMaceta')?.addEventListener(
     'click',
     async () => {
 
+      carritoMacetas.splice(Number(boton.dataset.index), 1);
       const items = obtenerProductosSeleccionados();
 
+      mostrarCarritoMacetas();
       if (items.length === 0) {
 
+    });
         alert('Indica al menos una cantidad para registrar la venta.');
         return;
 
+  }
       }
 
       for (const item of items) {
 
+  // ==========================================
+  // 11. REGISTRAR VENTA COMPLETA
+  // ==========================================
         const producto = inventarioMacetas.find(
           p => p.id === item.macetaId
         );
 
+  if (btnRegistrarVentaMaceta) {
         if (
           !Number.isInteger(item.cantidad) ||
           item.cantidad <= 0 ||
@@ -931,19 +1286,27 @@ function guardarYDescargarImagen() {
           item.cantidad > Number(producto.stock || 0)
         ) {
 
+    btnRegistrarVentaMaceta.addEventListener('click', async () => {
           alert(
             `Revisa la cantidad y el precio de ${item.producto}.`
           );
 
+      if (carritoMacetas.length === 0) {
           return;
 
+        alert('Agrega al menos un producto a la venta.');
+        return;
         }
 
       }
 
       const cliente =
+        clienteVentaMaceta.value.trim() || 'Cliente Anónimo';
+
+      const pago = medioPagoMacetas.value;
         $('clienteVentaMaceta').value.trim() || 'Cliente Anónimo';
 
+      const items = carritoMacetas.map(item => ({ ...item }));
       const metodoPago = $('medioPagoMacetas').value;
 
       const total = items.reduce(
@@ -964,6 +1327,7 @@ function guardarYDescargarImagen() {
           item,
 
           productoRef: db.collection('macetas').doc(item.macetaId),
+          movimientoRef: db.collection('movimientosMacetas').doc()
 
           movimientoRef:
             db.collection('movimientosMacetas').doc()
@@ -972,21 +1336,28 @@ function guardarYDescargarImagen() {
 
         await db.runTransaction(async transaction => {
 
+          // Primero se leen todos los productos.
           // Leer todos los productos antes de escribir.
           const documentos = await Promise.all(
+            referencias.map(ref => transaction.get(ref.productoRef))
             referencias.map(ref =>
               transaction.get(ref.productoRef)
             )
           );
 
+          // Se comprueba el stock de todos los productos.
           documentos.forEach((doc, index) => {
 
             if (!doc.exists) {
+
               throw new Error('Uno de los productos ya no existe.');
+
             }
 
+            const stockActual = Number(doc.data().stock || 0);
             const stock = Number(doc.data().stock || 0);
 
+            if (stockActual < referencias[index].item.cantidad) {
             if (stock < referencias[index].item.cantidad) {
 
               throw new Error(
@@ -997,12 +1368,17 @@ function guardarYDescargarImagen() {
 
           });
 
+          // Después de validar, se realizan las escrituras.
           referencias.forEach((ref, index) => {
 
             const producto = documentos[index].data();
 
+            const nuevoStock =
+              Number(producto.stock || 0) - ref.item.cantidad;
+
             transaction.update(ref.productoRef, {
 
+              stock: nuevoStock
               stock:
                 Number(producto.stock || 0) - ref.item.cantidad
 
@@ -1016,6 +1392,7 @@ function guardarYDescargarImagen() {
               cantidad: ref.item.cantidad,
               detalle: 'Salida por venta',
               ventaId: ventaRef.id,
+              fecha: timestamp()
               fecha: fechaServidor()
 
             });
@@ -1026,6 +1403,7 @@ function guardarYDescargarImagen() {
 
             items,
 
+            // Campos compatibles con el historial antiguo.
             producto: items.length === 1
               ? items[0].producto
               : `${items.length} productos`,
@@ -1041,18 +1419,27 @@ function guardarYDescargarImagen() {
 
             total,
             cliente,
+            metodoPago: pago,
             metodoPago,
             estado: 'Registrada',
+            fecha: timestamp()
             fecha: fechaServidor()
 
           });
 
         });
 
+        carritoMacetas = [];
+
+        mostrarCarritoMacetas();
         $('clienteVentaMaceta').value = '';
 
+        clienteVentaMaceta.value = '';
         $('medioPagoMacetas').value = 'Efectivo';
 
+        medioPagoMacetas.value = 'Efectivo';
+
+        alert('Venta registrada correctamente. El stock se actualizó.');
         alert('Venta registrada correctamente.');
 
       } catch (error) {
@@ -1061,6 +1448,9 @@ function guardarYDescargarImagen() {
 
       }
 
+    });
+
+  }
     }
   );
 
@@ -1086,30 +1476,41 @@ function guardarYDescargarImagen() {
 
       });
 
+      mostrarHistorialVentasMacetas();
+      actualizarResumenMacetas();
       mostrarHistorial();
       actualizarResumen();
 
     }, mostrarError);
 
 
+  function mostrarHistorialVentasMacetas() {
   function mostrarHistorial() {
 
+    if (!historialVentasMacetas) return;
     const tabla = $('historialVentasMacetas');
 
+    historialVentasMacetas.innerHTML = '';
     if (!tabla) return;
 
+    const desde = fechaDesdeMacetas?.value
+      ? new Date(`${fechaDesdeMacetas.value}T00:00:00`)
     tabla.innerHTML = '';
 
     const desde = $('fechaDesdeMacetas').value
       ? new Date($('fechaDesdeMacetas').value + 'T00:00:00')
       : null;
 
+    const hasta = fechaHastaMacetas?.value
+      ? new Date(`${fechaHastaMacetas.value}T23:59:59.999`)
     const hasta = $('fechaHastaMacetas').value
       ? new Date($('fechaHastaMacetas').value + 'T23:59:59.999')
       : null;
 
+    const ventasFiltradas = ventasMacetas.filter(venta => {
     const filtradas = ventasMacetas.filter(venta => {
 
+      const fecha = fechaReal(venta.fecha);
       const fecha = convertirFecha(venta.fecha);
 
       if (!fecha) return !desde && !hasta;
@@ -1122,6 +1523,7 @@ function guardarYDescargarImagen() {
 
     });
 
+    ventasFiltradas.forEach(venta => {
     filtradas.forEach(venta => {
 
       const items = Array.isArray(venta.items)
@@ -1132,6 +1534,7 @@ function guardarYDescargarImagen() {
           }];
 
       const productos = items.map(item =>
+        `${escaparHTML(item.producto)} x${item.cantidad}`
         `${escapar(item.producto)} x${item.cantidad}`
       ).join('<br>');
 
@@ -1141,33 +1544,43 @@ function guardarYDescargarImagen() {
 
       fila.innerHTML = `
 
+        <td>${fechaTexto(venta.fecha)}</td>
         <td>${mostrarFecha(venta.fecha)}</td>
 
         <td>${productos}</td>
 
+        <td>${escaparHTML(venta.cliente || 'Cliente Anónimo')}</td>
         <td>${escapar(venta.cliente || 'Cliente Anónimo')}</td>
 
         <td>S/. ${dinero(venta.total)}</td>
 
+        <td>${escaparHTML(venta.metodoPago || '-')}</td>
         <td>${escapar(venta.metodoPago || '-')}</td>
 
         <td>${anulada ? 'Anulada' : 'Registrada'}</td>
 
         <td>
+
           ${
             anulada
               ? '-'
               : Array.isArray(venta.items)
                 ? `<button
+                     type="button"
+                     class="btn-anular-venta"
+                     data-id="${venta.id}"
+                   >Anular</button>`
                     class="anular-venta-maceta"
                     data-id="${venta.id}"
                   >Anular</button>`
                 : 'Venta antigua'
           }
+
         </td>
 
       `;
 
+      historialVentasMacetas.appendChild(fila);
       tabla.appendChild(fila);
 
     });
@@ -1175,13 +1588,24 @@ function guardarYDescargarImagen() {
   }
 
 
+  // ==========================================
+  // 13. FILTRAR HISTORIAL
+  // ==========================================
   $('btnFiltrarVentasMacetas')?.addEventListener(
     'click',
     () => {
 
+  if (btnFiltrarVentasMacetas) {
       const desde = $('fechaDesdeMacetas').value;
       const hasta = $('fechaHastaMacetas').value;
 
+    btnFiltrarVentasMacetas.addEventListener('click', () => {
+
+      if (
+        fechaDesdeMacetas.value &&
+        fechaHastaMacetas.value &&
+        fechaDesdeMacetas.value > fechaHastaMacetas.value
+      ) {
       if (desde && hasta && desde > hasta) {
 
         alert('La fecha inicial no puede ser posterior a la fecha final.');
@@ -1189,41 +1613,66 @@ function guardarYDescargarImagen() {
 
       }
 
+      mostrarHistorialVentasMacetas();
+
+    });
+
+  }
       mostrarHistorial();
 
     }
   );
 
+  if (btnLimpiarFiltrosMacetas) {
 
+    btnLimpiarFiltrosMacetas.addEventListener('click', () => {
+
+      fechaDesdeMacetas.value = '';
+      fechaHastaMacetas.value = '';
   $('btnLimpiarFiltrosMacetas')?.addEventListener(
     'click',
     () => {
 
+      mostrarHistorialVentasMacetas();
       $('fechaDesdeMacetas').value = '';
       $('fechaHastaMacetas').value = '';
 
+    });
       mostrarHistorial();
 
+  }
     }
   );
 
 
   // ==========================================
+  // 14. ANULAR VENTA Y DEVOLVER STOCK
   // 13. ANULAR VENTA Y DEVOLVER STOCK
   // ==========================================
 
+  if (historialVentasMacetas) {
   $('historialVentasMacetas')?.addEventListener(
     'click',
     async event => {
 
+    historialVentasMacetas.addEventListener('click', async event => {
+
+      const boton = event.target.closest('.btn-anular-venta');
       const boton = event.target.closest('.anular-venta-maceta');
 
       if (!boton) return;
 
+      const id = boton.dataset.id;
+
       if (!confirm(
+        '¿Deseas anular esta venta? Las unidades volverán al inventario.'
+      )) {
+
+        return;
         '¿Anular esta venta y devolver las unidades al inventario?'
       )) return;
 
+      }
       const id = boton.dataset.id;
 
       try {
@@ -1235,18 +1684,25 @@ function guardarYDescargarImagen() {
           const ventaDoc = await transaction.get(ventaRef);
 
           if (!ventaDoc.exists) {
+
             throw new Error('La venta no existe.');
+
           }
 
           const venta = ventaDoc.data();
 
           if (venta.estado === 'Anulada') {
+
+            throw new Error('Esta venta ya fue anulada.');
+
             throw new Error('La venta ya está anulada.');
           }
 
           if (!Array.isArray(venta.items)) {
 
             throw new Error(
+              'Esta es una venta antigua y no contiene los identificadores ' +
+              'de sus productos. No se puede devolver el stock automáticamente.'
               'Esta venta antigua no permite devolver el stock automáticamente.'
             );
 
@@ -1256,23 +1712,35 @@ function guardarYDescargarImagen() {
 
             item,
 
+            productoRef: db.collection('macetas').doc(item.macetaId),
             productoRef:
               db.collection('macetas').doc(item.macetaId),
 
+            movimientoRef: db.collection('movimientosMacetas').doc()
             movimientoRef:
               db.collection('movimientosMacetas').doc()
 
           }));
 
+          // Leer todos los productos antes de realizar escrituras.
           const documentos = await Promise.all(
+
+            referencias.map(ref => transaction.get(ref.productoRef))
+
             referencias.map(ref =>
               transaction.get(ref.productoRef)
             )
           );
 
+          documentos.forEach((doc, index) => {
           documentos.forEach(doc => {
 
             if (!doc.exists) {
+
+              throw new Error(
+                `No se encontró el producto ${referencias[index].item.producto}.`
+              );
+
               throw new Error('No se encontró uno de los productos.');
             }
 
@@ -1295,8 +1763,10 @@ function guardarYDescargarImagen() {
               producto: producto.nombre,
               tipo: 'Anulación de venta',
               cantidad: ref.item.cantidad,
+              detalle: 'Devolución de unidades por anulación',
               detalle: 'Devolución de unidades',
               ventaId: id,
+              fecha: timestamp()
               fecha: fechaServidor()
 
             });
@@ -1306,12 +1776,14 @@ function guardarYDescargarImagen() {
           transaction.update(ventaRef, {
 
             estado: 'Anulada',
+            fechaAnulacion: timestamp()
             fechaAnulacion: fechaServidor()
 
           });
 
         });
 
+        alert('Venta anulada y stock devuelto correctamente.');
         alert('Venta anulada y stock devuelto.');
 
       } catch (error) {
@@ -1320,11 +1792,15 @@ function guardarYDescargarImagen() {
 
       }
 
+    });
+
+  }
     }
   );
 
 
   // ==========================================
+  // 15. MOVIMIENTOS DE INVENTARIO
   // 14. MOVIMIENTOS
   // ==========================================
 
@@ -1337,21 +1813,27 @@ function guardarYDescargarImagen() {
       snapshot.forEach(doc => {
 
         movimientosMacetas.push({
+
           id: doc.id,
           ...doc.data()
+
         });
 
       });
 
+      mostrarMovimientosMacetas();
       mostrarMovimientos();
 
     }, mostrarError);
 
 
+  function mostrarMovimientosMacetas() {
   function mostrarMovimientos() {
 
+    if (!movimientosInventarioMacetas) return;
     const tabla = $('movimientosInventarioMacetas');
 
+    movimientosInventarioMacetas.innerHTML = '';
     if (!tabla) return;
 
     tabla.innerHTML = '';
@@ -1362,18 +1844,23 @@ function guardarYDescargarImagen() {
 
       fila.innerHTML = `
 
+        <td>${fechaTexto(movimiento.fecha)}</td>
         <td>${mostrarFecha(movimiento.fecha)}</td>
 
+        <td>${escaparHTML(movimiento.producto)}</td>
         <td>${escapar(movimiento.producto)}</td>
 
+        <td>${escaparHTML(movimiento.tipo)}</td>
         <td>${escapar(movimiento.tipo)}</td>
 
         <td>${movimiento.cantidad}</td>
 
+        <td>${escaparHTML(movimiento.detalle || '-')}</td>
         <td>${escapar(movimiento.detalle || '-')}</td>
 
       `;
 
+      movimientosInventarioMacetas.appendChild(fila);
       tabla.appendChild(fila);
 
     });
@@ -1382,13 +1869,17 @@ function guardarYDescargarImagen() {
 
 
   // ==========================================
+  // 16. ACTUALIZAR PANEL DE RESUMEN
   // 15. PANEL DE INICIO
   // ==========================================
 
+  function actualizarResumenMacetas() {
   function actualizarResumen() {
 
+    const productos = inventarioMacetas.length;
     const totalProductos = inventarioMacetas.length;
 
+    const stock = inventarioMacetas.reduce(
     const totalStock = inventarioMacetas.reduce(
       (suma, item) => suma + Number(item.stock || 0),
       0
@@ -1398,6 +1889,7 @@ function guardarYDescargarImagen() {
       venta => venta.estado !== 'Anulada'
     );
 
+    const vendidas = ventasValidas.reduce((suma, venta) => {
     const totalVendidas = ventasValidas.reduce((suma, venta) => {
 
       if (Array.isArray(venta.items)) {
@@ -1415,12 +1907,18 @@ function guardarYDescargarImagen() {
 
     const ahora = new Date();
 
+    const mes = ahora.getMonth();
+    const anio = ahora.getFullYear();
+
     const totalMes = ventasValidas.reduce((suma, venta) => {
 
+      const fecha = fechaReal(venta.fecha);
       const fecha = convertirFecha(venta.fecha);
 
       if (
         fecha &&
+        fecha.getMonth() === mes &&
+        fecha.getFullYear() === anio
         fecha.getMonth() === ahora.getMonth() &&
         fecha.getFullYear() === ahora.getFullYear()
       ) {
@@ -1433,13 +1931,22 @@ function guardarYDescargarImagen() {
 
     }, 0);
 
+    if (totalProductosMacetas) {
+      totalProductosMacetas.textContent = productos;
+    }
     $('totalProductosMacetas').textContent = totalProductos;
     $('totalStockMacetas').textContent = totalStock;
     $('totalVendidasMacetas').textContent = totalVendidas;
 
+    if (totalStockMacetas) {
+      totalStockMacetas.textContent = stock;
+    }
     $('ventasMesMacetas').textContent =
       `S/. ${dinero(totalMes)}`;
 
+    if (totalVendidasMacetas) {
+      totalVendidasMacetas.textContent = vendidas;
+    }
     mostrarAlertasStock();
 
   }
@@ -1463,6 +1970,8 @@ function guardarYDescargarImagen() {
 
       return;
 
+    if (ventasMesMacetas) {
+      ventasMesMacetas.textContent = `S/. ${dinero(totalMes)}`;
     }
 
     productosBajos.forEach(item => {
@@ -1485,48 +1994,16 @@ function guardarYDescargarImagen() {
 // ==========================================
 // 4. MÓDULO DE SUSTRATOS
 // ==========================================
-// ======================================================
-// 4. MÓDULO DE SUSTRATOS - VIVERO ELIEL
-// ======================================================
-// Colecciones:
-// sustratos
-// ventasSustratos
-// entradasSustratos
-// movimientosSustratos
-//
-// Unidades:
-// kg = kilogramos
-// L  = litros
-// und = bolsas o unidades
-// ======================================================
-
-
-// ======================================================
-// 1. ELEMENTOS HTML
-// ======================================================
 
 const nombreSustrato = document.getElementById('nombreSustrato');
-const unidadSustrato = document.getElementById('unidadSustrato');
 const costoSustrato = document.getElementById('costoSustrato');
-const precioVentaSustrato = document.getElementById('precioVentaSustrato');
 const stockSustrato = document.getElementById('stockSustrato');
-
 const btnAgregarSustrato = document.getElementById('btnAgregarSustrato');
 const tablaInventarioSustratos = document.getElementById('tablaInventarioSustratos');
 
 const selectSustratoVenta = document.getElementById('selectSustratoVenta');
 const cantidadSustratoVenta = document.getElementById('cantidadSustratoVenta');
 const precioVentaSustratoInput = document.getElementById('precioVentaSustratoInput');
-const selectEntradaSustrato = document.getElementById('selectEntradaSustrato');
-const cantidadEntradaSustrato = document.getElementById('cantidadEntradaSustrato');
-const costoEntradaSustrato = document.getElementById('costoEntradaSustrato');
-const observacionEntradaSustrato = document.getElementById('observacionEntradaSustrato');
-const btnRegistrarEntradaSustrato = document.getElementById('btnRegistrarEntradaSustrato');
-
-const historialEntradasSustratos = document.getElementById('historialEntradasSustratos');
-
-const detalleVentaSustratos = document.getElementById('detalleVentaSustratos');
-const totalVentaSustratos = document.getElementById('totalVentaSustratos');
 const clienteVentaSustrato = document.getElementById('clienteVentaSustrato');
 const metodoPagoSustrato = document.getElementById('metodoPagoSustrato');
 const btnRegistrarVentaSustrato = document.getElementById('btnRegistrarVentaSustrato');
@@ -1537,88 +2014,10 @@ if (btnAgregarSustrato) {
     const nombre = nombreSustrato.value.trim();
     const costo = parseFloat(costoSustrato.value);
     const stock = parseInt(stockSustrato.value);
-const historialVentasSustratos = document.getElementById('historialVentasSustratos');
-const filtroFechaSustratos = document.getElementById('filtroFechaSustratos');
 
     if (!nombre || isNaN(costo) || isNaN(stock)) {
       alert("Por favor completa los campos del sustrato.");
       return;
-const movimientosInventarioSustratos = document.getElementById('movimientosInventarioSustratos');
-const filtroMovimientoSustratos = document.getElementById('filtroMovimientoSustratos');
-
-const buscarSustrato = document.getElementById('buscarSustrato');
-
-
-// ======================================================
-// 2. REFERENCIAS A FIRESTORE
-// ======================================================
-
-const coleccionSustratos = db.collection('sustratos');
-const coleccionVentasSustratos = db.collection('ventasSustratos');
-const coleccionEntradasSustratos = db.collection('entradasSustratos');
-const coleccionMovimientosSustratos = db.collection('movimientosSustratos');
-
-
-// ======================================================
-// 3. VARIABLES DEL MÓDULO
-// ======================================================
-
-let productosSustratos = [];
-let ventasSustratos = [];
-let entradasSustratos = [];
-let movimientosSustratos = [];
-
-let paginaActualSustratos = 'inicioSustratos';
-
-let ventaEnProcesoSustratos = false;
-
-
-// ======================================================
-// 4. FUNCIONES GENERALES
-// ======================================================
-
-function formatoMonedaSustratos(valor) {
-    return 'S/ ' + Number(valor || 0).toFixed(2);
-}
-
-
-function formatoCantidadSustratos(valor) {
-    return Number(valor || 0).toLocaleString('es-PE', {
-        maximumFractionDigits: 2
-    });
-}
-
-
-function unidadTextoSustratos(unidad) {
-
-    if (unidad === 'kg') return 'kg';
-    if (unidad === 'L') return 'L';
-
-    return 'und.';
-}
-
-
-function escaparHTMLSustratos(texto) {
-    return String(texto ?? '').replace(/[&<>"']/g, caracter => {
-        const entidades = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#039;'
-        };
-
-        return entidades[caracter];
-    });
-}
-
-
-function obtenerFechaSustratos(fecha) {
-
-    if (!fecha) return null;
-
-    if (fecha.toDate) {
-        return fecha.toDate();
     }
 
     db.collection('sustratos').add({
@@ -1632,25 +2031,6 @@ function obtenerFechaSustratos(fecha) {
       nombreSustrato.value = '';
       costoSustrato.value = '';
       stockSustrato.value = '';
-    if (fecha instanceof Date) {
-        return fecha;
-    }
-
-    const resultado = new Date(fecha);
-
-    return isNaN(resultado.getTime()) ? null : resultado;
-}
-
-
-function mostrarFechaSustratos(fecha) {
-
-    const fechaConvertida = obtenerFechaSustratos(fecha);
-
-    if (!fechaConvertida) return '-';
-
-    return fechaConvertida.toLocaleString('es-PE', {
-        dateStyle: 'short',
-        timeStyle: 'short'
     });
   });
 }
@@ -1674,61 +2054,6 @@ db.collection('sustratos').onSnapshot(snapshot => {
       </td>
     `;
     tablaInventarioSustratos.appendChild(fila);
-function validarCantidadSustratos(cantidad, unidad) {
-
-    const numero = Number(cantidad);
-
-    if (!Number.isFinite(numero) || numero <= 0) {
-        return false;
-    }
-
-    if (unidad === 'und') {
-        return Number.isInteger(numero);
-    }
-
-    return true;
-}
-
-
-function obtenerPasoUnidadSustratos(unidad) {
-    return unidad === 'und' ? '1' : '0.01';
-}
-
-
-function mostrarMensajeSustratos(mensaje) {
-    alert(mensaje);
-}
-
-
-// ======================================================
-// 5. NAVEGACIÓN DEL MENÚ
-// ======================================================
-
-document.querySelectorAll('#tab-sustratos button.nav-sustratos').forEach(boton => {
-
-    boton.addEventListener('click', () => {
-
-        const pagina = boton.dataset.pagina;
-
-        if (!pagina) return;
-
-        document.querySelectorAll('#tab-sustratos .pagina-sustratos')
-            .forEach(seccion => seccion.classList.remove('activa'));
-
-        document.querySelectorAll('#tab-sustratos button.nav-sustratos')
-            .forEach(item => item.classList.remove('activo'));
-
-        const destino = document.getElementById(pagina);
-
-        if (destino) {
-            destino.classList.add('activa');
-        }
-
-        boton.classList.add('activo');
-
-        paginaActualSustratos = pagina;
-
-    });
 
     const option = document.createElement('option');
     option.value = id;
@@ -1746,108 +2071,6 @@ function cargarPrecioVentaSustrato() {
   } else {
     precioVentaSustratoInput.value = '';
   }
-
-// ======================================================
-// 6. REGISTRAR NUEVO PRODUCTO
-// ======================================================
-
-if (btnAgregarSustrato) {
-
-    btnAgregarSustrato.addEventListener('click', async () => {
-
-        const nombre = nombreSustrato.value.trim();
-        const unidad = unidadSustrato.value;
-
-        const costo = Number(costoSustrato.value);
-        const precioVenta = Number(precioVentaSustrato.value);
-        const stock = Number(stockSustrato.value);
-
-        if (!nombre) {
-            return mostrarMensajeSustratos('Ingresa el nombre del producto.');
-        }
-
-        if (!['kg', 'L', 'und'].includes(unidad)) {
-            return mostrarMensajeSustratos('Selecciona una unidad válida.');
-        }
-
-        if (!Number.isFinite(costo) || costo < 0) {
-            return mostrarMensajeSustratos('Ingresa un costo válido.');
-        }
-
-        if (!Number.isFinite(precioVenta) || precioVenta < 0) {
-            return mostrarMensajeSustratos('Ingresa un precio de venta válido.');
-        }
-
-        if (!Number.isFinite(stock) || stock < 0) {
-            return mostrarMensajeSustratos('Ingresa un stock válido.');
-        }
-
-        if (unidad === 'und' && !Number.isInteger(stock)) {
-            return mostrarMensajeSustratos('Las unidades deben registrarse con números enteros.');
-        }
-
-        try {
-
-            btnAgregarSustrato.disabled = true;
-
-            const referencia = await coleccionSustratos.add({
-
-                nombre: nombre,
-                unidad: unidad,
-
-                costo: costo,
-                precioVenta: precioVenta,
-
-                stock: stock,
-
-                stockMinimo: 2,
-
-                fecha: firebase.firestore.FieldValue.serverTimestamp(),
-
-                actualizado: firebase.firestore.FieldValue.serverTimestamp()
-
-            });
-
-            if (stock > 0) {
-
-                await coleccionMovimientosSustratos.add({
-
-                    sustratoId: referencia.id,
-                    producto: nombre,
-
-                    tipo: 'entrada',
-                    cantidad: stock,
-                    unidad: unidad,
-
-                    detalle: 'Stock inicial del producto',
-
-                    fecha: firebase.firestore.FieldValue.serverTimestamp()
-
-                });
-
-            }
-
-            nombreSustrato.value = '';
-            costoSustrato.value = '';
-            precioVentaSustrato.value = '';
-            stockSustrato.value = '';
-
-            mostrarMensajeSustratos('Producto registrado correctamente.');
-
-        } catch (error) {
-
-            console.error('Error registrando sustrato:', error);
-
-            mostrarMensajeSustratos('No se pudo registrar el producto.');
-
-        } finally {
-
-            btnAgregarSustrato.disabled = false;
-
-        }
-
-    });
-
 }
 
 if (btnRegistrarVentaSustrato) {
@@ -1862,67 +2085,6 @@ if (btnRegistrarVentaSustrato) {
     if (!sustratoId || isNaN(cant) || isNaN(precio) || cant <= 0) {
       alert("Por favor selecciona un producto y datos válidos.");
       return;
-
-// ======================================================
-// 7. CARGAR INVENTARIO
-// ======================================================
-
-coleccionSustratos.onSnapshot(snapshot => {
-
-    productosSustratos = [];
-
-    snapshot.forEach(doc => {
-
-        const producto = doc.data();
-
-        productosSustratos.push({
-            id: doc.id,
-            ...producto
-        });
-
-    });
-
-    mostrarInventarioSustratos();
-    cargarSelectEntradasSustratos();
-    mostrarProductosVentaSustratos();
-    actualizarPanelSustratos();
-
-}, error => {
-
-    console.error('Error cargando inventario:', error);
-
-});
-
-
-// ======================================================
-// 8. MOSTRAR INVENTARIO
-// ======================================================
-
-function mostrarInventarioSustratos() {
-
-    if (!tablaInventarioSustratos) return;
-
-    const busqueda = (buscarSustrato?.value || '').toLowerCase();
-
-    const filtrados = productosSustratos.filter(producto => {
-
-        return String(producto.nombre || '')
-            .toLowerCase()
-            .includes(busqueda);
-
-    });
-
-    tablaInventarioSustratos.innerHTML = '';
-
-    if (filtrados.length === 0) {
-
-        tablaInventarioSustratos.innerHTML = `
-            <tr>
-                <td colspan="6">No hay productos registrados.</td>
-            </tr>
-        `;
-
-        return;
     }
 
     db.collection('ventasSustratos').add({
@@ -1940,45 +2102,8 @@ function mostrarInventarioSustratos() {
       clienteVentaSustrato.value = '';
       selectSustratoVenta.value = '';
       precioVentaSustratoInput.value = '';
-    filtrados.forEach(producto => {
-
-        const unidad = producto.unidad || 'und';
-
-        const fila = document.createElement('tr');
-
-        fila.innerHTML = `
-
-            <td>${escaparHTMLSustratos(producto.nombre)}</td>
-
-            <td>${unidadTextoSustratos(unidad)}</td>
-
-            <td>${formatoMonedaSustratos(producto.costo)}</td>
-
-            <td>${formatoMonedaSustratos(producto.precioVenta ?? producto.costo)}</td>
-
-            <td>${formatoCantidadSustratos(producto.stock)} ${unidadTextoSustratos(unidad)}</td>
-
-            <td>
-
-                <button onclick="editarSustrato('${producto.id}')"
-                    class="btn-editar-sustrato">
-                    Editar
-                </button>
-
-                <button onclick="eliminarSustrato('${producto.id}')"
-                    class="btn-eliminar-sustrato">
-                    Eliminar
-                </button>
-
-            </td>
-
-        `;
-
-        tablaInventarioSustratos.appendChild(fila);
-
     });
   });
-
 }
 
 db.collection('ventasSustratos').orderBy('fecha', 'desc').onSnapshot(snapshot => {
@@ -2001,9 +2126,6 @@ db.collection('ventasSustratos').orderBy('fecha', 'desc').onSnapshot(snapshot =>
     listaHistorialSustratos.appendChild(li);
   });
 });
-if (buscarSustrato) {
-
-    buscarSustrato.addEventListener('input', mostrarInventarioSustratos);
 
 function eliminarSustrato(id) {
   if (confirm("¿Deseas eliminar este producto del inventario?")) {
@@ -2015,1230 +2137,5 @@ function eliminarVentaSustrato(id) {
   if (confirm("¿Estás seguro de eliminar este registro de venta?")) {
     db.collection('ventasSustratos').doc(id).delete();
   }
-
-// ======================================================
-// 9. EDITAR PRODUCTO
-// ======================================================
-
-async function editarSustrato(id) {
-
-    const producto = productosSustratos.find(item => item.id === id);
-
-    if (!producto) return;
-
-    const nuevoNombre = prompt('Nombre del producto:', producto.nombre);
-
-    if (nuevoNombre === null) return;
-
-    if (!nuevoNombre.trim()) {
-        return mostrarMensajeSustratos('El nombre no puede estar vacío.');
-    }
-
-    const nuevoCosto = prompt('Costo unitario:', producto.costo || 0);
-
-    if (nuevoCosto === null) return;
-
-    const nuevoPrecio = prompt(
-        'Precio de venta:',
-        producto.precioVenta ?? producto.costo ?? 0
-    );
-
-    if (nuevoPrecio === null) return;
-
-    const nuevoStock = prompt('Stock actual:', producto.stock || 0);
-
-    if (nuevoStock === null) return;
-
-    const costo = Number(nuevoCosto);
-    const precio = Number(nuevoPrecio);
-    const stock = Number(nuevoStock);
-
-    if (
-        !Number.isFinite(costo) || costo < 0 ||
-        !Number.isFinite(precio) || precio < 0 ||
-        !Number.isFinite(stock) || stock < 0
-    ) {
-        return mostrarMensajeSustratos('Los datos ingresados no son válidos.');
-    }
-
-    if (producto.unidad === 'und' && !Number.isInteger(stock)) {
-        return mostrarMensajeSustratos('Las unidades deben ser números enteros.');
-    }
-
-    try {
-
-        await coleccionSustratos.doc(id).update({
-
-            nombre: nuevoNombre.trim(),
-            costo: costo,
-            precioVenta: precio,
-            stock: stock,
-
-            actualizado: firebase.firestore.FieldValue.serverTimestamp()
-
-        });
-
-        mostrarMensajeSustratos('Producto actualizado correctamente.');
-
-    } catch (error) {
-
-        console.error(error);
-
-        mostrarMensajeSustratos('No se pudo actualizar el producto.');
-
-    }
-
 }
-
-
-// ======================================================
-// 10. ELIMINAR PRODUCTO
-// ======================================================
-
-async function eliminarSustrato(id) {
-
-    const producto = productosSustratos.find(item => item.id === id);
-
-    if (!producto) return;
-
-    if (Number(producto.stock || 0) > 0) {
-
-        return mostrarMensajeSustratos(
-            'No puedes eliminar un producto que todavía tiene stock. Primero registra su salida o ajusta su inventario.'
-        );
-
-    }
-
-    if (!confirm(`¿Deseas eliminar ${producto.nombre} del inventario?`)) {
-        return;
-    }
-
-    try {
-
-        await coleccionSustratos.doc(id).delete();
-
-        mostrarMensajeSustratos('Producto eliminado.');
-
-    } catch (error) {
-
-        console.error(error);
-
-        mostrarMensajeSustratos('No se pudo eliminar el producto.');
-
-    }
-
-}
-
-
-// ======================================================
-// 11. CARGAR SELECT DE ENTRADAS
-// ======================================================
-
-function cargarSelectEntradasSustratos() {
-
-    if (!selectEntradaSustrato) return;
-
-    const valorAnterior = selectEntradaSustrato.value;
-
-    selectEntradaSustrato.innerHTML = `
-        <option value="">Selecciona un producto</option>
-    `;
-
-    productosSustratos.forEach(producto => {
-
-        const option = document.createElement('option');
-
-        option.value = producto.id;
-
-        option.textContent =
-            `${producto.nombre} (${unidadTextoSustratos(producto.unidad || 'und')})`;
-
-        selectEntradaSustrato.appendChild(option);
-
-    });
-
-    if (productosSustratos.some(p => p.id === valorAnterior)) {
-        selectEntradaSustrato.value = valorAnterior;
-    }
-
-}
-
-
-// ======================================================
-// 12. REGISTRAR ENTRADA DE PRODUCTOS
-// ======================================================
-
-if (btnRegistrarEntradaSustrato) {
-
-    btnRegistrarEntradaSustrato.addEventListener('click', async () => {
-
-        const id = selectEntradaSustrato.value;
-        const cantidad = Number(cantidadEntradaSustrato.value);
-        const costo = Number(costoEntradaSustrato.value);
-
-        const observacion = observacionEntradaSustrato.value.trim();
-
-        const producto = productosSustratos.find(item => item.id === id);
-
-        if (!producto) {
-            return mostrarMensajeSustratos('Selecciona un producto.');
-        }
-
-        if (!validarCantidadSustratos(cantidad, producto.unidad || 'und')) {
-            return mostrarMensajeSustratos('La cantidad ingresada no es válida para esta unidad.');
-        }
-
-        if (!Number.isFinite(costo) || costo < 0) {
-            return mostrarMensajeSustratos('Ingresa un costo unitario válido.');
-        }
-
-        try {
-
-            btnRegistrarEntradaSustrato.disabled = true;
-
-            await db.runTransaction(async transaction => {
-
-                const referenciaProducto = coleccionSustratos.doc(id);
-
-                const documento = await transaction.get(referenciaProducto);
-
-                if (!documento.exists) {
-                    throw new Error('El producto ya no existe.');
-                }
-
-                const datos = documento.data();
-
-                const stockAnterior = Number(datos.stock || 0);
-
-                transaction.update(referenciaProducto, {
-
-                    stock: stockAnterior + cantidad,
-
-                    costo: costo,
-
-                    actualizado: firebase.firestore.FieldValue.serverTimestamp()
-
-                });
-
-                const entradaRef = coleccionEntradasSustratos.doc();
-
-                transaction.set(entradaRef, {
-
-                    sustratoId: id,
-                    producto: datos.nombre,
-
-                    cantidad: cantidad,
-                    unidad: datos.unidad || 'und',
-
-                    costoUnit: costo,
-                    total: cantidad * costo,
-
-                    observacion: observacion,
-
-                    fecha: firebase.firestore.FieldValue.serverTimestamp()
-
-                });
-
-                const movimientoRef = coleccionMovimientosSustratos.doc();
-
-                transaction.set(movimientoRef, {
-
-                    sustratoId: id,
-                    producto: datos.nombre,
-
-                    tipo: 'entrada',
-
-                    cantidad: cantidad,
-                    unidad: datos.unidad || 'und',
-
-                    detalle: observacion || 'Ingreso de productos',
-
-                    fecha: firebase.firestore.FieldValue.serverTimestamp()
-
-                });
-
-            });
-
-            cantidadEntradaSustrato.value = '';
-            costoEntradaSustrato.value = '';
-            observacionEntradaSustrato.value = '';
-
-            mostrarMensajeSustratos('Entrada registrada correctamente.');
-
-        } catch (error) {
-
-            console.error(error);
-
-            mostrarMensajeSustratos('No se pudo registrar la entrada.');
-
-        } finally {
-
-            btnRegistrarEntradaSustrato.disabled = false;
-
-        }
-
-    });
-
-}
-
-
-// ======================================================
-// 13. HISTORIAL DE ENTRADAS
-// ======================================================
-
-coleccionEntradasSustratos
-    .orderBy('fecha', 'desc')
-    .onSnapshot(snapshot => {
-
-        entradasSustratos = [];
-
-        snapshot.forEach(doc => {
-
-            entradasSustratos.push({
-                id: doc.id,
-                ...doc.data()
-            });
-
-        });
-
-        mostrarHistorialEntradasSustratos();
-
-    }, error => {
-
-        console.error('Error cargando entradas:', error);
-
-    });
-
-
-function mostrarHistorialEntradasSustratos() {
-
-    if (!historialEntradasSustratos) return;
-
-    historialEntradasSustratos.innerHTML = '';
-
-    if (entradasSustratos.length === 0) {
-
-        historialEntradasSustratos.innerHTML = `
-            <tr>
-                <td colspan="6">Todavía no hay entradas registradas.</td>
-            </tr>
-        `;
-
-        return;
-    }
-
-    entradasSustratos.forEach(entrada => {
-
-        const fila = document.createElement('tr');
-
-        fila.innerHTML = `
-
-            <td>${mostrarFechaSustratos(entrada.fecha)}</td>
-
-            <td>${escaparHTMLSustratos(entrada.producto)}</td>
-
-            <td>${formatoCantidadSustratos(entrada.cantidad)}</td>
-
-            <td>${unidadTextoSustratos(entrada.unidad)}</td>
-
-            <td>${formatoMonedaSustratos(entrada.costoUnit)}</td>
-
-            <td>${formatoMonedaSustratos(entrada.total)}</td>
-
-        `;
-
-        historialEntradasSustratos.appendChild(fila);
-
-    });
-
-}
-
-
-// ======================================================
-// 14. MOSTRAR PRODUCTOS PARA VENTA
-// ======================================================
-
-function mostrarProductosVentaSustratos() {
-
-    if (!detalleVentaSustratos) return;
-
-    const cantidadesAnteriores = {};
-
-    detalleVentaSustratos.querySelectorAll('tr[data-id]').forEach(fila => {
-
-        const id = fila.dataset.id;
-
-        cantidadesAnteriores[id] = {
-            cantidad: fila.querySelector('.cantidad-venta-sustrato')?.value || '',
-            precio: fila.querySelector('.precio-venta-sustrato')?.value || ''
-        };
-
-    });
-
-    detalleVentaSustratos.innerHTML = '';
-
-    if (productosSustratos.length === 0) {
-
-        detalleVentaSustratos.innerHTML = `
-            <tr>
-                <td colspan="6">No hay productos disponibles.</td>
-            </tr>
-        `;
-
-        actualizarTotalVentaSustratos();
-
-        return;
-    }
-
-    productosSustratos.forEach(producto => {
-
-        const unidad = producto.unidad || 'und';
-
-        const stock = Number(producto.stock || 0);
-
-        const precio = Number(producto.precioVenta ?? producto.costo ?? 0);
-
-        const anterior = cantidadesAnteriores[producto.id] || {};
-
-        const fila = document.createElement('tr');
-
-        fila.dataset.id = producto.id;
-
-        fila.innerHTML = `
-
-            <td>${escaparHTMLSustratos(producto.nombre)}</td>
-
-            <td>${unidadTextoSustratos(unidad)}</td>
-
-            <td>${formatoCantidadSustratos(stock)}</td>
-
-            <td>
-                <input
-                    type="number"
-                    class="cantidad-venta-sustrato"
-                    min="0"
-                    step="${obtenerPasoUnidadSustratos(unidad)}"
-                    max="${stock}"
-                    value="${escaparHTMLSustratos(anterior.cantidad || '')}"
-                    placeholder="0"
-                    ${stock <= 0 ? 'disabled' : ''}
-                >
-            </td>
-
-            <td>
-                <input
-                    type="number"
-                    class="precio-venta-sustrato"
-                    min="0"
-                    step="0.01"
-                    value="${escaparHTMLSustratos(anterior.precio || precio)}"
-                >
-            </td>
-
-            <td class="subtotal-venta-sustrato">
-                S/ 0.00
-            </td>
-
-        `;
-
-        detalleVentaSustratos.appendChild(fila);
-
-    });
-
-    detalleVentaSustratos.querySelectorAll('input').forEach(input => {
-
-        input.addEventListener('input', actualizarTotalVentaSustratos);
-
-    });
-
-    actualizarTotalVentaSustratos();
-
-}
-
-
-// ======================================================
-// 15. CALCULAR TOTAL DE VENTA
-// ======================================================
-
-function actualizarTotalVentaSustratos() {
-
-    if (!detalleVentaSustratos || !totalVentaSustratos) return;
-
-    let total = 0;
-
-    detalleVentaSustratos.querySelectorAll('tr[data-id]').forEach(fila => {
-
-        const cantidad = Number(
-            fila.querySelector('.cantidad-venta-sustrato')?.value || 0
-        );
-
-        const precio = Number(
-            fila.querySelector('.precio-venta-sustrato')?.value || 0
-        );
-
-        const subtotal = cantidad * precio;
-
-        total += subtotal;
-
-        const celda = fila.querySelector('.subtotal-venta-sustrato');
-
-        if (celda) {
-            celda.textContent = formatoMonedaSustratos(subtotal);
-        }
-
-    });
-
-    totalVentaSustratos.textContent = formatoMonedaSustratos(total);
-
-}
-
-
-// ======================================================
-// 16. REGISTRAR VENTA COMPLETA
-// ======================================================
-
-if (btnRegistrarVentaSustrato) {
-
-    btnRegistrarVentaSustrato.addEventListener('click', async () => {
-
-        if (ventaEnProcesoSustratos) return;
-
-        const productosVenta = [];
-
-        detalleVentaSustratos.querySelectorAll('tr[data-id]').forEach(fila => {
-
-            const cantidad = Number(
-                fila.querySelector('.cantidad-venta-sustrato')?.value || 0
-            );
-
-            const precio = Number(
-                fila.querySelector('.precio-venta-sustrato')?.value || 0
-            );
-
-            if (cantidad > 0) {
-
-                productosVenta.push({
-
-                    id: fila.dataset.id,
-                    cantidad: cantidad,
-                    precio: precio
-
-                });
-
-            }
-
-        });
-
-        if (productosVenta.length === 0) {
-            return mostrarMensajeSustratos('Ingresa la cantidad de al menos un producto.');
-        }
-
-        for (const item of productosVenta) {
-
-            const producto = productosSustratos.find(p => p.id === item.id);
-
-            if (!producto) {
-                return mostrarMensajeSustratos('Uno de los productos ya no está disponible.');
-            }
-
-            if (!validarCantidadSustratos(item.cantidad, producto.unidad || 'und')) {
-                return mostrarMensajeSustratos(
-                    `La cantidad de ${producto.nombre} no es válida.`
-                );
-            }
-
-            if (!Number.isFinite(item.precio) || item.precio < 0) {
-                return mostrarMensajeSustratos(
-                    `El precio de ${producto.nombre} no es válido.`
-                );
-            }
-
-        }
-
-        const cliente = clienteVentaSustrato.value.trim() || 'Cliente Anónimo';
-        const metodoPago = metodoPagoSustrato.value;
-
-        const total = productosVenta.reduce((suma, item) => {
-            return suma + item.cantidad * item.precio;
-        }, 0);
-
-        if (!confirm(`¿Confirmas esta venta por ${formatoMonedaSustratos(total)}?`)) {
-            return;
-        }
-
-        try {
-
-            ventaEnProcesoSustratos = true;
-
-            btnRegistrarVentaSustrato.disabled = true;
-
-            await db.runTransaction(async transaction => {
-
-                const referencias = productosVenta.map(item => ({
-                    item: item,
-                    referencia: coleccionSustratos.doc(item.id)
-                }));
-
-                const documentos = [];
-
-                // Primero leer todos los productos.
-                for (const dato of referencias) {
-
-                    const documento = await transaction.get(dato.referencia);
-
-                    if (!documento.exists) {
-                        throw new Error('Uno de los productos ya no existe.');
-                    }
-
-                    documentos.push({
-                        ...dato,
-                        documento: documento
-                    });
-
-                }
-
-                const itemsVenta = [];
-
-                // Validar stock antes de modificar.
-                for (const dato of documentos) {
-
-                    const producto = dato.documento.data();
-
-                    const stockActual = Number(producto.stock || 0);
-
-                    if (dato.item.cantidad > stockActual) {
-
-                        throw new Error(
-                            `Stock insuficiente de ${producto.nombre}. Disponible: ${stockActual}.`
-                        );
-
-                    }
-
-                    itemsVenta.push({
-
-                        sustratoId: dato.item.id,
-
-                        producto: producto.nombre,
-
-                        unidad: producto.unidad || 'und',
-
-                        cantidad: dato.item.cantidad,
-
-                        precioUnit: dato.item.precio,
-
-                        subtotal: dato.item.cantidad * dato.item.precio
-
-                    });
-
-                }
-
-                // Descontar existencias.
-                documentos.forEach(dato => {
-
-                    const producto = dato.documento.data();
-
-                    transaction.update(dato.referencia, {
-
-                        stock: Number(producto.stock || 0) - dato.item.cantidad,
-
-                        actualizado: firebase.firestore.FieldValue.serverTimestamp()
-
-                    });
-
-                });
-
-                // Registrar venta.
-                const ventaRef = coleccionVentasSustratos.doc();
-
-                transaction.set(ventaRef, {
-
-                    items: itemsVenta,
-
-                    producto: itemsVenta.length === 1
-                        ? itemsVenta[0].producto
-                        : `${itemsVenta.length} productos`,
-
-                    cantidad: itemsVenta.length === 1
-                        ? itemsVenta[0].cantidad
-                        : null,
-
-                    precioUnit: itemsVenta.length === 1
-                        ? itemsVenta[0].precioUnit
-                        : null,
-
-                    total: total,
-
-                    cliente: cliente,
-
-                    metodoPago: metodoPago,
-
-                    estado: 'completada',
-
-                    fecha: firebase.firestore.FieldValue.serverTimestamp()
-
-                });
-
-                // Registrar movimientos de venta.
-                itemsVenta.forEach(item => {
-
-                    const movimientoRef = coleccionMovimientosSustratos.doc();
-
-                    transaction.set(movimientoRef, {
-
-                        sustratoId: item.sustratoId,
-
-                        producto: item.producto,
-
-                        tipo: 'venta',
-
-                        cantidad: item.cantidad,
-
-                        unidad: item.unidad,
-
-                        detalle: 'Venta registrada',
-
-                        ventaId: ventaRef.id,
-
-                        fecha: firebase.firestore.FieldValue.serverTimestamp()
-
-                    });
-
-                });
-
-            });
-
-            clienteVentaSustrato.value = '';
-
-            mostrarMensajeSustratos('¡Venta registrada correctamente!');
-
-        } catch (error) {
-
-            console.error('Error registrando venta:', error);
-
-            mostrarMensajeSustratos(error.message || 'No se pudo registrar la venta.');
-
-        } finally {
-
-            ventaEnProcesoSustratos = false;
-
-            btnRegistrarVentaSustrato.disabled = false;
-
-        }
-
-    });
-
-}
-
-
-// ======================================================
-// 17. HISTORIAL DE VENTAS
-// ======================================================
-
-coleccionVentasSustratos
-    .orderBy('fecha', 'desc')
-    .onSnapshot(snapshot => {
-
-        ventasSustratos = [];
-
-        snapshot.forEach(doc => {
-
-            ventasSustratos.push({
-                id: doc.id,
-                ...doc.data()
-            });
-
-        });
-
-        mostrarHistorialVentasSustratos();
-        actualizarPanelSustratos();
-
-    }, error => {
-
-        console.error('Error cargando ventas:', error);
-
-    });
-
-
-function obtenerResumenVentaSustratos(venta) {
-
-    if (Array.isArray(venta.items) && venta.items.length > 0) {
-
-        return venta.items.map(item => {
-
-            return `${item.producto} (${formatoCantidadSustratos(item.cantidad)} ${unidadTextoSustratos(item.unidad)})`;
-
-        }).join(', ');
-
-    }
-
-    return `${venta.producto || 'Venta antigua'} (${formatoCantidadSustratos(venta.cantidad || 0)})`;
-
-}
-
-
-function mostrarHistorialVentasSustratos() {
-
-    if (!historialVentasSustratos) return;
-
-    historialVentasSustratos.innerHTML = '';
-
-    let filtradas = ventasSustratos;
-
-    if (filtroFechaSustratos?.value) {
-
-        filtradas = ventasSustratos.filter(venta => {
-
-            const fecha = obtenerFechaSustratos(venta.fecha);
-
-            if (!fecha) return false;
-
-            const fechaTexto = [
-                fecha.getFullYear(),
-                String(fecha.getMonth() + 1).padStart(2, '0'),
-                String(fecha.getDate()).padStart(2, '0')
-            ].join('-');
-
-            return fechaTexto === filtroFechaSustratos.value;
-
-        });
-
-    }
-
-    if (filtradas.length === 0) {
-
-        historialVentasSustratos.innerHTML = `
-            <tr>
-                <td colspan="7">No hay ventas registradas.</td>
-            </tr>
-        `;
-
-        return;
-    }
-
-    filtradas.forEach(venta => {
-
-        const estado = venta.estado || 'completada';
-
-        const fila = document.createElement('tr');
-
-        fila.innerHTML = `
-
-            <td>${mostrarFechaSustratos(venta.fecha)}</td>
-
-            <td>${escaparHTMLSustratos(obtenerResumenVentaSustratos(venta))}</td>
-
-            <td>${escaparHTMLSustratos(venta.cliente || 'Cliente Anónimo')}</td>
-
-            <td>${escaparHTMLSustratos(venta.metodoPago || '-')}</td>
-
-            <td>${formatoMonedaSustratos(venta.total)}</td>
-
-            <td>${estado === 'anulada' ? 'Anulada' : 'Completada'}</td>
-
-            <td>
-                ${
-                    estado === 'anulada'
-                    ? '<span>Sin acciones</span>'
-                    : `<button onclick="anularVentaSustrato('${venta.id}')"
-                        class="btn-eliminar-sustrato">Anular</button>`
-                }
-            </td>
-
-        `;
-
-        historialVentasSustratos.appendChild(fila);
-
-    });
-
-}
-
-
-if (filtroFechaSustratos) {
-
-    filtroFechaSustratos.addEventListener('change', mostrarHistorialVentasSustratos);
-
-}
-
-
-// ======================================================
-// 18. ANULAR VENTA Y DEVOLVER STOCK
-// ======================================================
-
-async function anularVentaSustrato(id) {
-
-    const venta = ventasSustratos.find(item => item.id === id);
-
-    if (!venta) return;
-
-    if (venta.estado === 'anulada') {
-        return mostrarMensajeSustratos('Esta venta ya fue anulada.');
-    }
-
-    if (!Array.isArray(venta.items) || venta.items.length === 0) {
-
-        return mostrarMensajeSustratos(
-            'Esta es una venta antigua que no contiene los identificadores de los productos. No se puede devolver el stock automáticamente.'
-        );
-
-    }
-
-    if (!confirm('¿Deseas anular esta venta y devolver las cantidades al inventario?')) {
-        return;
-    }
-
-    try {
-
-        await db.runTransaction(async transaction => {
-
-            const ventaRef = coleccionVentasSustratos.doc(id);
-
-            const ventaDoc = await transaction.get(ventaRef);
-
-            if (!ventaDoc.exists) {
-                throw new Error('La venta no existe.');
-            }
-
-            const datosVenta = ventaDoc.data();
-
-            if (datosVenta.estado === 'anulada') {
-                throw new Error('Esta venta ya fue anulada.');
-            }
-
-            const referencias = [];
-
-            for (const item of datosVenta.items) {
-
-                const referencia = coleccionSustratos.doc(item.sustratoId);
-
-                const documento = await transaction.get(referencia);
-
-                if (!documento.exists) {
-
-                    throw new Error(
-                        `No se encontró el producto ${item.producto}. No se puede completar la devolución.`
-                    );
-
-                }
-
-                referencias.push({
-                    item,
-                    referencia,
-                    documento
-                });
-
-            }
-
-            // Devolver existencias.
-            referencias.forEach(dato => {
-
-                const stockActual = Number(dato.documento.data().stock || 0);
-
-                transaction.update(dato.referencia, {
-
-                    stock: stockActual + Number(dato.item.cantidad),
-
-                    actualizado: firebase.firestore.FieldValue.serverTimestamp()
-
-                });
-
-            });
-
-            // Cambiar estado de la venta.
-            transaction.update(ventaRef, {
-
-                estado: 'anulada',
-
-                fechaAnulacion: firebase.firestore.FieldValue.serverTimestamp()
-
-            });
-
-            // Registrar devoluciones.
-            referencias.forEach(dato => {
-
-                const movimientoRef = coleccionMovimientosSustratos.doc();
-
-                transaction.set(movimientoRef, {
-
-                    sustratoId: dato.item.sustratoId,
-
-                    producto: dato.item.producto,
-
-                    tipo: 'devolucion',
-
-                    cantidad: dato.item.cantidad,
-
-                    unidad: dato.item.unidad,
-
-                    detalle: 'Devolución por anulación de venta',
-
-                    ventaId: id,
-
-                    fecha: firebase.firestore.FieldValue.serverTimestamp()
-
-                });
-
-            });
-
-        });
-
-        mostrarMensajeSustratos('Venta anulada y stock devuelto correctamente.');
-
-    } catch (error) {
-
-        console.error(error);
-
-        mostrarMensajeSustratos(error.message || 'No se pudo anular la venta.');
-
-    }
-
-}
-
-
-// ======================================================
-// 19. HISTORIAL DE MOVIMIENTOS
-// ======================================================
-
-coleccionMovimientosSustratos
-    .orderBy('fecha', 'desc')
-    .onSnapshot(snapshot => {
-
-        movimientosSustratos = [];
-
-        snapshot.forEach(doc => {
-
-            movimientosSustratos.push({
-                id: doc.id,
-                ...doc.data()
-            });
-
-        });
-
-        mostrarMovimientosSustratos();
-
-    }, error => {
-
-        console.error('Error cargando movimientos:', error);
-
-    });
-
-
-function mostrarMovimientosSustratos() {
-
-    if (!movimientosInventarioSustratos) return;
-
-    movimientosInventarioSustratos.innerHTML = '';
-
-    let filtrados = movimientosSustratos;
-
-    const filtro = filtroMovimientoSustratos?.value || 'todos';
-
-    if (filtro !== 'todos') {
-
-        filtrados = movimientosSustratos.filter(movimiento => {
-            return movimiento.tipo === filtro;
-        });
-
-    }
-
-    if (filtrados.length === 0) {
-
-        movimientosInventarioSustratos.innerHTML = `
-            <tr>
-                <td colspan="6">No hay movimientos registrados.</td>
-            </tr>
-        `;
-
-        return;
-
-    }
-
-    filtrados.forEach(movimiento => {
-
-        const fila = document.createElement('tr');
-
-        let tipoTexto = movimiento.tipo;
-
-        if (movimiento.tipo === 'entrada') tipoTexto = 'Entrada';
-        if (movimiento.tipo === 'venta') tipoTexto = 'Venta';
-        if (movimiento.tipo === 'devolucion') tipoTexto = 'Devolución';
-
-        fila.innerHTML = `
-
-            <td>${mostrarFechaSustratos(movimiento.fecha)}</td>
-
-            <td>${escaparHTMLSustratos(movimiento.producto)}</td>
-
-            <td>${tipoTexto}</td>
-
-            <td>${formatoCantidadSustratos(movimiento.cantidad)}</td>
-
-            <td>${unidadTextoSustratos(movimiento.unidad)}</td>
-
-            <td>${escaparHTMLSustratos(movimiento.detalle || '-')}</td>
-
-        `;
-
-        movimientosInventarioSustratos.appendChild(fila);
-
-    });
-
-}
-
-
-if (filtroMovimientoSustratos) {
-
-    filtroMovimientoSustratos.addEventListener('change', mostrarMovimientosSustratos);
-
-}
-
-
-// ======================================================
-// 20. PANEL PRINCIPAL
-// ======================================================
-
-function actualizarPanelSustratos() {
-
-    const totalProductos = productosSustratos.length;
-
-    let stockKg = 0;
-    let stockLitros = 0;
-    let stockUnidades = 0;
-    let alertas = 0;
-
-    productosSustratos.forEach(producto => {
-
-        const stock = Number(producto.stock || 0);
-
-        if (producto.unidad === 'kg') stockKg += stock;
-        else if (producto.unidad === 'L') stockLitros += stock;
-        else stockUnidades += stock;
-
-        const minimo = Number(producto.stockMinimo ?? 2);
-
-        if (stock <= minimo) {
-            alertas++;
-        }
-
-    });
-
-    const ahora = new Date();
-
-    const ventasMes = ventasSustratos.reduce((suma, venta) => {
-
-        if (venta.estado === 'anulada') return suma;
-
-        const fecha = obtenerFechaSustratos(venta.fecha);
-
-        if (!fecha) return suma;
-
-        if (
-            fecha.getMonth() === ahora.getMonth() &&
-            fecha.getFullYear() === ahora.getFullYear()
-        ) {
-
-            return suma + Number(venta.total || 0);
-
-        }
-
-        return suma;
-
-    }, 0);
-
-
-    const totalElementos = {
-
-        totalProductosSustratos: totalProductos,
-
-        stockKgSustratos: formatoCantidadSustratos(stockKg) + ' kg',
-
-        stockLitrosSustratos: formatoCantidadSustratos(stockLitros) + ' L',
-
-        stockUnidadesSustratos: formatoCantidadSustratos(stockUnidades),
-
-        ventasMesSustratos: formatoMonedaSustratos(ventasMes),
-
-        alertasSustratos: alertas
-
-    };
-
-
-    Object.entries(totalElementos).forEach(([id, valor]) => {
-
-        const elemento = document.getElementById(id);
-
-        if (elemento) {
-            elemento.textContent = valor;
-        }
-
-    });
-
-
-    mostrarAlertasSustratos();
-
-}
-
-
-// ======================================================
-// 21. ALERTAS DE STOCK BAJO
-// ======================================================
-
-function mostrarAlertasSustratos() {
-
-    const tabla = document.getElementById('alertasInventarioSustratos');
-
-    if (!tabla) return;
-
-    const alertas = productosSustratos.filter(producto => {
-
-        const stock = Number(producto.stock || 0);
-
-        const minimo = Number(producto.stockMinimo ?? 2);
-
-        return stock <= minimo;
-
-    });
-
-    tabla.innerHTML = '';
-
-    if (alertas.length === 0) {
-
-        tabla.innerHTML = `
-            <tr>
-                <td colspan="4">No hay productos con stock bajo.</td>
-            </tr>
-        `;
-
-        return;
-
-    }
-
-    alertas.forEach(producto => {
-
-        const fila = document.createElement('tr');
-
-        fila.innerHTML = `
-
-            <td>${escaparHTMLSustratos(producto.nombre)}</td>
-
-            <td>${formatoCantidadSustratos(producto.stock)}</td>
-
-            <td>${unidadTextoSustratos(producto.unidad)}</td>
-
-            <td>
-                <span style="color:#d97706;font-weight:600;">
-                    Stock bajo
-                </span>
-            </td>
-
-        `;
-
-        tabla.appendChild(fila);
-
-    });
-
-}
-
-
-// ======================================================
-// FIN DEL MÓDULO DE SUSTRATOS
 // ======================================================
