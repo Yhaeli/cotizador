@@ -323,7 +323,6 @@ input, select, textarea {
 
 .stock-low { color: var(--danger-color); font-weight: bold; }
 
-
 /* ==========================================
    DISEÑO DEL MÓDULO DE MACETAS
 ========================================== */
@@ -335,8 +334,6 @@ input, select, textarea {
   border-radius: 12px;
   overflow: hidden;
 }
-
-/* MENÚ LATERAL */
 
 #tab-macetas .menu-macetas {
   width: 230px;
@@ -381,8 +378,6 @@ input, select, textarea {
   background: #2c7652;
 }
 
-/* CONTENIDO */
-
 #tab-macetas .contenido-macetas {
   flex: 1;
   padding: 28px;
@@ -399,8 +394,6 @@ input, select, textarea {
   margin-bottom: 25px;
 }
 
-/* NAVEGACIÓN ENTRE PÁGINAS */
-
 #tab-macetas .pagina-macetas {
   display: none;
 }
@@ -408,8 +401,6 @@ input, select, textarea {
 #tab-macetas .pagina-macetas.activa {
   display: block;
 }
-
-/* TARJETAS */
 
 #tab-macetas .tarjeta-macetas {
   background: white;
@@ -424,35 +415,50 @@ input, select, textarea {
   margin-top: 0;
 }
 
-/* RESUMEN */
+/* =====================================================
+   ESTADÍSTICAS UNIFICADAS (Macetas y Sustratos idénticos)
+===================================================== */
 
-#tab-macetas .resumen-macetas {
+.resumen-macetas,
+#tab-sustratos .estadisticas-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 15px;
   margin-bottom: 25px;
 }
 
-#tab-macetas .tarjeta-resumen {
+.tarjeta-resumen,
+#tab-sustratos .tarjeta-estadistica {
   background: white;
   border-radius: 10px;
   padding: 22px 15px;
   box-shadow: 0 2px 9px rgba(0,0,0,.05);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
-#tab-macetas .tarjeta-resumen span {
+.tarjeta-resumen span,
+#tab-sustratos .tarjeta-estadistica span {
   display: block;
   color: #777;
   font-size: 13px;
   margin-bottom: 12px;
 }
 
-#tab-macetas .tarjeta-resumen strong {
+.tarjeta-resumen strong,
+#tab-sustratos .tarjeta-estadistica h3 {
   font-size: 25px;
   color: #174d36;
+  margin: 0;
+  font-weight: 700;
+  overflow-wrap: break-word;
 }
 
-/* FORMULARIOS */
+/* ==========================================
+   RESTO DE FORMULARIOS Y TABLAS DE MACETAS
+========================================== */
 
 #tab-macetas .formulario-macetas {
   display: grid;
@@ -478,8 +484,6 @@ input, select, textarea {
   font-size: 13px;
 }
 
-/* BOTONES */
-
 #tab-macetas button {
   cursor: pointer;
 }
@@ -503,8 +507,6 @@ input, select, textarea {
   margin-top: 20px;
   font-size: 15px;
 }
-
-/* TABLAS */
 
 #tab-macetas .tabla-responsive {
   width: 100%;
@@ -531,8 +533,6 @@ input, select, textarea {
   font-size: 13px;
 }
 
-/* FILTROS */
-
 #tab-macetas .filtros-macetas {
   display: flex;
   align-items: end;
@@ -548,8 +548,6 @@ input, select, textarea {
   background: #247548;
   color: white;
 }
-
-/* VENTAS */
 
 #tab-macetas .resumen-venta {
   display: grid;
@@ -577,8 +575,6 @@ input, select, textarea {
   grid-column: 1 / -1;
 }
 
-/* ALERTAS */
-
 #tab-macetas .alerta-stock {
   padding: 10px;
   margin-bottom: 8px;
@@ -587,289 +583,253 @@ input, select, textarea {
   color: #946200;
 }
 
-/* RESPONSIVE */
-
 @media (max-width: 850px) {
-
   #tab-macetas .panel-macetas {
     flex-direction: column;
   }
-
   #tab-macetas .menu-macetas {
     width: auto;
     min-width: 0;
-  }
-
-  #tab-macetas .menu-macetas {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
   }
-
   #tab-macetas .logo-macetas {
     grid-column: 1 / -1;
   }
-
-  #tab-macetas .resumen-macetas {
+  .resumen-macetas,
+  #tab-sustratos .estadisticas-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-
   #tab-macetas .contenido-macetas {
     padding: 18px;
   }
-
 }
 
 @media (max-width: 500px) {
-
   #tab-macetas .formulario-macetas {
     grid-template-columns: 1fr;
   }
-
   #tab-macetas .resumen-venta {
     grid-template-columns: 1fr;
   }
-
   #tab-macetas .total-venta-macetas {
     text-align: left;
   }
-
 }
 
+/* =====================================================
+   VIVERO ELIEL - MÓDULO DE SUSTRATOS (AISLADO Y UNIFICADO)
+   VIVERO ELIEL - MÓDULO DE SUSTRATOS (CORREGIDO)
+===================================================== */
 
-/* ==========================================
-   DISEÑO DEL MÓDULO DE SUSTRATOS
-========================================== */
+#tab-sustratos {
+@@ -637,6 +18,16 @@ input, select, textarea {
+    box-sizing: border-box;
+}
 
-#tab-sustratos .panel-sustratos {
-  display: flex;
-  min-height: 700px;
-  background: #f5f7f5;
-  border-radius: 12px;
-  overflow: hidden;
+/* Ocultar el módulo completo cuando no está activo */
+#tab-sustratos.tab-content {
+    display: none;
+}
+
+#tab-sustratos.tab-content.active {
+    display: block;
+}
+
+/* ESTRUCTURA PRINCIPAL */
+#tab-sustratos .modulo-layout {
+    display: flex;
+    width: 100%;
+@@ -646,6 +37,7 @@ input, select, textarea {
+    overflow: hidden;
 }
 
 /* MENÚ LATERAL */
-
-#tab-sustratos .menu-sustratos {
-  width: 230px;
-  min-width: 230px;
-  background: #174d36;
-  padding: 22px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
+#tab-sustratos .sidebar-modulo {
+    flex: 0 0 242px;
+    width: 242px;
+@@ -713,26 +105,31 @@ input, select, textarea {
+    font-weight: 700;
 }
 
-#tab-sustratos .logo-sustratos {
-  color: white;
-  text-align: center;
-  margin-bottom: 25px;
+/* CONTENIDO PRINCIPAL */
+#tab-sustratos .contenido-modulo {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 28px 26px;
+    background: #f5f7f6;
 }
 
-#tab-sustratos .logo-sustratos h2 {
-  font-size: 21px;
-  margin-bottom: 5px;
-  color: white;
-}
-
-#tab-sustratos .logo-sustratos p {
-  font-size: 13px;
-  color: #d5e8dc;
-  margin: 0;
-}
-
-#tab-sustratos .nav-sustratos {
-  background: transparent;
-  border: none;
-  color: white;
-  text-align: left;
-  padding: 13px 12px;
-  border-radius: 7px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: .2s;
-}
-
-#tab-sustratos .nav-sustratos:hover,
-#tab-sustratos .nav-sustratos.activo {
-  background: #2c7652;
-}
-
-/* CONTENIDO */
-
-#tab-sustratos .contenido-sustratos {
-  flex: 1;
-  padding: 28px;
-  min-width: 0;
-}
-
-#tab-sustratos .contenido-sustratos h2 {
-  color: #174d36;
-  margin-top: 0;
-}
-
-#tab-sustratos .subtitulo-sustratos {
-  color: #777;
-  margin-bottom: 25px;
-}
-
-/* NAVEGACIÓN ENTRE PÁGINAS */
-
+#tab-sustratos.tab-content {
+/* CAMBIO ENTRE LAS SEIS PÁGINAS (OCULTAS POR DEFECTO) */
 #tab-sustratos .pagina-sustratos {
-  display: none;
+    display: none;
+    width: 100%;
 }
 
+#tab-sustratos.tab-content.active {
 #tab-sustratos .pagina-sustratos.activa {
-  display: block;
+    display: block;
+    animation: aparecerSustratos .22s ease;
 }
 
-/* TARJETAS */
-
-#tab-sustratos .tarjeta-sustratos {
-  background: white;
-  padding: 22px;
-  border-radius: 10px;
-  margin-bottom: 22px;
-  box-shadow: 0 2px 9px rgba(0,0,0,.05);
+@keyframes aparecerSustratos {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-#tab-sustratos .tarjeta-sustratos h3 {
-  color: #245c40;
-  margin-top: 0;
+/* ENCABEZADOS */
+#tab-sustratos .encabezado-pagina {
+    display: flex;
+    flex-direction: column;
+@@ -756,6 +153,45 @@ input, select, textarea {
+    line-height: 1.5;
 }
 
-/* RESUMEN / ESTADÍSTICAS */
-
-#tab-sustratos .resumen-sustratos {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 15px;
-  margin-bottom: 25px;
+/* ESTADÍSTICAS (4 COLUMNAS) */
+#tab-sustratos .estadisticas-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin: 0 0 22px;
 }
 
-#tab-sustratos .tarjeta-resumen-sustratos {
-  background: white;
-  border-radius: 10px;
-  padding: 22px 15px;
-  box-shadow: 0 2px 9px rgba(0,0,0,.05);
+#tab-sustratos .tarjeta-estadistica {
+    min-width: 0;
+    min-height: 116px;
+    padding: 20px 14px;
+    border: 0;
+    border-radius: 11px;
+    background: #fff;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, .05);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
-#tab-sustratos .tarjeta-resumen-sustratos span {
-  display: block;
-  color: #777;
-  font-size: 13px;
-  margin-bottom: 12px;
+#tab-sustratos .tarjeta-estadistica span {
+    display: block;
+    margin: 0 0 12px;
+    color: #78857c;
+    font-size: 12px;
+    line-height: 1.5;
 }
 
-#tab-sustratos .tarjeta-resumen-sustratos strong {
-  font-size: 25px;
-  color: #174d36;
+#tab-sustratos .tarjeta-estadistica h3 {
+    margin: 0;
+    color: #174d36;
+    font-size: 23px;
+    line-height: 1.25;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+/* PANELES BLANCOS */
+#tab-sustratos .panel-modulo {
+    margin: 0 0 22px;
+    padding: 22px;
+@@ -773,6 +209,7 @@ input, select, textarea {
+    font-weight: 700;
+}
+
+/* TARJETA VENTAS DEL MES */
+#tab-sustratos .tarjeta-ventas-mes-sustratos {
+    margin: 0 0 22px;
+    padding: 18px 22px;
+@@ -793,6 +230,7 @@ input, select, textarea {
+    font-size: 23px;
 }
 
 /* FORMULARIOS */
-
-#tab-sustratos .formulario-sustratos {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 13px;
+#tab-sustratos .formulario-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+@@ -826,7 +264,6 @@ input, select, textarea {
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: border-color .2s ease, box-shadow .2s ease;
 }
 
-#tab-sustratos input,
-#tab-sustratos select {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 11px;
-  border: 1px solid #d7ddd8;
-  border-radius: 6px;
-  background: white;
-  font-size: 14px;
+#tab-sustratos input:focus,
+@@ -835,6 +272,7 @@ input, select, textarea {
+    box-shadow: 0 0 0 3px rgba(36, 117, 72, .10);
 }
 
-#tab-sustratos label {
-  display: block;
-  margin-bottom: 7px;
-  color: #555;
-  font-size: 13px;
+/* BOTONES DE ACCIÓN */
+#tab-sustratos .btn-principal {
+    display: inline-flex;
+    align-items: center;
+@@ -849,12 +287,10 @@ input, select, textarea {
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s ease, transform .2s ease;
 }
 
-/* BOTONES */
-
-#tab-sustratos button {
-  cursor: pointer;
-}
-
-#tab-sustratos .btn-principal-sustratos {
-  background: #247548;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 12px 18px;
-  font-weight: bold;
-}
-
-#tab-sustratos .btn-principal-sustratos:hover {
-  background: #185b35;
+#tab-sustratos .btn-principal:hover {
+    background: #185b35;
+    transform: translateY(-1px);
 }
 
 #tab-sustratos .btn-registrar-venta {
-  width: 100%;
-  padding: 16px;
-  margin-top: 20px;
-  font-size: 15px;
+@@ -864,24 +300,7 @@ input, select, textarea {
+    font-size: 15px;
+}
+
+#tab-sustratos .encabezado-tabla {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 0 0 18px;
+}
+
+#tab-sustratos .encabezado-tabla h3 {
+    margin: 0;
+}
+
+#tab-sustratos .encabezado-tabla input,
+#tab-sustratos .encabezado-tabla select {
+    max-width: 260px;
+}
+
+/* TABLAS */
+#tab-sustratos .tabla-responsive {
+    width: 100%;
+    overflow-x: auto;
+@@ -917,10 +336,7 @@ input, select, textarea {
+    vertical-align: middle;
+}
+
+#tab-sustratos table tbody tr:hover {
+    background: #f8fbf8;
 }
 
 /* RESUMEN DE VENTA */
-
-#tab-sustratos .resumen-venta-sustratos {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 20px;
+#tab-sustratos .resumen-venta {
+    display: flex;
+    justify-content: flex-end;
+@@ -944,6 +360,7 @@ input, select, textarea {
+    font-weight: 800;
 }
 
-#tab-sustratos .total-venta-sustratos {
-  text-align: right;
-}
-
-#tab-sustratos .total-venta-sustratos span {
-  display: block;
-  color: #777;
-  font-size: 14px;
-}
-
-#tab-sustratos .total-venta-sustratos strong {
-  font-size: 28px;
-  color: #174d36;
-}
-
-/* RESPONSIVE */
-
+/* RESPONSIVO */
 @media (max-width: 850px) {
-  #tab-sustratos .panel-sustratos {
-    flex-direction: column;
-  }
-
-  #tab-sustratos .menu-sustratos {
-    width: auto;
-    min-width: 0;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  #tab-sustratos .logo-sustratos {
-    grid-column: 1 / -1;
-  }
-
-  #tab-sustratos .resumen-sustratos {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  #tab-sustratos .contenido-sustratos {
-    padding: 18px;
-  }
-}
-
-@media (max-width: 500px) {
-  #tab-sustratos .formulario-sustratos {
-    grid-template-columns: 1fr;
-  }
+    #tab-sustratos .modulo-layout {
+        flex-direction: column;
+@@ -959,11 +376,7 @@ input, select, textarea {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+    #tab-sustratos button.nav-sustratos {
+        padding: 11px 8px;
+        text-align: center;
+    }
+    #tab-sustratos .contenido-modulo {
+        padding: 22px;
+    #tab-sustratos .estadisticas-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
