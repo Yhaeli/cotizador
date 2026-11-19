@@ -1,4 +1,4 @@
-/* VIVERO ELIEL - Cotizaciones y control de inventario/ventas */
+  /* VIVERO ELIEL - Cotizaciones y control de inventario/ventas */
 'use strict';
 
 const $ = id => document.getElementById(id);
@@ -148,12 +148,247 @@ function pintarAlertasSustratos(){const bajo=sustratos.filter(p=>Number(p.stock)
 function resumenSustratos(){ $('totalProductosSustratos')&&($('totalProductosSustratos').textContent=sustratos.length);for(const [u,id] of [['kg','stockKgSustratos'],['L','stockLitrosSustratos'],['und','stockUnidadesSustratos']])if($(id))$(id).textContent=dinero(sustratos.filter(p=>p.unidad===u).reduce((a,p)=>a+Number(p.stock||0),0));const n=new Date();const total=ventasSustratos.filter(v=>{const d=v.fecha?.toDate?v.fecha.toDate():new Date(v.fecha);return d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();}).reduce((a,v)=>a+Number(v.total||0),0);$('ventasMesSustratos')&&($('ventasMesSustratos').textContent='S/. '+dinero(total));}
 $('btnAgregarSustrato')?.addEventListener('click',async()=>{const nombre=$('nombreSustrato').value.trim(),unidad=$('unidadSustrato').value,costo=Number($('costoSustrato').value),precioVenta=Number($('precioVentaSustrato').value),stock=Number($('stockSustrato').value);if(!nombre||$('costoSustrato').value===''||$('precioVentaSustrato').value===''||$('stockSustrato').value===''||![costo,precioVenta,stock].every(Number.isFinite)||costo<0||precioVenta<0||stock<0)return alert('Completa correctamente todos los campos.');try{const ref=db.collection('sustratos').doc();await ref.set({nombre,unidad,costo,precioVenta,stock,fecha:fechaServidor()});if(stock>0)await db.collection('movimientosSustratos').add({sustratoId:ref.id,producto:nombre,tipo:'Stock inicial',cantidad:stock,unidad,detalle:'Registro inicial',fecha:fechaServidor()});$('nombreSustrato').value=$('costoSustrato').value=$('precioVentaSustrato').value=$('stockSustrato').value='';alert('Producto registrado.');}catch(e){mostrarError(e);}});
 $('tablaInventarioSustratos')?.addEventListener('click',async e=>{const id=e.target.dataset.id;if(e.target.classList.contains('eliminar-sustrato')){if(confirm('¿Eliminar este producto?'))try{await db.collection('sustratos').doc(id).delete();}catch(err){mostrarError(err);}}if(e.target.classList.contains('editar-sustrato')){const p=sustratos.find(x=>x.id===id);if(!p)return;const nombre=prompt('Nombre:',p.nombre);if(nombre===null)return;const costo=Number(prompt('Costo:',p.costo)),precioVenta=Number(prompt('Precio de venta:',p.precioVenta));if(!nombre.trim()||!Number.isFinite(costo)||!Number.isFinite(precioVenta)||costo<0||precioVenta<0)return alert('Datos no válidos.');try{await db.collection('sustratos').doc(id).update({nombre:nombre.trim(),costo,precioVenta});}catch(err){mostrarError(err);}}});
-$('btnRegistrarEntradaSustrato')?.addEventListener('click',async()=>{const id=$('selectEntradaSustrato').value,cantidad=Number($('cantidadEntradaSustrato').value),costo=Number($('costoEntradaSustrato').value),p=sustratos.find(x=>x.id===id);if(!p||!Number.isFinite(cantidad)||cantidad<=0||$('costoEntradaSustrato').value===''||!Number.isFinite(costo)||costo<0)return alert('Completa los datos de la entrada.');try{await db.runTransaction(async t=>{t.update(db.collection('sustratos').doc(id),{stock:Number(p.stock||0)+cantidad,costo});const mov=db.collection('movimientosSustratos').doc();t.set(mov,{sustratoId:id,producto:p.nombre,tipo:'Entrada',cantidad,unidad:p.unidad,detalle:$('observacionEntradaSustrato').value.trim(),fecha:fechaServidor()});const ent=db.collection('entradasSustratos').doc();t.set(ent,{sustratoId:id,producto:p.nombre,cantidad,unidad:p.unidad,costoUnitario:costo,total:cantidad*costo,fecha:fechaServidor()});});$('cantidadEntradaSustrato').value=$('costoEntradaSustrato').value=$('observacionEntradaSustrato').value='';alert('Entrada registrada.');}catch(e){mostrarError(e);}});
-function actualizarTotalSustratos(){let total=0;document.querySelectorAll('.cantidad-sustrato-venta').forEach(i=>{const p=sustratos.find(x=>x.id===i.dataset.id),q=Math.max(0,Number(i.value||0)),sub=q*Number(p?.precioVenta||0);total+=sub;const cel=document.querySelector(`.subtotal-sustrato[data-id="${i.dataset.id}"]`);if(cel)cel.textContent='S/. '+dinero(sub);});$('totalVentaSustratos').textContent='S/. '+dinero(total);}
+
+$('btnRegistrarEntradaSustrato')?.addEventListener('click', async () => {
+  const id = $('selectEntradaSustrato').value;
+  const cantidad = Number($('cantidadEntradaSustrato').value);
+  const costo = Number($('costoEntradaSustrato').value);
+  const observacion = $('observacionEntradaSustrato').value.trim();
+
+  if (
+    !id ||
+    !Number.isFinite(cantidad) ||
+    cantidad <= 0 ||
+    $('costoEntradaSustrato').value === '' ||
+    !Number.isFinite(costo) ||
+    costo < 0
+  ) {
+    return alert('Completa correctamente los datos de la entrada.');
+  }
+
+  try {
+    await db.runTransaction(async transaction => {
+      const productoRef = db.collection('sustratos').doc(id);
+      const productoSnap = await transaction.get(productoRef);
+
+      if (!productoSnap.exists) {
+        throw new Error('El producto ya no existe.');
+      }
+
+      const producto = productoSnap.data();
+      const stockActual = Number(producto.stock || 0);
+      const nuevoStock = stockActual + cantidad;
+
+      const movimientoRef = db.collection('movimientosSustratos').doc();
+      const entradaRef = db.collection('entradasSustratos').doc();
+
+      // Todas las lecturas se realizan antes de escribir.
+      transaction.update(productoRef, {
+        stock: nuevoStock,
+        costo: costo
+      });
+
+      transaction.set(movimientoRef, {
+        sustratoId: id,
+        producto: producto.nombre,
+        tipo: 'Entrada',
+        cantidad,
+        unidad: producto.unidad,
+        detalle: observacion,
+        fecha: fechaServidor()
+      });
+
+      transaction.set(entradaRef, {
+        sustratoId: id,
+        producto: producto.nombre,
+        cantidad,
+        unidad: producto.unidad,
+        costoUnitario: costo,
+        total: cantidad * costo,
+        fecha: fechaServidor()
+      });
+    });
+
+    $('cantidadEntradaSustrato').value = '';
+    $('costoEntradaSustrato').value = '';
+    $('observacionEntradaSustrato').value = '';
+
+    alert('Entrada registrada correctamente.');
+  } catch (error) {
+    console.error(error);
+    alert(error.message || 'No se pudo registrar la entrada.');
+  }
+});
+
+function actualizarTotalSustratos() {
+  let total = 0;
+
+  document.querySelectorAll('.cantidad-sustrato-venta').forEach(input => {
+    const producto = sustratos.find(p => p.id === input.dataset.id);
+    const cantidad = Math.max(0, Number(input.value || 0));
+    const subtotal = cantidad * Number(producto?.precioVenta || 0);
+
+    total += subtotal;
+
+    const celda = document.querySelector(
+      `.subtotal-sustrato[data-id="${input.dataset.id}"]`
+    );
+
+    if (celda) {
+      celda.textContent = 'S/. ' + dinero(subtotal);
+    }
+  });
+
+  if ($('totalVentaSustratos')) {
+    $('totalVentaSustratos').textContent = 'S/. ' + dinero(total);
+  }
+}
+
 $('detalleVentaSustratos')?.addEventListener('input',actualizarTotalSustratos);
-$('btnRegistrarVentaSustrato')?.addEventListener('click',async()=>{const productos=[...document.querySelectorAll('.cantidad-sustrato-venta')].map(i=>{const p=sustratos.find(x=>x.id===i.dataset.id);return p?{id:p.id,nombre:p.nombre,unidad:p.unidad,cantidad:Number(i.value||0),precioUnitario:Number(p.precioVenta||0),subtotal:Number(i.value||0)*Number(p.precioVenta||0)}:null;}).filter(x=>x&&x.cantidad>0);if(!productos.length)return alert('Indica la cantidad de al menos un producto.');for(const x of productos)if(x.cantidad>sustratos.find(p=>p.id===x.id).stock)return alert(`Stock insuficiente para ${x.nombre}.`);const total=productos.reduce((a,p)=>a+p.subtotal,0);try{await db.runTransaction(async t=>{for(const x of productos)t.update(db.collection('sustratos').doc(x.id),{stock:sustratos.find(p=>p.id===x.id).stock-x.cantidad});const v=db.collection('ventasSustratos').doc();t.set(v,{productos,total,cliente:$('clienteVentaSustrato').value.trim()||'Público general',metodoPago:$('metodoPagoSustrato').value,estado:'Pagado',fecha:fechaServidor()});for(const x of productos){const m=db.collection('movimientosSustratos').doc();t.set(m,{sustratoId:x.id,producto:x.nombre,tipo:'Venta',cantidad:x.cantidad,unidad:x.unidad,detalle:'Venta registrada',fecha:fechaServidor()});}});document.querySelectorAll('.cantidad-sustrato-venta').forEach(i=>i.value=0);$('clienteVentaSustrato').value='';actualizarTotalSustratos();alert('Venta registrada correctamente.');}catch(e){mostrarError(e);}});
+$('btnRegistrarVentaSustrato')?.addEventListener('click', async () => {
+  const cantidades = [
+    ...document.querySelectorAll('.cantidad-sustrato-venta')
+  ];
+
+  const productos = cantidades
+    .map(input => {
+      const cantidad = Number(input.value || 0);
+      const producto = sustratos.find(p => p.id === input.dataset.id);
+
+      if (!producto || cantidad === 0) return null;
+
+      if (!Number.isFinite(cantidad) || cantidad < 0) {
+      throw new Error('Hay una cantidad no válida.');
+      }
+
+      return {
+        id: producto.id,
+        nombre: producto.nombre,
+        unidad: producto.unidad,
+        cantidad,
+        precioUnitario: Number(producto.precioVenta || 0),
+        subtotal: cantidad * Number(producto.precioVenta || 0)
+      };
+    })
+    .filter(Boolean);
+
+  if (!productos.length) {
+    return alert('Indica la cantidad de al menos un producto.');
+  }
+
+  if (productos.some(p =>
+    !Number.isFinite(p.cantidad) ||
+    p.cantidad <= 0 ||
+    !Number.isFinite(p.precioUnitario) ||
+    p.precioUnitario < 0
+  )) {
+    return alert('Verifica las cantidades y los precios.');
+  }
+
+  // Evitar IDs repetidos en una misma venta.
+  const ids = productos.map(p => p.id);
+  if (new Set(ids).size !== ids.length) {
+    return alert('Hay productos duplicados en la venta.');
+  }
+
+  const total = productos.reduce((suma, p) => suma + p.subtotal, 0);
+  const cliente = $('clienteVentaSustrato').value.trim() || 'Público general';
+  const metodoPago = $('metodoPagoSustrato').value;
+
+  try {
+    await db.runTransaction(async transaction => {
+      // Primero se leen todos los productos directamente de Firebase.
+      const referencias = productos.map(p =>
+        db.collection('sustratos').doc(p.id)
+      );
+
+      const documentos = await Promise.all(
+        referencias.map(ref => transaction.get(ref))
+      );
+
+      // Comprobar existencias actuales antes de realizar escrituras.
+      documentos.forEach((doc, index) => {
+        const producto = productos[index];
+
+        if (!doc.exists) {
+          throw new Error(`El producto ${producto.nombre} ya no existe.`);
+        }
+
+        const stockActual = Number(doc.data().stock || 0);
+
+        if (producto.cantidad > stockActual) {
+          throw new Error(
+            `Stock insuficiente para ${producto.nombre}. ` +
+            `Disponible: ${stockActual} ${producto.unidad}.`
+          );
+        }
+      });
+
+      // Todas las lecturas terminaron. Ahora se realizan las escrituras.
+      documentos.forEach((doc, index) => {
+        const producto = productos[index];
+        const stockActual = Number(doc.data().stock || 0);
+
+        transaction.update(referencias[index], {
+          stock: stockActual - producto.cantidad
+        });
+      });
+
+      const ventaRef = db.collection('ventasSustratos').doc();
+
+      transaction.set(ventaRef, {
+        productos,
+        total,
+        cliente,
+        metodoPago,
+        estado: 'Pagado',
+        fecha: fechaServidor()
+      });
+
+      productos.forEach(producto => {
+        const movimientoRef = db.collection('movimientosSustratos').doc();
+
+        transaction.set(movimientoRef, {
+          sustratoId: producto.id,
+          producto: producto.nombre,
+          tipo: 'Venta',
+          cantidad: producto.cantidad,
+          unidad: producto.unidad,
+          detalle: 'Venta registrada',
+          fecha: fechaServidor()
+        });
+      });
+    });
+
+    // Limpiar el formulario después de confirmar la operación.
+    cantidades.forEach(input => {
+      input.value = 0;
+    });
+
+    $('clienteVentaSustrato').value = '';
+
+    actualizarTotalSustratos();
+
+    alert('Venta registrada correctamente.');
+  } catch (error) {
+    console.error(error);
+    alert(error.message || 'No se pudo registrar la venta.');
+  }
+});
 function pintarHistorialSustratos(){const tb=$('historialVentasSustratos');if(!tb)return;const f=$('filtroFechaSustratos')?.value;const rows=ventasSustratos.filter(v=>!f||fechaISO(v.fecha)===f);tb.innerHTML=rows.map(v=>`<tr><td>${fechaTexto(v.fecha)}</td><td>${(v.productos||[]).map(p=>`${escapar(p.nombre)} x${dinero(p.cantidad)} ${escapar(p.unidad)}`).join(', ')}</td><td>${escapar(v.cliente)}</td><td>${escapar(v.metodoPago)}</td><td>S/. ${dinero(v.total)}</td><td>${escapar(v.estado)}</td><td><button class="borrar-venta-sustrato" data-id="${v.id}">Eliminar</button></td></tr>`).join('')||'<tr><td colspan="7">No hay ventas registradas.</td></tr>';}
-const fechaISO=v=>{if(!v)return '';const d=v.toDate?v.toDate():new Date(v);return Number.isNaN(d.getTime())?'':d.toISOString().slice(0,10);};
+const fechaISO = v => {
+  if (!v) return '';
+
+  const d = v.toDate ? v.toDate() : new Date(v);
+
+  if (Number.isNaN(d.getTime())) return '';
+
+  const anio = d.getFullYear();
+  const mes = String(d.getMonth() + 1).padStart(2, '0');
+  const dia = String(d.getDate()).padStart(2, '0');
+
+  return `${anio}-${mes}-${dia}`;
+};
 $('filtroFechaSustratos')?.addEventListener('change',pintarHistorialSustratos);
 $('historialVentasSustratos')?.addEventListener('click',async e=>{if(!e.target.classList.contains('borrar-venta-sustrato'))return;if(!confirm('¿Eliminar el registro? El stock no se modificará.'))return;try{await db.collection('ventasSustratos').doc(e.target.dataset.id).delete();}catch(err){mostrarError(err);}});
 $('filtroMovimientoSustratos')?.addEventListener('change',e=>{const filtro=e.target.value;db.collection('movimientosSustratos').orderBy('fecha','desc').get().then(s=>{const tb=$('movimientosInventarioSustratos');const rows=s.docs.map(d=>d.data()).filter(x=>filtro==='todos'||(filtro==='entrada'&&x.tipo==='Entrada')||(filtro==='venta'&&x.tipo==='Venta')||(filtro==='devolucion'&&x.tipo==='Devolución'));if(tb)tb.innerHTML=rows.map(x=>`<tr><td>${fechaTexto(x.fecha)}</td><td>${escapar(x.producto)}</td><td>${escapar(x.tipo)}</td><td>${dinero(x.cantidad)}</td><td>${escapar(x.unidad)}</td><td>${escapar(x.detalle||'')}</td></tr>`).join('')||'<tr><td colspan="6">Sin movimientos.</td></tr>';}).catch(mostrarError);});
