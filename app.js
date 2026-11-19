@@ -1,4 +1,4 @@
-  /* VIVERO ELIEL - Cotizaciones y control de inventario/ventas */
+   /* VIVERO ELIEL - Cotizaciones y control de inventario/ventas */
 'use strict';
 
 const $ = id => document.getElementById(id);
@@ -394,66 +394,54 @@ $('historialVentasSustratos')?.addEventListener('click',async e=>{if(!e.target.c
 $('filtroMovimientoSustratos')?.addEventListener('change',e=>{const filtro=e.target.value;db.collection('movimientosSustratos').orderBy('fecha','desc').get().then(s=>{const tb=$('movimientosInventarioSustratos');const rows=s.docs.map(d=>d.data()).filter(x=>filtro==='todos'||(filtro==='entrada'&&x.tipo==='Entrada')||(filtro==='venta'&&x.tipo==='Venta')||(filtro==='devolucion'&&x.tipo==='Devolución'));if(tb)tb.innerHTML=rows.map(x=>`<tr><td>${fechaTexto(x.fecha)}</td><td>${escapar(x.producto)}</td><td>${escapar(x.tipo)}</td><td>${dinero(x.cantidad)}</td><td>${escapar(x.unidad)}</td><td>${escapar(x.detalle||'')}</td></tr>`).join('')||'<tr><td colspan="6">Sin movimientos.</td></tr>';}).catch(mostrarError);});
 
 // Inicialización cuando el documento ya está cargado.
-document.addEventListener('DOMContentLoaded',()=>{
-  ['cliente','num-cotizacion','pedido-texto','valEmbalaje'].forEach(id=>$(id)?.addEventListener('input',procesarCotizacion));
+
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  // COTIZADOR
   ['cliente', 'num-cotizacion', 'pedido-texto', 'valEmbalaje']
-    .forEach(id => {
-      $(id)?.addEventListener('input', procesarCotizacion);
-    });
+    .forEach(id => $(id)?.addEventListener('input', procesarCotizacion));
 
+// Inicialización cuando el documento ya está cargado.
+document.addEventListener('DOMContentLoaded',()=>{
+  ['cliente','num-cotizacion','pedido-texto','valEmbalaje'].forEach(id=>$(id)?.addEventListener('input',procesarCotizacion));
   procesarCotizacion();
-  if(typeof firebase==='undefined'||!firebase.apps?.length){console.error('Firebase no está configurado.');return;}
-  escucharCotizaciones(); escucharMacetas(); escucharSustratos();
 
-  // CONFIGURACIÓN FIREBASE
   if (typeof firebase === 'undefined' || !firebase.apps?.length) {
     console.error('Firebase no está configurado.');
     return;
   }
 
-  // INICIAR ESCUCHAS
   escucharCotizaciones();
   escucharMacetas();
   escucharSustratos();
 
-  // NAVEGACIÓN DE SUSTRATOS
-  const botonesSustratos = document.querySelectorAll(
-    '#tab-sustratos .nav-sustratos'
-  );
+  // NAVEGACIÓN DEL MÓDULO DE SUSTRATOS
+  document.querySelectorAll('#tab-sustratos .nav-sustratos')
+    .forEach(boton => {
 
-  botonesSustratos.forEach(boton => {
+      boton.addEventListener('click', () => {
 
-    boton.addEventListener('click', () => {
+        const pagina = boton.dataset.pagina;
 
-      const pagina = boton.dataset.pagina;
+        document.querySelectorAll('#tab-sustratos .pagina-sustratos')
+          .forEach(seccion => {
+            seccion.classList.remove('activa');
+          });
 
-      document.querySelectorAll(
-        '#tab-sustratos .pagina-sustratos'
-      ).forEach(seccion => {
-        seccion.classList.remove('activa');
-      });
+        document.querySelectorAll('#tab-sustratos .nav-sustratos')
+          .forEach(btn => {
+            btn.classList.remove('activo');
+          });
 
-      botonesSustratos.forEach(btn => {
-        btn.classList.remove('activo');
-      });
-
-      const seccionActiva = document.getElementById(pagina);
-
-      if (seccionActiva) {
-        seccionActiva.classList.add('activa');
+        document.getElementById(pagina)?.classList.add('activa');
         boton.classList.add('activo');
-      } else {
-        console.error('No se encontró la página:', pagina);
-      }
+
+      });
 
     });
 
-  });
-
+  if(typeof firebase==='undefined'||!firebase.apps?.length){console.error('Firebase no está configurado.');return;}
+  escucharCotizaciones(); escucharMacetas(); escucharSustratos();
 });
 
 
