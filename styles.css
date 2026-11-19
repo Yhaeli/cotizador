@@ -1225,3 +1225,120 @@ input, select, textarea {
         font-size: 19px;
     }
 }
+
+
+/* ==========================================
+   VIVERO ELIEL - AMPLIAR PANELES DE SUSTRATOS
+========================================== */
+
+/* Aprovechar todo el ancho disponible */
+#tab-sustratos .contenido-modulo {
+    width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 32px;
+}
+
+/* Dar más espacio a las tarjetas estadísticas */
+#tab-sustratos .estadisticas-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+    width: 100%;
+    margin-bottom: 28px;
+}
+
+/* Tarjetas más grandes */
+#tab-sustratos .tarjeta-estadistica {
+    min-width: 0;
+    min-height: 145px;
+    padding: 25px 22px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border-radius: 12px;
+}
+
+/* Texto de las tarjetas */
+#tab-sustratos .tarjeta-estadistica span {
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 16px;
+}
+
+/* Valores numéricos */
+#tab-sustratos .tarjeta-estadistica h3 {
+    font-size: 27px;
+    line-height: 1.3;
+}
+
+/* Paneles blancos más amplios */
+#tab-sustratos .panel-modulo {
+    width: 100%;
+    padding: 28px;
+    margin-bottom: 26px;
+    border-radius: 12px;
+}
+
+/* Dar más espacio a los formularios */
+#tab-sustratos .formulario-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+}
+
+/* Tablas que aprovechan el ancho */
+#tab-sustratos .tabla-responsive {
+    width: 100%;
+    overflow-x: auto;
+}
+
+#tab-sustratos .tabla-responsive table {
+    width: 100%;
+    min-width: 650px;
+}
+
+/* TABLET */
+@media (max-width: 850px) {
+    #tab-sustratos .contenido-modulo {
+        padding: 22px;
+    }
+
+    #tab-sustratos .estadisticas-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 15px;
+    }
+}
+
+/* CELULAR */
+@media (max-width: 500px) {
+    #tab-sustratos .contenido-modulo {
+        padding: 15px;
+    }
+
+    #tab-sustratos .estadisticas-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    #tab-sustratos .tarjeta-estadistica {
+        min-height: 125px;
+        padding: 17px 14px;
+    }
+
+    #tab-sustratos .tarjeta-estadistica span {
+        font-size: 12px;
+    }
+
+    #tab-sustratos .tarjeta-estadistica h3 {
+        font-size: 22px;
+    }
+
+    #tab-sustratos .panel-modulo {
+        padding: 17px;
+    }
+
+    #tab-sustratos .formulario-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
