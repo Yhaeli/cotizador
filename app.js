@@ -396,46 +396,12 @@ $('filtroMovimientoSustratos')?.addEventListener('change',e=>{const filtro=e.tar
 // Inicialización cuando el documento ya está cargado.
 
 
-document.addEventListener('DOMContentLoaded', () => {
-
-  ['cliente', 'num-cotizacion', 'pedido-texto', 'valEmbalaje']
-    .forEach(id => $(id)?.addEventListener('input', procesarCotizacion));
-
+// Inicialización cuando el documento ya está cargado.
+document.addEventListener('DOMContentLoaded',()=>{
+  ['cliente','num-cotizacion','pedido-texto','valEmbalaje'].forEach(id=>$(id)?.addEventListener('input',procesarCotizacion));
   procesarCotizacion();
-
-  if (typeof firebase === 'undefined' || !firebase.apps?.length) {
-    console.error('Firebase no está configurado.');
-    return;
-  }
-
-  escucharCotizaciones();
-  escucharMacetas();
-  escucharSustratos();
-
-  // NAVEGACIÓN DEL MÓDULO DE SUSTRATOS
-  document.querySelectorAll('#tab-sustratos .nav-sustratos')
-    .forEach(boton => {
-
-      boton.addEventListener('click', () => {
-
-        const pagina = boton.dataset.pagina;
-
-        document.querySelectorAll('#tab-sustratos .pagina-sustratos')
-          .forEach(seccion => {
-            seccion.classList.remove('activa');
-          });
-
-        document.querySelectorAll('#tab-sustratos .nav-sustratos')
-          .forEach(btn => {
-            btn.classList.remove('activo');
-          });
-
-        document.getElementById(pagina)?.classList.add('activa');
-        boton.classList.add('activo');
-
-      });
-
-    });
-
+  if(typeof firebase==='undefined'||!firebase.apps?.length){console.error('Firebase no está configurado.');return;}
+  escucharCotizaciones(); escucharMacetas(); escucharSustratos();
 });
+
 
