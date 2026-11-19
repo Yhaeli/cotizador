@@ -377,91 +377,102 @@
       </section>
 
 
-      <!-- ======================================
-           PÁGINA 4: REGISTRAR VENTA
-      ====================================== -->
+     <!-- ======================================
+     PÁGINA 4: REGISTRAR VENTA
+====================================== -->
 
-      <section id="ventasMacetas" class="pagina-macetas">
+<section id="ventasSustratos" class="pagina-sustratos">
 
-        <h2>Registrar venta</h2>
+  <h2>Registrar venta</h2>
 
-        <p class="subtitulo-macetas">
-          Selecciona las macetas que deseas vender e indica sus cantidades.
-        </p>
+  <p class="subtitulo-modulo">
+    Registra los productos vendidos, las cantidades y el precio acordado con el cliente.
+  </p>
 
-        <div class="tarjeta-macetas">
+  <!-- DATOS DEL CLIENTE -->
+  <div class="panel-modulo">
 
-          <label>Nombre del cliente (opcional)</label>
+    <h3>Datos del cliente</h3>
 
-          <input
-            type="text"
-            id="clienteVentaMaceta"
-            placeholder="Nombre del cliente"
-          >
+    <label>Nombre del cliente</label>
 
-        </div>
+    <input
+      type="text"
+      id="clienteVentaSustrato"
+      placeholder="Ingrese el nombre del cliente (opcional)"
+    >
 
-
-        <div class="tarjeta-macetas">
-
-          <h3>Productos disponibles</h3>
-
-          <div class="tabla-responsive">
-
-            <table>
-
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th>Stock disponible</th>
-                  <th>Cantidad a vender</th>
-                  <th>Precio unitario</th>
-                  <th>Subtotal</th>
-                </tr>
-              </thead>
-
-              <tbody id="productosVentaMacetas"></tbody>
-
-            </table>
-
-          </div>
-
-        </div>
+  </div>
 
 
-        <div class="tarjeta-macetas resumen-venta">
+  <!-- PRODUCTOS DE LA VENTA -->
+  <div class="panel-modulo">
 
-          <div>
-            <label>Método de pago</label>
+    <h3>Productos de la venta</h3>
 
-            <select id="medioPagoMacetas">
+    <p class="subtitulo-modulo">
+      Selecciona los productos e indica la cantidad y el precio de venta.
+    </p>
 
-              <option value="Efectivo">Efectivo</option>
-              <option value="Yape">Yape</option>
-              <option value="Transferencia">Transferencia</option>
-              <option value="Pago Pendiente">Pago pendiente</option>
+    <div class="tabla-responsive">
 
-            </select>
-          </div>
+      <table>
 
-          <div class="total-venta-macetas">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Stock disponible</th>
+            <th>Unidades a vender</th>
+            <th>Precio de venta unitario</th>
+            <th>Subtotal</th>
+          </tr>
+        </thead>
 
-            <span>Total de la venta</span>
+        <tbody id="detalleVentaSustratos"></tbody>
 
-            <strong id="totalVentaMacetas">S/. 0.00</strong>
+      </table>
 
-          </div>
+    </div>
 
-          <button
-            id="btnRegistrarVentaMaceta"
-            class="btn-principal-macetas btn-registrar-venta"
-          >
-            REGISTRAR VENTA COMPLETA
-          </button>
+  </div>
 
-        </div>
 
-      </section>
+  <!-- MÉTODO DE PAGO Y TOTAL -->
+  <div class="panel-modulo resumen-venta">
+
+    <div>
+
+      <label>Método de pago</label>
+
+      <select id="metodoPagoSustrato">
+
+        <option value="Efectivo">Efectivo</option>
+        <option value="Yape">Yape</option>
+        <option value="Transferencia">Transferencia</option>
+        <option value="Pago Pendiente">Pago pendiente</option>
+
+      </select>
+
+    </div>
+
+    <div class="total-venta">
+
+      <span>Total de la venta</span>
+
+      <strong id="totalVentaSustratos">S/. 0.00</strong>
+
+    </div>
+
+    <button
+      id="btnRegistrarVentaSustrato"
+      class="btn-principal"
+    >
+      REGISTRAR VENTA
+    </button>
+
+  </div>
+
+</section>
 
 
       <!-- ======================================
