@@ -395,60 +395,47 @@ $('filtroMovimientoSustratos')?.addEventListener('change',e=>{const filtro=e.tar
 
 // Inicialización cuando el documento ya está cargado.
 
+
 document.addEventListener('DOMContentLoaded', () => {
 
-  // COTIZADOR
   ['cliente', 'num-cotizacion', 'pedido-texto', 'valEmbalaje']
-    .forEach(id => {
-      $(id)?.addEventListener('input', procesarCotizacion);
-    });
+    .forEach(id => $(id)?.addEventListener('input', procesarCotizacion));
 
   procesarCotizacion();
 
-  // CONFIGURACIÓN FIREBASE
   if (typeof firebase === 'undefined' || !firebase.apps?.length) {
     console.error('Firebase no está configurado.');
     return;
   }
 
-  // INICIAR ESCUCHAS
   escucharCotizaciones();
   escucharMacetas();
   escucharSustratos();
 
-  // NAVEGACIÓN DE SUSTRATOS
-  const botonesSustratos = document.querySelectorAll(
-    '#tab-sustratos .nav-sustratos'
-  );
+  // NAVEGACIÓN DEL MÓDULO DE SUSTRATOS
+  document.querySelectorAll('#tab-sustratos .nav-sustratos')
+    .forEach(boton => {
 
-  botonesSustratos.forEach(boton => {
+      boton.addEventListener('click', () => {
 
-    boton.addEventListener('click', () => {
+        const pagina = boton.dataset.pagina;
 
-      const pagina = boton.dataset.pagina;
+        document.querySelectorAll('#tab-sustratos .pagina-sustratos')
+          .forEach(seccion => {
+            seccion.classList.remove('activa');
+          });
 
-      document.querySelectorAll(
-        '#tab-sustratos .pagina-sustratos'
-      ).forEach(seccion => {
-        seccion.classList.remove('activa');
-      });
+        document.querySelectorAll('#tab-sustratos .nav-sustratos')
+          .forEach(btn => {
+            btn.classList.remove('activo');
+          });
 
-      botonesSustratos.forEach(btn => {
-        btn.classList.remove('activo');
-      });
-
-      const seccionActiva = document.getElementById(pagina);
-
-      if (seccionActiva) {
-        seccionActiva.classList.add('activa');
+        document.getElementById(pagina)?.classList.add('activa');
         boton.classList.add('activo');
-      } else {
-        console.error('No se encontró la página:', pagina);
-      }
+
+      });
 
     });
-
-  });
 
 });
 
