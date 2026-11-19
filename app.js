@@ -245,6 +245,9 @@ function actualizarTotalSustratos() {
 }
 
 $('detalleVentaSustratos')?.addEventListener('input',actualizarTotalSustratos);
+console.log('Botón encontrado:', $('btnRegistrarVentaSustrato'));
+console.log('Productos cargados:', sustratos);
+console.log('Firebase disponible:', typeof db);
 $('btnRegistrarVentaSustrato')?.addEventListener('click', async () => {
   const cantidades = [
     ...document.querySelectorAll('.cantidad-sustrato-venta')
