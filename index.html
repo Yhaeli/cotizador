@@ -210,7 +210,7 @@
 
           <div class="tarjeta-macetas">
             <h3>Productos registrados</h3>
-            <div class="tabla-responsive">
+            <input type="text" id="buscarMaceta" placeholder="Buscar maceta por nombre..." style="margin-bottom: 12px;">
               <table>
                 <thead>
                   <tr>
@@ -258,9 +258,9 @@
             <input type="text" id="clienteVentaMaceta" placeholder="Ingrese el nombre del cliente (opcional)">
           </div>
 
-          <div class="tarjeta-macetas">
+         <div class="tarjeta-macetas">
             <h3>Productos de la venta</h3>
-            <div class="tabla-responsive">
+            <input type="text" id="buscarMacetaVenta" placeholder="Buscar maceta por nombre para vender..." style="margin-bottom: 12px;">
               <table>
                 <thead>
                   <tr>
@@ -585,14 +585,22 @@
           <p class="subtitulo-modulo">Consulta las entradas, ventas y devoluciones de sustratos.</p>
 
           <div class="panel-modulo">
-            <div class="filtros-modulo">
-              <label>Filtrar movimientos</label>
-              <select id="filtroMovimientoSustratos">
-                <option value="todos">Todos los movimientos</option>
-                <option value="entrada">Entradas</option>
-                <option value="venta">Ventas</option>
-                <option value="devolucion">Devoluciones</option>
-              </select>
+         <div class="filtros-modulo">
+              <div>
+                <label>Buscar por nombre de sustrato</label>
+                <input type="text" id="filtroNombreMovimientoSustrato" placeholder="Ej: Plugmix, Pino...">
+              </div>
+
+              <div>
+                <label>Filtrar movimientos</label>
+                <select id="filtroMovimientoSustratos">
+                  <option value="todos">Todos los movimientos</option>
+                  <option value="entrada">Entradas</option>
+                  <option value="venta">Ventas</option>
+                  <option value="devolucion">Devoluciones</option>
+                </select>
+              </div>
+            </div>
             </div>
 
             <div class="tabla-responsive">
