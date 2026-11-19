@@ -396,15 +396,63 @@ $('filtroFechaSustratos')?.addEventListener('change',pintarHistorialSustratos);
 $('historialVentasSustratos')?.addEventListener('click',async e=>{if(!e.target.classList.contains('borrar-venta-sustrato'))return;if(!confirm('¿Eliminar el registro? El stock no se modificará.'))return;try{await db.collection('ventasSustratos').doc(e.target.dataset.id).delete();}catch(err){mostrarError(err);}});
 $('filtroMovimientoSustratos')?.addEventListener('change',e=>{const filtro=e.target.value;db.collection('movimientosSustratos').orderBy('fecha','desc').get().then(s=>{const tb=$('movimientosInventarioSustratos');const rows=s.docs.map(d=>d.data()).filter(x=>filtro==='todos'||(filtro==='entrada'&&x.tipo==='Entrada')||(filtro==='venta'&&x.tipo==='Venta')||(filtro==='devolucion'&&x.tipo==='Devolución'));if(tb)tb.innerHTML=rows.map(x=>`<tr><td>${fechaTexto(x.fecha)}</td><td>${escapar(x.producto)}</td><td>${escapar(x.tipo)}</td><td>${dinero(x.cantidad)}</td><td>${escapar(x.unidad)}</td><td>${escapar(x.detalle||'')}</td></tr>`).join('')||'<tr><td colspan="6">Sin movimientos.</td></tr>';}).catch(mostrarError);});
 
-// Inicialización cuando el documento ya está cargado.
+// NAVEGACIÓN DEL MÓDULO DE SUSTRATOS
+function iniciarNavegacionSustratos() {
+
+  const botones = document.querySelectorAll('#tab-sustratos .nav-sustratos');
+  const paginas = document.querySelectorAll('#tab-sustratos .pagina-sustratos');
+
+  botones.forEach(boton => {
+
+    boton.addEventListener('click', () => {
+
+      const destino = boton.dataset.pagina;
+
+      // Ocultar todas las páginas
+      paginas.forEach(pagina => {
+        pagina.classList.remove('activa');
+      });
+
+      // Quitar selección de los botones
+      botones.forEach(btn => {
+        btn.classList.remove('activo');
+      });
+
+      // Mostrar la página seleccionada
+      const paginaSeleccionada = document.getElementById(destino);
+
+      if (paginaSeleccionada) {
+        paginaSeleccionada.classList.add('activa');
+        boton.classList.add('activo');
+      }
+
+    });
+
+  });
+
+}
 
 
 // Inicialización cuando el documento ya está cargado.
 document.addEventListener('DOMContentLoaded',()=>{
-  ['cliente','num-cotizacion','pedido-texto','valEmbalaje'].forEach(id=>$(id)?.addEventListener('input',procesarCotizacion));
+
+  iniciarNavegacionSustratos();
+
+  ['cliente','num-cotizacion','pedido-texto','valEmbalaje'].forEach(id=>
+    $(id)?.addEventListener('input',procesarCotizacion)
+  );
+
   procesarCotizacion();
-  if(typeof firebase==='undefined'||!firebase.apps?.length){console.error('Firebase no está configurado.');return;}
-  escucharCotizaciones(); escucharMacetas(); escucharSustratos();
+
+  if(typeof firebase==='undefined'||!firebase.apps?.length){
+    console.error('Firebase no está configurado.');
+    return;
+  }
+
+  escucharCotizaciones();
+  escucharMacetas();
+  escucharSustratos();
+
 });
 
 
