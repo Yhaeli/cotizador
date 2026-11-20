@@ -444,7 +444,15 @@ function pintarHistorialSustratos() {
   const tb = $('historialVentasSustratos');
   if (!tb) return;
   const f = $('filtroFechaSustratos')?.value;
-  const rows = ventasSustratos.filter(v => !f || fechaISO(v.fecha) === f);
+  const nombre = ($('filtroNombreVentaSustrato')?.value || '').toLowerCase().trim();
+
+  const rows = ventasSustratos.filter(v => {
+    const coincideFecha = !f || fechaISO(v.fecha) === f;
+    const coincideNombre = !nombre || (v.productos || []).some(p =>
+      String(p.nombre || '').toLowerCase().includes(nombre)
+    );
+    return coincideFecha && coincideNombre;
+  });
 
   tb.innerHTML = rows.map(v => `<tr>
     <td>${fechaTexto(v.fecha)}</td>
@@ -765,6 +773,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   $('filtroFechaSustratos')?.addEventListener('change', pintarHistorialSustratos);
+  $('filtroNombreVentaSustrato')?.addEventListener('input', pintarHistorialSustratos);
 
   $('historialVentasSustratos')?.addEventListener('click', async e => {
     if (!e.target.classList.contains('borrar-venta-sustrato')) return;
