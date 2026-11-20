@@ -233,9 +233,15 @@ function escucharMacetas() {
 }
 
 function pintarMacetas() {
+  const filtroInv = ($('buscarMaceta')?.value || '').toLowerCase().trim();
+  const filtroVenta = ($('buscarMacetaVenta')?.value || '').toLowerCase().trim();
+
+  const macetasInv = macetas.filter(p => String(p.nombre || '').toLowerCase().includes(filtroInv));
+  const macetasVenta = macetas.filter(p => String(p.nombre || '').toLowerCase().includes(filtroVenta));
+
   const tb = $('tablaInventarioMacetas');
   if (tb) {
-    tb.innerHTML = macetas.map(p => `<tr>
+    tb.innerHTML = macetasInv.map(p => `<tr>
       <td>${escapar(p.nombre)}</td>
       <td>S/. ${dinero(p.costo)}</td>
       <td>S/. ${dinero(p.precioVenta)}</td>
@@ -252,7 +258,7 @@ function pintarMacetas() {
 
   const tbody = $('productosVentaMacetas');
   if (tbody) {
-    tbody.innerHTML = macetas.map(p => `<tr>
+    tbody.innerHTML = macetasVenta.map(p => `<tr>
       <td>${escapar(p.nombre)}</td>
       <td>${p.stock}</td>
       <td><input type="number" min="0" max="${p.stock}" step="1" value="0" class="cantidad-maceta-venta" data-id="${p.id}" style="width:75px"></td>
@@ -343,29 +349,21 @@ function escucharSustratos() {
   }, mostrarError);
 
   db.collection('movimientosSustratos').orderBy('fecha', 'desc').onSnapshot(s => {
-    const tb = $('movimientosInventarioSustratos');
-    if (!tb) return;
-    tb.innerHTML = s.docs.map(d => {
-      const x = d.data();
-      return `<tr>
-        <td>${fechaTexto(x.fecha)}</td>
-        <td>${escapar(x.producto)}</td>
-        <td>${escapar(x.tipo)}</td>
-        <td>${dinero(x.cantidad)}</td>
-        <td>${escapar(x.unidad)}</td>
-        <td>${escapar(x.detalle || '')}</td>
-      </tr>`;
-    }).join('') || '<tr><td colspan="6">Sin movimientos.</td></tr>';
+    movimientosSustratosCache = s.docs.map(d => d.data());
+    pintarMovimientosSustratos();
   }, mostrarError);
 }
 
 function pintarSustratos() {
-  const filtroTexto = ($('buscarSustrato')?.value || '').toLowerCase().trim();
-  const filtrados = sustratos.filter(p => p.nombre.toLowerCase().includes(filtroTexto));
+  const filtroInv = ($('buscarSustrato')?.value || '').toLowerCase().trim();
+  const filtroVenta = ($('buscarSustratoVenta')?.value || '').toLowerCase().trim();
+
+  const sustratosInv = sustratos.filter(p => String(p.nombre || '').toLowerCase().includes(filtroInv));
+  const sustratosVenta = sustratos.filter(p => String(p.nombre || '').toLowerCase().includes(filtroVenta));
 
   const tb = $('tablaInventarioSustratos');
   if (tb) {
-    tb.innerHTML = filtrados.map(p => `<tr>
+    tb.innerHTML = sustratosInv.map(p => `<tr>
       <td>${escapar(p.nombre)}</td>
       <td>${escapar(p.unidad)}</td>
       <td>S/. ${dinero(p.costo)}</td>
@@ -383,7 +381,7 @@ function pintarSustratos() {
 
   const venta = $('detalleVentaSustratos');
   if (venta) {
-    venta.innerHTML = sustratos.map(p => `<tr>
+    venta.innerHTML = sustratosVenta.map(p => `<tr>
       <td>${escapar(p.nombre)}</td>
       <td>${escapar(p.unidad)}</td>
       <td>${dinero(p.stock)}</td>
@@ -409,6 +407,33 @@ function pintarAlertasSustratos() {
     </tr>`).join('') || '<tr><td colspan="4">No hay alertas de stock.</td></tr>';
   }
   if ($('alertasSustratos')) $('alertasSustratos').textContent = bajo.length;
+}
+function pintarMovimientosSustratos() {
+  const tb = $('movimientosInventarioSustratos');
+  if (!tb) return;
+
+  const tipoFiltro = $('filtroMovimientoSustratos')?.value || 'todos';
+  const nombreFiltro = ($('filtroNombreMovimientoSustrato')?.value || '').toLowerCase().trim();
+
+  const rows = movimientosSustratosCache.filter(x => {
+    const coincideTipo =
+      tipoFiltro === 'todos' ||
+      (tipoFiltro === 'entrada' && x.tipo === 'Entrada') ||
+      (tipoFiltro === 'venta' && x.tipo === 'Venta') ||
+      (tipoFiltro === 'devolucion' && x.tipo === 'Devolución');
+
+    const coincideNombre = !nombreFiltro || String(x.producto || '').toLowerCase().includes(nombreFiltro);
+    return coincideTipo && coincideNombre;
+  });
+
+  tb.innerHTML = rows.map(x => `<tr>
+    <td>${fechaTexto(x.fecha)}</td>
+    <td>${escapar(x.producto)}</td>
+    <td>${escapar(x.tipo)}</td>
+    <td>${dinero(x.cantidad)}</td>
+    <td>${escapar(x.unidad)}</td>
+    <td>${escapar(x.detalle || '')}</td>
+  </tr>`).join('') || '<tr><td colspan="6">Sin movimientos.</td></tr>';
 }
 
 function resumenSustratos() {
@@ -474,6 +499,9 @@ document.addEventListener('DOMContentLoaded', () => {
   procesarCotizacion();
 
   // 3. Eventos Módulo Macetas
+  $('buscarMaceta')?.addEventListener('input', pintarMacetas);
+  $('buscarMacetaVenta')?.addEventListener('input', pintarMacetas);
+
   $('btnAgregarMaceta')?.addEventListener('click', async () => {
     const nombre = $('nombreMaceta').value.trim();
     const costo = Number($('costoMaceta').value);
@@ -596,6 +624,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 4. Eventos Módulo Sustratos
   $('buscarSustrato')?.addEventListener('input', pintarSustratos);
+  $('buscarSustratoVenta')?.addEventListener('input', pintarSustratos);
+  $('filtroNombreMovimientoSustrato')?.addEventListener('input', pintarMovimientosSustratos);
+  $('filtroMovimientoSustratos')?.addEventListener('change', pintarMovimientosSustratos);
 
   $('btnAgregarSustrato')?.addEventListener('click', async () => {
     const nombre = $('nombreSustrato').value.trim();
@@ -770,29 +801,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!e.target.classList.contains('borrar-venta-sustrato')) return;
     if (!confirm('¿Eliminar el registro? El stock no se modificará.')) return;
     try { await db.collection('ventasSustratos').doc(e.target.dataset.id).delete(); } catch (err) { mostrarError(err); }
-  });
-
-  $('filtroMovimientoSustratos')?.addEventListener('change', e => {
-    const filtro = e.target.value;
-    db.collection('movimientosSustratos').orderBy('fecha', 'desc').get().then(s => {
-      const tb = $('movimientosInventarioSustratos');
-      const rows = s.docs.map(d => d.data()).filter(x =>
-        filtro === 'todos' ||
-        (filtro === 'entrada' && x.tipo === 'Entrada') ||
-        (filtro === 'venta' && x.tipo === 'Venta') ||
-        (filtro === 'devolucion' && x.tipo === 'Devolución')
-      );
-      if (tb) {
-        tb.innerHTML = rows.map(x => `<tr>
-          <td>${fechaTexto(x.fecha)}</td>
-          <td>${escapar(x.producto)}</td>
-          <td>${escapar(x.tipo)}</td>
-          <td>${dinero(x.cantidad)}</td>
-          <td>${escapar(x.unidad)}</td>
-          <td>${escapar(x.detalle || '')}</td>
-        </tr>`).join('') || '<tr><td colspan="6">Sin movimientos.</td></tr>';
-      }
-    }).catch(mostrarError);
   });
 
   // 5. Conexión inicial con Firebase
