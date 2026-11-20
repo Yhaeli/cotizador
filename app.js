@@ -448,9 +448,11 @@ function pintarHistorialSustratos() {
 
   const rows = ventasSustratos.filter(v => {
     const coincideFecha = !f || fechaISO(v.fecha) === f;
-    const coincideNombre = !nombre || (v.productos || []).some(p =>
-      String(p.nombre || '').toLowerCase().includes(nombre)
-    );
+    const textoProductos = (v.productos || [])
+      .map(p => `${p.nombre || ''} x${dinero(p.cantidad)} ${p.unidad || ''}`)
+      .join(' ')
+      .toLowerCase();
+    const coincideNombre = !nombre || textoProductos.includes(nombre);
     return coincideFecha && coincideNombre;
   });
 
