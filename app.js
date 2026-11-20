@@ -354,45 +354,32 @@ function escucharSustratos() {
   }, mostrarError);
 }
 
-function pintarSustratos() {
-  const filtroInv = ($('buscarSustrato')?.value || '').toLowerCase().trim();
-  const filtroVenta = ($('buscarSustratoVenta')?.value || '').toLowerCase().trim();
+function pintarMovimientosSustratos() {
+  const tb = $('movimientosInventarioSustratos');
+  if (!tb) return;
 
-  const sustratosInv = sustratos.filter(p => String(p.nombre || '').toLowerCase().includes(filtroInv));
-  const sustratosVenta = sustratos.filter(p => String(p.nombre || '').toLowerCase().includes(filtroVenta));
+  const tipoFiltro = $('filtroMovimientoSustratos')?.value || 'todos';
+  const nombreFiltro = ($('filtroNombreMovimientoSustrato')?.value || '').toLowerCase().trim();
 
-  const tb = $('tablaInventarioSustratos');
-  if (tb) {
-    tb.innerHTML = sustratosInv.map(p => `<tr>
-      <td>${escapar(p.nombre)}</td>
-      <td>${escapar(p.unidad)}</td>
-      <td>S/. ${dinero(p.costo)}</td>
-      <td>S/. ${dinero(p.precioVenta)}</td>
-      <td>${dinero(p.stock)}</td>
-      <td>${p.stock <= 0 ? 'Agotado' : p.stock <= 5 ? 'Stock bajo' : 'Disponible'}</td>
-      <td>
-        <button type="button" class="editar-sustrato" data-id="${p.id}">Editar</button>
-        <button type="button" class="eliminar-sustrato" data-id="${p.id}">Eliminar</button>
-      </td>
-    </tr>`).join('') || '<tr><td colspan="7">No hay productos registrados.</td></tr>';
-  }
+  const rows = movimientosSustratosCache.filter(x => {
+    const coincideTipo =
+      tipoFiltro === 'todos' ||
+      (tipoFiltro === 'entrada' && x.tipo === 'Entrada') ||
+      (tipoFiltro === 'venta' && x.tipo === 'Venta') ||
+      (tipoFiltro === 'devolucion' && x.tipo === 'Devolución');
 
-  setOpciones($('selectEntradaSustrato'), sustratos, 'Selecciona un producto', true);
+    const coincideNombre = !nombreFiltro || String(x.producto || '').toLowerCase().includes(nombreFiltro);
+    return coincideTipo && coincideNombre;
+  });
 
-  const venta = $('detalleVentaSustratos');
-  if (venta) {
-    venta.innerHTML = sustratosVenta.map(p => `<tr>
-      <td>${escapar(p.nombre)}</td>
-      <td>${escapar(p.unidad)}</td>
-      <td>${dinero(p.stock)}</td>
-      <td><input class="cantidad-sustrato-venta" data-id="${p.id}" type="number" min="0" max="${p.stock}" step="0.01" value="0" style="width:85px"></td>
-      <td>S/. ${dinero(p.precioVenta)}</td>
-      <td class="subtotal-sustrato" data-id="${p.id}">S/. 0.00</td>
-    </tr>`).join('') || '<tr><td colspan="6">No hay productos registrados.</td></tr>';
-  }
-
-  pintarAlertasSustratos();
-  resumenSustratos();
+  tb.innerHTML = rows.map(x => `<tr>
+    <td>${fechaTexto(x.fecha)}</td>
+    <td>${escapar(x.producto)}</td>
+    <td>${escapar(x.tipo)}</td>
+    <td>${dinero(x.cantidad)}</td>
+    <td>${escapar(x.unidad)}</td>
+    <td>${escapar(x.detalle || '')}</td>
+  </tr>`).join('') || '<tr><td colspan="6">Sin movimientos.</td></tr>';
 }
 
 function pintarAlertasSustratos() {
